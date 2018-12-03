@@ -12,6 +12,8 @@ Example site: (https://www.kudocams.com/).
 4. Upload all files to your server.
 5. Make sure chaturbate.xml is writable.
 
+NOTE: This script was written in PHP 5.x and might not work with PHP7.
+
 ## Cache and speed
 
 This script makes use of a very simple xml caching method. It pré downloads the feed from Chaturbate and then saves it to a local xml file on your server.
