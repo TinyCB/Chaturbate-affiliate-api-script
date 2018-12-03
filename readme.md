@@ -1,6 +1,6 @@
 # TinyCB - Chaturbate affiliate website / script
 
-TinyCB is a small script and simple script that fetches models from Chaturbate's API feed. 
+TinyCB is a small sand simple script that fetches models from Chaturbate's API feed and create your own free cam site. 
 
 Example site: (https://www.kudocams.com/).
 
