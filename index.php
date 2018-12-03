@@ -141,6 +141,16 @@ include ('includes/functions.php');
 		
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5550b8fc3ee9489a"></script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo ''.analytics.'';?>"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '<?php echo ''.analytics.'';?>)';
+</script>
+
 </body>
 </html>
 <?php
