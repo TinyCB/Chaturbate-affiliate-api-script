@@ -35,4 +35,5 @@ define ( 'subpagetitletag',		'' . $_GET['arg1'] . ' title subpage tagline for Go
 
 define ( 'modelpagetitletag',	'' . $_GET['arg1'] . '\'s title model page tagline for Google Snippet'); /* $_GET['arg1'] grabs female,male,couple,transsexual and model names */
 
+define ( 'analytics',			'UA-xxxxxxxxx-x'); /* Google analytics code e.g. UA-xxxxxxxxx-x */
 ?>
