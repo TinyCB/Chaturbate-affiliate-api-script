@@ -5,7 +5,7 @@
 
 /* 
 If you like my script and want to thank me for it. 
-Please consider using my affiliate link: https://www.chaturbate.com/affiliates/api/onlinerooms/?wm=2DLMP&format=xml
+Please consider using my affiliate link: https://chaturbate.com/in/?track=default&tour=9O7D&campaign=2DLMP
 Thank you very much.
 */   
 
