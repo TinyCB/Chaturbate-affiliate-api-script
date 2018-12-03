@@ -1,8 +1,7 @@
 <?php
 
-/* Do not edit the parts between the first brackets. Only between the second brackets. */
+/* Do not edit the parts between the first Apostrophes. Only between the second Apostrophes. */
 /* Note that the PHP version being used for this script is PHP 5.3. and might not work with PHP 7. I might create a version for PHP 7 in the future. */
-
 /* 
 If you like my script and want to thank me for it. 
 Please consider using my affiliate link: https://chaturbate.com/in/?track=default&tour=9O7D&campaign=2DLMP
