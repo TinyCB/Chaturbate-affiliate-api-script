@@ -6,7 +6,7 @@ Example site: (https://www.kudocams.com/).
 
 ## Setup
 
-1. [Sign up at Chaturbate] (https://chaturbate.com/in/?track=default&tour=9O7D&campaign=2DLMP)
+1. [Sign up at Chaturbate](https://chaturbate.com/in/?track=default&tour=9O7D&campaign=2DLMP)
 2. Unzip the archive.
 3. Go to functions/edit.php and change everything accordingly.
 4. Upload all files to your server.
