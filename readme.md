@@ -4,7 +4,9 @@ TinyCB is a small sand simple script that fetches models from Chaturbate's API f
 
 Example site: (https://www.kudocams.com/).
 
-01/26/2019 - Example is now a BETA of the upcoming release (working on making the script responsive).
+02/03/2019 - Updated script to responsive design including IFRAME. Sadly, because of how Chaturbate has set the IFRAME, it's not possible to get it 100% right.
+
+If you find something not working as intended, please send me a message.
 
 ## Setup
 
@@ -14,7 +16,7 @@ Example site: (https://www.kudocams.com/).
 4. Upload all files to your server.
 5. Make sure chaturbate.xml is writable.
 
-NOTE: This script was written in PHP 5.x and might not work with PHP7.
+NOTE: Tested script with PHH7 and works.
 
 ## Cache and speed
 
