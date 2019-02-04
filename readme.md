@@ -16,7 +16,10 @@ If you find something not working as intended, please send me a message.
 4. Upload all files to your server.
 5. Make sure chaturbate.xml is writable.
 
-NOTE: Tested script with PHH7 and works.
+NOTE: Tested script with PHP7 and works.
+NOTE: It is recommended to set display_errors=Off in your php.ini file.
+      Alternatively, if you don't have access to php.ini you can turn off error reporting by adding
+      error_reporting(0); to index.php or php_flag display_errors off to your htaccess file.
 
 ## Cache and speed
 
