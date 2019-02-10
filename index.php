@@ -242,7 +242,7 @@ while ($xmlcontent = fread($fh, 1024)) {
 $core = new axl_Core();
 $core->setHeaderFunc('tpl_header');
 $core->setFooterFunc('tpl_footer');
-$core->addCommand('home', 'tpl_home', '' . SERPTITLEHOME . ' - ' . SITENAME . '', '' . SERPDESCHOME . '', '' . KWS . '');
+$core->addCommand('home', 'tpl_home', '' . SERPTITLEHOME . ' - ' . SITENAME . '', '' . SERPDESCHOME . '', '' . KWSHOME . '');
 $core->addCommand('' . GENDERSLUG . '', 'tpl_cams', ' ' . $_GET['arg1'] . ' '.GENDERTITLE.' - ' . SITENAME . '', '', '' . $_GET['arg1'] . ' cams');
 $core->addCommand('' . MODELSLUG . '', 'tpl_view_cams', '' . $_GET['arg1'] . '\'s '.MODELTITLE.' - ' . SITENAME . '', '', '' . $_GET['arg1'] . '');
 $core->addCommand('404', 'tpl_404', ' 404 error Page Not Found' . SITENAME, ' - The requested page was not found on ' . SITENAME, '');
