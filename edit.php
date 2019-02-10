@@ -29,7 +29,7 @@ define ( 'SERPTITLEHOME',   'My Title');      /* Title for Google (SERP) (Recomm
 define ( 'GENDERTITLE',		'');			  /* Title for Google gender page (male, female, couples, transsexuals are automatically set)*/
 define ( 'MODELTITLE', 		'');			  /* Title for Google model page (single page) (Title starts with example name JaneDoe's...) */
 define ( 'SERPDESCHOME',    ''); 			  /* Home page description for Google (optional)*/
-define ( 'KWSHOME',			'');       		  /* Homepage keywords (obsolete, optional) */
+define ( 'KWSHOME',			'Don\'t break my page');       		  /* Homepage keywords (obsolete, optional) (Set at least one keyword, else the page will break. Keyword won't be used on pages, it's just for tech.*/
 define ( 'WHITELABEL',		'https://chaturbate.com');/* Whitebale URL, no whitelabel? Leave default */
 define ( 'VUUKLE',			''); 			  /* If you want VUUKLE as a comment system, leave empty if not. Else get VUUKLE API key and paste it here.*/
 define ( 'GOOGLEVALIDATE',  ''); 			  /* Google webmaster verification code */
