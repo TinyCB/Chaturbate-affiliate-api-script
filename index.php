@@ -13,7 +13,7 @@ function tpl_header($cmd, $title, $des, $kws)
 <meta name="google-site-verification" content="'.GOOGLEVALIDATE.'" />
 <meta name="msvalidate.01" content="'.MSVALIDATE.'" />
 <meta name="description" content="' . $des . '" />
-<meta name="keywords" content="' . $kws . '" />
+<meta name="keywords" content="/*' . $kws . '*/" />
 <meta name="Rating" content="mature">
 <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA"/>
 
