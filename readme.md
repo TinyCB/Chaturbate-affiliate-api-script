@@ -2,8 +2,6 @@
 
 TinyCB is a small sand simple script that fetches models from Chaturbate's API feed and create your own free cam site. 
 
-Example site: (https://www.kudocams.com/).
-
 02/03/2019 - Updated script to responsive design including IFRAME. Sadly, because of how Chaturbate has set the IFRAME, it's not possible to get it 100% right.
 
 If you find something not working as intended, please send me a message.
@@ -31,7 +29,7 @@ There's no need to setup any cron jobs etc.
 
 TinyCB is released under the MIT license.
 
-Copyright (c) [Thefreeporndirectory.com](https://www.hefreeporndirectory.com/)
+Copyright (c) [Searchaporn.com](https://www.searchaporn.com/)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
