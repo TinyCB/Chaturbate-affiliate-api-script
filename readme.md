@@ -6,7 +6,7 @@ TinyCB is a small sand simple script that fetches models from Chaturbate's API f
 
 If you find something not working as intended, please send me a message.
 
-Official page: (https://www.searchaporn.com/d/tinycb/)
+Official page: (https://www.searchaporn.com/groups/tinycb/d/)
 
 ## Setup
 
