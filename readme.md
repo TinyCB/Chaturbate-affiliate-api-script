@@ -1,18 +1,16 @@
-# TinyCB - Chaturbate affiliate website / script
+# Chaturbate affiliate API script
 
-TinyCB is a small sand simple script that fetches models from Chaturbate's API feed and create your own free cam site. 
+## About TinyCB
 
-02/03/2019 - Updated script to responsive design including IFRAME. Sadly, because of how Chaturbate has set the IFRAME, it's not possible to get it 100% right.
+TinyCB is a small Chaturbate affiliate script that you can deploy on your server. What it does is, it downloads Chaturbate's XML API feed on your own server and uses that file to parse the models on your website. This script comes with a default template. To change the default template, it is recommended to have some basic knowledge about HTML / CSS / PHP.
 
-If you find something not working as intended, please send me a message.
-
-Official page: (https://www.searchaporn.com/groups/tinycb/d/)
+Furthermore, TinyCB should be easy to setup (no programmin knowledge required). All values are predefined in the edit.php file.
 
 ## Setup
 
 1. [Sign up at Chaturbate](https://chaturbate.com/in/?track=default&tour=9O7D&campaign=2DLMP)
 2. Download and unzip the archive [here](https://github.com/Kudocams/TinyCB/archive/master.zip).
-3. Go to functions/edit.php and change everything accordingly.
+3. Change edit.php accordingly.
 4. Upload all files to your server.
 5. Make sure chaturbate.xml is writable.
 
