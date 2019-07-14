@@ -2,7 +2,7 @@
 
 ## About TinyCB
 
-TinyCB is a small Chaturbate affiliate script that you can deploy on your server. What it does is, it downloads Chaturbate's XML API feed on your own server and uses that file to parse the models on your website. This script comes with a default template. To change the default template, it is recommended to have some basic knowledge about HTML / CSS / PHP.
+TinyCB is a small Chaturbate affiliate script (written in PHP) that you can deploy on your server. What it does is, it downloads Chaturbate's XML API feed on your own server and uses that file to parse the models on your website. This script comes with a default template. To change the default template, it is recommended to have some basic knowledge about HTML / CSS / PHP.
 
 Furthermore, TinyCB should be easy to setup (no programmin knowledge required). All values are predefined in the edit.php file.
 
