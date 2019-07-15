@@ -25,6 +25,10 @@ NOTE: It is recommended to set display_errors=Off in your php.ini file.
 This script makes use of a very simple xml caching method. It pré downloads the feed from Chaturbate and then saves it to a local xml file on your server.
 There's no need to setup any cron jobs etc.
 
+## Twitter
+
+[twitter.com/TinyCB_](https://twitter.com/TinyCB_)
+
 ## License
 
 TinyCB is released under the MIT license.
