@@ -22,12 +22,19 @@ NOTE: It is recommended to set display_errors=Off in your php.ini file.
 
 ## Cache and speed
 
-This script makes use of a very simple xml caching method. It pré downloads the feed from Chaturbate and then saves it to a local xml file on your server.
-There's no need to setup any cron jobs etc.
+This script makes use of a very simple xml caching method. It pré downloads the feed from Chaturbate and then saves it to a local xml file on your server. There's no need to setup any cron jobs etc. The script is very light weight and should run with minimal system specifications however. Because of Chaturbate's ever growing API feed I recommed using an SSD and fairly decent processor to keep pages loading fast.
+
+## Features
+
+The script is currently divided into 4 categories. Features cams, female cams, male cams, and transsexual cams. All rooms are provided with Chaturbate's theater mode. I've chosen for this mode because it had the best results for mobile devices. The script works most optimal by using Chaturbate's white label in the back end (this is optional but recommended).
+
+## For the future
+
+For the script in its current state, I'm planning to create different types of templates so people can switch between those. There is also a rework planned for the script in which I'm planning to implement a simple CMS, more features and possibly a plugin for Wordpress.
 
 ## Twitter
 
-[twitter.com/TinyCB_](https://twitter.com/TinyCB_)
+Follow me on [twitter.com/TinyCB_](https://twitter.com/TinyCB_) to stay updated for further updates of the script (or a complete rework).
 
 ## License
 
