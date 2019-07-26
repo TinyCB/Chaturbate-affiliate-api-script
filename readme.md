@@ -6,6 +6,8 @@ TinyCB is a small Chaturbate affiliate script (written in PHP) that you can depl
 
 Furthermore, TinyCB should be easy to setup (no programming knowledge required). All values are predefined in the edit.php file.
 
+Tinycb is specifically created to work as the front end for a Chaturbate whitelabel however. It's not manditory, and also runs without.
+
 ## Setup
 
 1. [Sign up at Chaturbate](https://chaturbate.com/in/?track=default&tour=9O7D&campaign=2DLMP)
@@ -22,11 +24,24 @@ NOTE: It is recommended to set display_errors=Off in your php.ini file.
 
 ## Cache and speed
 
-This script makes use of a very simple xml caching method. It prÃ© downloads the feed from Chaturbate and then saves it to a local xml file on your server. There's no need to setup any cron jobs etc. The script is very light weight and should run with minimal system specifications however. Because of Chaturbate's ever growing API feed I recommed using an SSD and fairly decent processor to keep pages loading fast.
+This script makes use of a very simple xml caching method. It pré downloads the feed from Chaturbate and then saves it to a local xml file on your server. There's no need to setup any cron jobs etc. The script is very light weight and should run with minimal system specifications however. Because of Chaturbate's ever growing API feed I recommed using an SSD and fairly decent processor to keep pages loading fast.
 
 ## Features
 
 The script is currently divided into 4 categories. Features cams, female cams, male cams, and transsexual cams. All rooms are provided with Chaturbate's theater mode. I've chosen for this mode because it had the best results for mobile devices. The script works most optimal by using Chaturbate's white label in the back end (this is optional but recommended).
+
+## Vuukle
+
+TinyCB make use of Vuukle. Vuukle is a free online commenting system similar to disqus. Using a comment system has multiple benifits in either community building and or SEO. Users that enter a model's room are able to either leave a comment or review.
+Using Vuukle is not manditory but I do recommend it.
+
+Signing up for [Vuukle](https://vuukle.com/dashboard.html) is easy and fast. All you need is an API key and paste it in the edit.php file.
+
+## Model info US date: 07/26/2019 - EU date: 26-07-2019
+
+- Added some model info below the cam content.
+- Added the option to add a logo.
+- Tracking code now works properly.
 
 ## For the future
 

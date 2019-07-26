@@ -3,7 +3,8 @@
 /* 
 
    For this script. It is highly recommended to create a Chaturbate whitlabel on a subdomain seperate from this script.
-   The script does function without it, however some menu items are pointing towards pages which don't use a tracking code.
+   The script does function without it however. some menu items are pointing towards pages which don't use a tracking code.
+   Fot this reason it's recommended to use a whitelabel with this script, also because it makes it look more geniune.
    
    If you haven't signed up with Chaturbate yet, 
    please consider using my affiliate link to sign up with Chaturbate,
@@ -13,10 +14,17 @@
    
    Thank you in advance!
    
+   If you have questions about this script, need some help or have a request, please contact me on twitter: https://twitter.com/TinyCB_
+   
+   More template options: Planned.
+   CMS: Planned.
+   More features: Planned (script might need a rework).
+   
 */
 
 /* Must be set */
-define ( 'SITENAME',	'Localhost'); 		  /* Website name*/
+define ( 'SITENAME',	''); 		  /* Website name (if you want to use logo leave this empty, else put down your website title here and remove <img src="/img/logo.png" style="margin-top:10px;"/> below */
+define ( 'SITELOGO',	'<img src="/img/logo.png" style="margin-top:10px;"/>'); /* You can set a logo here for your website */
 define ( 'BASEHREF',	'http://localhost/'); /* Website URL */
 define ( 'BASEPATH',	'http://localhost/'); /* Website URL */
 define ( 'AFFID',		'2DLMP' );			  /* Affiliate ID */
