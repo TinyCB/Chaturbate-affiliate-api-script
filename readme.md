@@ -2,7 +2,7 @@
 
 ## About TinyCB
 
-TinyCB is a small Chaturbate affiliate script (written in PHP) that you can deploy on your server. What it does is, it downloads Chaturbate's XML API feed on your own server and uses that file to parse the models on your website. This script comes with a default template (mobile ready). To change the default template, it is recommended to have some basic knowledge about HTML / CSS / PHP.
+TinyCB is an adult affiliate script dedicated to Chaturbate (written in PHP) that you can deploy on your server. What it does is, it downloads Chaturbate's XML API feed on your own server and uses that file to parse the models on your website. This script comes with a default template (mobile ready). To change the default template, it is recommended to have some basic knowledge about HTML / CSS / PHP.
 
 Furthermore, TinyCB should be easy to setup (no programming knowledge required). All values are predefined in the edit.php file.
 
@@ -24,7 +24,7 @@ NOTE: It is recommended to set display_errors=Off in your php.ini file.
 
 ## Cache and speed
 
-This script makes use of a very simple xml caching method. It pré downloads the feed from Chaturbate and then saves it to a local xml file on your server. There's no need to setup any cron jobs etc. The script is very light weight and should run with minimal system specifications however. Because of Chaturbate's ever growing API feed I recommed using an SSD and fairly decent processor to keep pages loading fast.
+This script makes use of a very simple xml caching method. It prÃ© downloads the feed from Chaturbate and then saves it to a local xml file on your server. There's no need to setup any cron jobs etc. The script is very light weight and should run with minimal system specifications however. Because of Chaturbate's ever growing API feed I recommed using an SSD and fairly decent processor to keep pages loading fast.
 
 ## Features
 
