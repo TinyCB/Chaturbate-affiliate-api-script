@@ -1,4 +1,4 @@
-# Chaturbate affiliate API script
+# Chaturbate adult affiliate API script
 
 ## About TinyCB
 
