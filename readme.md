@@ -37,7 +37,7 @@ Using Vuukle is not manditory but I do recommend it.
 
 Signing up for [Vuukle](https://vuukle.com/dashboard.html) is easy and fast. All you need is an API key and paste it in the edit.php file.
 
-## Model info US date: 07/26/2019 - EU date: 26-07-2019
+## Udate: US date: 07/26/2019 - EU date: 26-07-2019
 
 - Added some model info below the cam content.
 - Added the option to add a logo.
@@ -45,7 +45,17 @@ Signing up for [Vuukle](https://vuukle.com/dashboard.html) is easy and fast. All
 
 ## For the future
 
-For the script in its current state, I'm planning to create different types of templates so people can switch between those. There is also a rework planned for the script in which I'm planning to implement a simple CMS, more features and possibly a plugin for Wordpress.
+- Template options.
+- CMS (possible rework needed for the script).
+- More SEO options.
+- Wordpress Plugin (Looking into this).
+- More categories (Looking into this).
+- Looking into XML -> MYSQL storage.
+- Bongacams version of the script (or integrated).
+- Better mobile template (might be difficult because the way Chaturbate has set IFRAME).
+- Options to choose between stream canvas (Theather, default etc.).
+
+More to come...
 
 ## Twitter
 
