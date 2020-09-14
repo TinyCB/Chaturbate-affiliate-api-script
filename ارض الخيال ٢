@@ -1,0 +1,170 @@
+
+تطوير البريد
+
+المفتاح الاساسي
+
+‏109394ec1bb74698b9f854b64c3f281f
+
+‏https://api.address.gov.sa/developer#
+
+المفتاح الثانوي
+
+
+‏9bf6fb60c7b24b55b3dcff5524c1df59
+
+
+
+‏GET https://apina.address.gov.sa/NationalAddress/v4/Address/address-free-text?language=A&format=json&page=1 HTTP/1.1
+‏Host: apina.address.gov.sa
+‏api_key: 9bf6fb60c7b24b55b3dcff5524c1df59
+
+
+
+
+
+‏Pragma: no-cache
+‏Request-Context: appId=cid-v1:302fcaf0-2dec-4c8c-a4bb-c7f4579c999b
+‏Cache-Control: no-cache
+‏Date: Mon, 27 Jul 2020 01:35:54 GMT
+‏Content-Length: 74
+‏Content-Type: application/json; charset=utf-8
+‏Expires: -1
+
+{
+‏"totalSearchResults": "0",
+‏"success": true,
+‏"statusdescription": "NO-RESULTS"
+}
+
+
+
+
+
+{
+‏"swagger": "2.0",
+‏"info": {
+‏"title": "NationalAddress.v4_Address",
+‏"version": "1.0"
+},
+‏"host": "apina.address.gov.sa",
+‏"basePath": "/NationalAddress/v4/Address",
+‏"schemes": [
+‏"http",
+‏"https"
+],
+‏"securityDefinitions": {
+‏"apiKeyHeader": {
+‏"type": "apiKey",
+‏"name": "api_key",
+‏"in": "header"
+},
+‏"apiKeyQuery": {
+‏"type": "apiKey",
+‏"name": "api_key",
+‏"in": "query"
+}
+},
+‏"security": [
+{
+‏"apiKeyHeader": []
+},
+{
+‏"apiKeyQuery": []
+}
+],
+‏"paths": {
+‏"/address-free-text": {
+‏"get": {
+‏"description": "Free text search - v4. There is a change in the header attribute for xml response.",
+‏"operationId": "58bbabe15054be1220e50129",
+‏"summary": "Free Text Search",
+‏"parameters": [
+{
+‏"name": "language",
+‏"in": "query",
+‏"description": "It is an optional input. Our API can provide response in Arabic or English with Arabic being the default language.",
+‏"type": "string",
+‏"default": "A",
+‏"enum": [
+‏"A"
+]
+},
+{
+‏"name": "format",
+‏"in": "query",
+‏"description": "Itâ€™s an optional input. We currently support output for APIâ€™s in two formats Json and XML. You will be required to specify in which format you need response, default is Json.",
+‏"type": "string",
+‏"default": "json",
+‏"enum": [
+‏"json"
+]
+},
+{
+‏"name": "page",
+‏"in": "query",
+‏"description": "By default each request returns a maximum number of 10 results. If there are a large number of results, in such a case, this page number must be passed along to get the next set of results. Default value is 1.",
+‏"type": "string",
+‏"default": "1",
+‏"enum": [
+"1"
+]
+},
+{
+‏"name": "addressstring",
+‏"in": "query",
+‏"description": "Free text details in a string format for a address.",
+‏"type": "string"
+}
+],
+‏"responses": {
+"200": {
+‏"description": null
+}
+}
+}
+}
+},
+‏"tags": []
+}
+
+
+
+‏https://apina.address.gov.sa/NationalAddress/v4/Address/address-free-text "؟
+
+
+
+
+روبي تطوير
+
+
+* 
+‏@ECHO OFF
+
+‏curl -v -X GET "https://apina.address.gov.sa/NationalAddress/v4/Address/address-free-text?language=A&format=json&page=1&addressstring={string}"
+‏-H "api_key: {subscription key}"
+
+‏--data-ascii "{body}"
+
+
+‏curl -v -X GET "https://apina.address.gov.sa/NationalAddress/v4/Address/address-free-text?language=A&format=json&page=1&addressstring={string}"
+‏-H "api_key: {subscription key}"
+
+‏--data-ascii "{body}"
+
+
+
+
+
+نطاقات الميزه
+
+
+
+‏https://apina.address.gov.sa/NationalAddress/v3.1/address/get-feature-extents?format=JSON&layername=regions&featureid=6&api_key=
+
+
+
+
+العنوان رقم الهاتف
+
+
+‏https://apina.address.gov.sa/NationalAddress/v3.1/AddressByPhoneWithPinCode/UPDS API / api / OTP / GetPinCode؟ StoreId = [StoreId] & MobileNo = [MobileNo] & api_key = [api_key]
