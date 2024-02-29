@@ -1,5 +1,9 @@
 # Chaturbate adult affiliate API script
 
+## 2024 Update
+
+A revised version of the script, currently in development, is set to be released this year. A preview is available for viewing here: [cameono.com](https://cameono.com/)
+
 ## About TinyCB
 
 TinyCB is an adult affiliate script dedicated to Chaturbate (written in PHP) that you can deploy on your server. What it does is, it downloads Chaturbate's XML API feed on your own server and uses that file to parse the models on your website. This script comes with a default template (mobile ready). To change the default template, it is recommended to have some basic knowledge about HTML / CSS / PHP.
