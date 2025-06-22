@@ -21,7 +21,7 @@ After downloading, [Sign up at Chaturbate](https://chaturbate.com/in/?track=defa
 ### 2. **Permissions**
 Make sure the following are **writable by your web server**:
 - `config.php`
-- `cache/` directory
+- `cache/` directory (You need to create this directory manually. This is where cached files from the API are stored.)
 - `assets/` directory
 
 ### 3. **Fetch/Cron setup**
