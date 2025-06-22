@@ -14,6 +14,9 @@ If you want to thank me, please don't forget to sign up via my [affiliate link](
 git clone https://github.com/YOURUSERNAME/YOURREPO.git
 cd YOURREPO
 ```
+Or, download and unzip the archive [here](https://github.com/Kudocams/TinyCB/archive/master.zip).
+
+After downloading, [Sign up at Chaturbate](https://chaturbate.com/in/?track=default&tour=9O7D&campaign=2DLMP) - you require an affiliate ID.
 
 ### 2. **Permissions**
 Make sure the following are **writable by your web server**:
