@@ -66,7 +66,7 @@ _All settings are saved instantly to `config.php`._
 - **Mobile design:** Not fully mobile responsive yet; best viewed on desktop for now.
 - **No database:** All data/settings are stored in flat files.
 - **Cache:** Only the models listed in your cache are shown. Update with the fetch script.
-- **All URLs are pretty (`/girls/page/2`), no query strings for filters or pages._
+- All URLs are pretty (`/girls/page/2`), no query strings for filters or pages._
 
 ---
 
