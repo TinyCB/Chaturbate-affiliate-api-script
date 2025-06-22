@@ -53,7 +53,6 @@ Go to your site root (e.g., `https://yourdomain.com/`) – you’ll see the live
 
 ### **What You Can Configure**
 - Site name, primary color, logo
-- Filters per page
 - SEO/meta for homepage and gender pages
 - Nav bar links for "Login" and "Broadcast Yourself" (URLs set in the admin panel)
 - Affiliate ID, whitelabel domain
