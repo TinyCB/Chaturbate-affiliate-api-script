@@ -7,7 +7,6 @@ $validRegions = [
    'asia',
    'other'
 ];
-
 // Accept region as comma-separated (single param)
 $requestedRegions = [];
 if (isset($_GET['region'])) {
@@ -23,7 +22,6 @@ if (isset($_GET['region'])) {
 }
 $requestedRegions = array_values(array_intersect($requestedRegions, $validRegions));
 if (empty($requestedRegions)) $requestedRegions = $validRegions;
-
 // Load & merge models from selected regions, dedup by username
 $models = [];
 error_log("Loading regions: " . implode(", ", $requestedRegions));
@@ -42,10 +40,8 @@ foreach ($requestedRegions as $reg) {
     }
 }
 $results = array_values($models);
-
 // Sort by viewers
 usort($results, function($a,$b){ return $b['num_users'] <=> $a['num_users']; });
-
 // All other filters:
 if (isset($_GET['gender'])) {
   $filterVal = is_array($_GET['gender']) ? $_GET['gender'] : [$_GET['gender']];
@@ -74,6 +70,22 @@ if(isset($_GET['minAge']) || isset($_GET['maxAge'])) {
   $results = array_filter($results, function($m) use ($min, $max) {
     return isset($m['age']) && $m['age'] >= $min && $m['age'] <= $max;
   });
+}
+// --- ROOM SIZE FILTERING (NEW) ---
+if (isset($_GET['size'])) {
+    $sizes = [
+        'intimate' => [0, 40],
+        'mid'      => [41, 120],
+        'high'     => [121, 999999]
+    ];
+    $sizeParam = $_GET['size'];
+    if (isset($sizes[$sizeParam])) {
+        $min = $sizes[$sizeParam][0];
+        $max = $sizes[$sizeParam][1];
+        $results = array_filter($results, function($m) use ($min, $max) {
+            return isset($m['num_users']) && $m['num_users'] >= $min && $m['num_users'] <= $max;
+        });
+    }
 }
 // Paging & output
 $results = array_values($results);
