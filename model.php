@@ -100,7 +100,7 @@ include('templates/header.php');
   background: #fff;
   border-radius: 22px;
   box-shadow: 0 2px 32px rgba(22,44,99,0.11);
-  padding: 0 0 32px 0;
+  padding: 0 24px 32px 24px; /* horizontal padding ADDED! */
   width: 100%;
 }
 .model-player { margin-top: 0; }
@@ -141,15 +141,36 @@ include('templates/header.php');
   border: none;
 }
 .model-profile-section {
-  width: 100%; max-width:1150px;
-  margin: 32px auto 7px auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 32px 0 7px 0; /* NO horizontal margin to avoid overflow */
   background: #f7fbff;
   border-radius:14px;
   padding: 32px 44px 25px 44px;
   box-shadow: 0 .5px 2px #b0d2fa22;
   min-width: 0;
+  box-sizing: border-box;
 }
-.mp-row { font-size:1.1em; color:#2b355a; margin-bottom: 12px; display:flex; flex-wrap:wrap; align-items:center; gap: 8px;}
+
+.mp-row {
+  font-size:1.1em;
+  color:#2b355a;
+  margin-bottom:12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items:center;
+  gap:8px;
+  width: 100%;
+  min-width: 0;         /* CRUCIAL FIX */
+  box-sizing: border-box;
+}
+
+.mp-row > * {
+  min-width: 0;
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
 .prof-label { color: #5a6e8c; font-weight:600; margin-right:3px;}
 .prof-value { color: #223361; }
 .mp-tag { background:#e6eef8; color:#2361aa; font-size:.98em; border-radius:13px; padding:2px 12px; margin-right:4px; margin-bottom:1.5px;}
