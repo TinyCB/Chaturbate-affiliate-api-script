@@ -1,6 +1,13 @@
 <?php
 $config = include('config.php');
 $camsPerPage = isset($config['cams_per_page']) ? intval($config['cams_per_page']) : 20;
+$slugs = $config['slugs'] ?? [
+    'f'=>'girls',
+    'm'=>'guys',
+    't'=>'trans',
+    'c'=>'couples',
+    'model'=>'model'
+];
 $meta_title = $config['meta_home_title'];
 $meta_desc  = $config['meta_home_desc'];
 if (isset($_GET['gender']) && count((array)$_GET['gender']) == 1) {
@@ -10,8 +17,18 @@ if (isset($_GET['gender']) && count((array)$_GET['gender']) == 1) {
 }
 include('templates/header.php');
 ?>
+
+<!-- Make the dynamic gender slugs available to JS -->
+<script>
+window.GENDER_SLUGS = <?=json_encode($slugs, JSON_UNESCAPED_SLASHES)?>;
+// Build reverse mapping for path parsing
+window.SLUG_TO_GENDER = {};
+for (const key in window.GENDER_SLUGS) {
+  window.SLUG_TO_GENDER[window.GENDER_SLUGS[key]] = key;
+}
+</script>
+
 <style>
-/* SIDEBAR: Minimal, perfectly visually integrated */
 #main-flex-wrap {
   display: flex;
   align-items: flex-start;
@@ -82,8 +99,6 @@ include('templates/header.php');
   color: #fff;
   border-color: var(--primary-color);
 }
-
-/* If you use .filter-chip:hover accent color, you can also base it on primary-color */
 #filter-sidebar .filter-chip:hover:not(.selected) {
   background: #ffeecc;
   color: var(--primary-color);
@@ -99,16 +114,17 @@ body { background: #fafafd; }
   #filter-sidebar { width: 92vw; }
 }
 </style>
+
 <div id="main-flex-wrap">
 <aside id="filter-sidebar" class="open">
   <button class="close-btn" onclick="toggleSidebar()" title="Hide Filters">&#10006; Hide Sidebar</button>
   <div class="filter-section">
     <div class="filter-label">Gender</div>
     <div class="filter-gender">
-      <span class="filter-chip" data-gender="f">&#9792; Female</span>
-      <span class="filter-chip" data-gender="m">&#9794; Male</span>
-      <span class="filter-chip" data-gender="t">&#9895; Trans</span>
-      <span class="filter-chip" data-gender="c">&#9792;&#9794; Couple</span>
+      <span class="filter-chip" data-gender="f">&#9792; <?=ucfirst(htmlspecialchars($slugs['f']))?></span>
+      <span class="filter-chip" data-gender="m">&#9794; <?=ucfirst(htmlspecialchars($slugs['m']))?></span>
+      <span class="filter-chip" data-gender="t">&#9895; <?=ucfirst(htmlspecialchars($slugs['t']))?></span>
+      <span class="filter-chip" data-gender="c">&#9792;&#9794; <?=ucfirst(htmlspecialchars($slugs['c']))?></span>
     </div>
   </div>
   <div class="filter-section">
@@ -162,7 +178,6 @@ function loadGridFilters() {
     if (s) try { return JSON.parse(s); } catch(e) {}
     return null;
 }
-
 function getGenderIcon(g) {
   if (!g) return '';
   let classes = "gender-cb " + g;
@@ -174,34 +189,42 @@ function getGenderIcon(g) {
 }
 const camsPerPage = <?= $camsPerPage ?>;
 const API = '/api-proxy.php';
-
 function getFlag(country) {
   if (!country) return '';
   return `<span class="country-cb"><img class="flag-cb" src="https://flagcdn.com/16x12/${country.toLowerCase()}.png" alt="${country}"></span>`;
 }
 
-// Parse path for gender & page
+// ---- DYNAMIC PATH PARSING BASED ON SLUGS ----
 function parsePrettyPath() {
+    const GSLUGS = window.GENDER_SLUGS || {};
+    const SLUG_TO_GENDER = window.SLUG_TO_GENDER || {};
+    const slugsForRegex = Object.values(GSLUGS).map((s)=>s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("|");
     const path = window.location.pathname.replace(/\/+/g, '/');
-    let gender = '';
-    let page = 1;
-    let match;
-    if ((match = /^\/(girls|guys|trans|couples)\/page\/([0-9]+)\/?$/.exec(path))) {
-        return { gender: {girls: 'f', guys: 'm', trans: 't', couples: 'c'}[match[1]], page: parseInt(match[2],10) };
+    let gender = '', page = 1, match;
+    // gender slug with page
+    if ((match = new RegExp(`^/(${slugsForRegex})/page/(\\d+)/?$`).exec(path))) {
+        gender = SLUG_TO_GENDER[match[1]];
+        page = parseInt(match[2],10);
     }
-    if ((match = /^\/page\/([0-9]+)\/?$/.exec(path))) {
-        return { gender: '', page: parseInt(match[1], 10) };
+    // /page/2
+    else if ((match = /^\/page\/([0-9]+)\/?$/.exec(path))) {
+        gender = '';
+        page = parseInt(match[1], 10);
     }
-    if ((match = /^\/(girls|guys|trans|couples)\/?$/.exec(path))) {
-        return { gender: {girls: 'f', guys: 'm', trans: 't', couples: 'c'}[match[1]], page: 1 };
+    // gender slug only
+    else if ((match = new RegExp(`^/(${slugsForRegex})/?$`).exec(path))) {
+        gender = SLUG_TO_GENDER[match[1]];
+        page = 1;
+    } else {
+        gender = '';
+        page = 1;
     }
-    return { gender: '', page: 1 };
+    return { gender, page };
 }
 
 let pretty = parsePrettyPath();
 let sessionFilters = loadGridFilters() || {};
 let urlFilters = {};
-
 urlFilters.gender = pretty.gender ? [pretty.gender] : (sessionFilters.gender || []);
 urlFilters.page = pretty.page || sessionFilters.page || 1;
 urlFilters.region = sessionFilters.region || [];
@@ -209,7 +232,6 @@ urlFilters.tag = sessionFilters.tag || [];
 urlFilters.minAge = sessionFilters.minAge === undefined ? 18 : sessionFilters.minAge;
 urlFilters.maxAge = sessionFilters.maxAge === undefined ? 99 : sessionFilters.maxAge;
 urlFilters.size   = sessionFilters.size || null;
-
 const FILTERS = {
   gender: urlFilters.gender,
   region: urlFilters.region,
@@ -219,9 +241,7 @@ const FILTERS = {
   size: urlFilters.size,
   page: urlFilters.page,
 };
-
 let currentPage = FILTERS.page || 1;
-
 // Sidebar toggle logic
 function toggleSidebar() {
   var sidebar = document.getElementById('filter-sidebar');
@@ -252,27 +272,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (resetEl) resetEl.onclick = resetFilters;
     updateResetFiltersLink();
 });
-
 function genderToPath() {
     if (FILTERS.gender && FILTERS.gender.length) {
-        if (FILTERS.gender[0] === 'f') return '/girls';
-        if (FILTERS.gender[0] === 'm') return '/guys';
-        if (FILTERS.gender[0] === 't') return '/trans';
-        if (FILTERS.gender[0] === 'c') return '/couples';
+        let g = FILTERS.gender[0];
+        if (window.GENDER_SLUGS && window.GENDER_SLUGS[g]) {
+            return '/' + window.GENDER_SLUGS[g];
+        }
     }
     return '/';
 }
-
 function getCurrentPath() {
-    let path = '';
-    if (FILTERS.gender && FILTERS.gender.length) {
-        if (FILTERS.gender[0] === 'f') path = '/girls';
-        else if (FILTERS.gender[0] === 'm') path = '/guys';
-        else if (FILTERS.gender[0] === 't') path = '/trans';
-        else if (FILTERS.gender[0] === 'c') path = '/couples';
-    } else {
-        path = '/';
-    }
+    let path = genderToPath();
     let page = FILTERS.page || 1;
     if (page > 1) {
         if (path.endsWith('/')) path += `page/${page}`;
@@ -281,27 +291,22 @@ function getCurrentPath() {
     if (!path.startsWith('/')) path = '/' + path;
     return path;
 }
-
 function setPage(n) {
     FILTERS.page = (n < 1) ? 1 : n;
     saveGridFilters();
     navigateToCurrentPrettyPath();
 }
-
 function navigateToCurrentPrettyPath() {
     window.location.href = getCurrentPath();
 }
-
 window.gotoPage = function(p) {
     setPage(p);
 }
-
 function onFilterChange() {
     FILTERS.page = 1;
     saveGridFilters();
     window.location.href = getCurrentPath();
 }
-
 const ROOMSIZE = { intimate: [0,40], mid: [41,120], high: [121,9999] };
 let allTags = [];
 let allModels = [];
@@ -333,7 +338,6 @@ function fetchModels() {
     updateResetFiltersLink();
   });
 }
-
 function renderModels(models) {
   let el = document.getElementById('model-grid');
   if(models.length===0) { el.innerHTML = "<b>No results.</b>"; return; }
@@ -364,7 +368,7 @@ function renderModels(models) {
     if (m.gender) arrMeta.push(getGenderIcon(m.gender));
     if (m.country) arrMeta.push(`<span class="country-cb"><img class="flag-cb" src="https://flagcdn.com/16x12/${m.country.toLowerCase()}.png" alt="${m.country}"></span>`);
     let metaRow = `<div class="row-meta-cb">${arrMeta.join('')}</div>`;
-    let href = "/model/" + encodeURIComponent(m.username);
+    let href = "/model/" + encodeURIComponent(m.username); // You can also make model slug dynamic if desired
     let timeString = (m.seconds_online >= 3600) ? ((m.seconds_online/3600).toFixed(1) + ' hrs') : (Math.floor((m.seconds_online%3600)/60) + ' mins');
     let viewers = (m.num_users ? `${m.num_users} viewers` : '');
     return `
@@ -389,7 +393,6 @@ function renderModels(models) {
     `;
   }).join('');
 }
-
 function renderPagination() {
   let totalPages = Math.ceil(totalCount / camsPerPage);
   let page = FILTERS.page || 1;
@@ -406,7 +409,6 @@ function renderPagination() {
   html += `<button ${page==totalPages?'disabled':''} onclick="gotoPage(${page+1})">Next &raquo;</button>`;
   document.getElementById('pagination-bar').innerHTML = html;
 }
-
 function loadTags() {
   if(allTags.length) return renderTags();
   let found = new Set();
