@@ -1,0 +1,13 @@
+RewriteEngine On
+RewriteBase /
+
+# Serve static files and folders as-is
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Model profile, only for current base slug (default: model)
+RewriteRule ^model/([\w\-]+)$ model.php?username=$1 [L,QSA]
+
+# Catch-all: everything else goes to index.php (pagination/gender slugs/all else)
+RewriteRule ^.*$ index.php [L,QSA]
