@@ -4,7 +4,7 @@ return array (
   'broadcast_url' => 'https://chaturbate.com/broadcast/',
   'login_url' => 'https://chaturbate.com/auth/login/',
   'affiliate_id' => '2DLMP',
-  'primary_color' => '#209fdf',
+  'primary_color' => '#636869',
   'footer_text' => '© 2024 Ultimate Live Cams.',
   'logo_path' => 'assets/logo.png',
   'whitelabel_domain' => 'chaturbate.com',
@@ -26,4 +26,12 @@ return array (
   ),
   'cams_per_page' => 96,
   'admin_password_hash' => '$2y$10$929GKDK3hZTjtoXP9nupyOTtWEQUdmeXmQa/wmU9Ztrp6usmSNNoy',
+  'slugs' => 
+  array (
+    'f' => 'female',
+    'm' => 'male',
+    't' => 'trans',
+    'c' => 'couples',
+    'model' => 'model',
+  ),
 );
