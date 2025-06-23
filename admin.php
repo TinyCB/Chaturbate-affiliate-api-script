@@ -13,7 +13,7 @@ if (empty($config['admin_password_hash'])) {
 
 // --- Authentication ---
 if (!isset($_SESSION['admin_logged_in'])) {
-    if ($_SERVER['REQUEST_METHOD'] === "POST" 
+    if ($_SERVER['REQUEST_METHOD'] === "POST"
         && isset($_POST['admin_password'])
         && password_verify($_POST['admin_password'], $config['admin_password_hash'])) {
         $_SESSION['admin_logged_in'] = true;
@@ -45,6 +45,8 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['footer_text'] = $_POST['footer_text'];
     $config['cams_per_page'] = (int)($_POST['cams_per_page'] ?? 20);
     $config['whitelabel_domain'] = trim($_POST['whitelabel_domain'] ?? 'chaturbate.com');
+    $config['login_url'] = trim($_POST['login_url'] ?? ''); // <-- Fixed: Save login_url
+    $config['broadcast_url'] = trim($_POST['broadcast_url'] ?? ''); // <-- Fixed: Save broadcast_url
     // --- SEO meta tag fields ---
     $config['meta_home_title'] = $_POST['meta_home_title'];
     $config['meta_home_desc'] = $_POST['meta_home_desc'];
@@ -69,7 +71,6 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     file_put_contents($CONFIG_FILE, "<?php\nreturn ".var_export($config,true).";\n");
     if (empty($error)) $success = ($success ?? '') . " Settings saved.";
 }
-
 ?><!DOCTYPE html>
 <html><head>
 <title>Admin</title>
@@ -90,7 +91,6 @@ button{background:var(--primary-color);color:#fff;border:none;width:100%;border-
 if(!empty($error))   echo "<div style='color:red;text-align:center;'>$error</div>";
 if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success</div>";
 ?>
-
 <form method="POST" enctype="multipart/form-data" autocomplete="off">
     <label>Site Name</label>
     <input name="site_name" value="<?=htmlspecialchars($config['site_name'])?>">
