@@ -4,7 +4,7 @@ $CONFIG_FILE = "config.php";
 $config = include($CONFIG_FILE);
 $genders = ['f'=>'Female','m'=>'Male','t'=>'Trans','c'=>'Couple'];
 
-// Default slugs (if not yet in config):
+// Default slugs (if not yet in config)
 if (empty($config['slugs']) || !is_array($config['slugs'])) {
     $config['slugs'] = [
         'f' => 'girls',
@@ -15,10 +15,11 @@ if (empty($config['slugs']) || !is_array($config['slugs'])) {
     ];
     file_put_contents($CONFIG_FILE, "<?php\nreturn ".var_export($config,true).";\n");
 }
+// Ensure GA field present
+if (!isset($config['google_analytics_id'])) $config['google_analytics_id'] = '';
 
-// --- Ensure a hash even if upgrading from plaintext (legacy) ---
+// --- Ensure hash (legacy upgrade) ---
 if (empty($config['admin_password_hash'])) {
-    // Default password is "changeme"
     $config['admin_password_hash'] = password_hash('changeme', PASSWORD_DEFAULT);
     file_put_contents($CONFIG_FILE, "<?php\nreturn ".var_export($config,true).";\n");
 }
@@ -49,7 +50,7 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// --- Update site settings, slugs & password ---
+// --- Update settings & password (now includes GA config and slugs) ---
 if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['site_name'] = $_POST['site_name'];
     $config['affiliate_id'] = $_POST['affiliate_id'];
@@ -59,6 +60,9 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['whitelabel_domain'] = trim($_POST['whitelabel_domain'] ?? 'chaturbate.com');
     $config['login_url'] = trim($_POST['login_url'] ?? '');
     $config['broadcast_url'] = trim($_POST['broadcast_url'] ?? '');
+
+    $config['google_analytics_id'] = trim($_POST['google_analytics_id'] ?? ''); // <<=== NEW
+
     // --- SEO meta tag fields ---
     $config['meta_home_title'] = $_POST['meta_home_title'];
     $config['meta_home_desc'] = $_POST['meta_home_desc'];
@@ -121,6 +125,8 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="login_url" value="<?=htmlspecialchars($config['login_url'] ?? '')?>">
     <label>Broadcast Yourself URL</label>
     <input name="broadcast_url" value="<?=htmlspecialchars($config['broadcast_url'] ?? '')?>">
+    <label>Google Analytics Tag (Measurement ID)</label>
+    <input name="google_analytics_id" placeholder="G-XXXXXXXXXX" value="<?=htmlspecialchars($config['google_analytics_id'] ?? '')?>">
     <label>Primary Color Website</label>
     <input type="color" name="primary_color" value="<?=htmlspecialchars($config['primary_color'])?>">
     <label>Footer Text</label>
