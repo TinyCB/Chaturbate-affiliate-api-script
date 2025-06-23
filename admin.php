@@ -4,6 +4,18 @@ $CONFIG_FILE = "config.php";
 $config = include($CONFIG_FILE);
 $genders = ['f'=>'Female','m'=>'Male','t'=>'Trans','c'=>'Couple'];
 
+// Default slugs (if not yet in config):
+if (empty($config['slugs']) || !is_array($config['slugs'])) {
+    $config['slugs'] = [
+        'f' => 'girls',
+        'm' => 'guys',
+        't' => 'trans',
+        'c' => 'couples',
+        'model' => 'model'
+    ];
+    file_put_contents($CONFIG_FILE, "<?php\nreturn ".var_export($config,true).";\n");
+}
+
 // --- Ensure a hash even if upgrading from plaintext (legacy) ---
 if (empty($config['admin_password_hash'])) {
     // Default password is "changeme"
@@ -37,7 +49,7 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// --- Update site settings & password ---
+// --- Update site settings, slugs & password ---
 if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['site_name'] = $_POST['site_name'];
     $config['affiliate_id'] = $_POST['affiliate_id'];
@@ -45,13 +57,22 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['footer_text'] = $_POST['footer_text'];
     $config['cams_per_page'] = (int)($_POST['cams_per_page'] ?? 20);
     $config['whitelabel_domain'] = trim($_POST['whitelabel_domain'] ?? 'chaturbate.com');
-    $config['login_url'] = trim($_POST['login_url'] ?? ''); // <-- Fixed: Save login_url
-    $config['broadcast_url'] = trim($_POST['broadcast_url'] ?? ''); // <-- Fixed: Save broadcast_url
+    $config['login_url'] = trim($_POST['login_url'] ?? '');
+    $config['broadcast_url'] = trim($_POST['broadcast_url'] ?? '');
     // --- SEO meta tag fields ---
     $config['meta_home_title'] = $_POST['meta_home_title'];
     $config['meta_home_desc'] = $_POST['meta_home_desc'];
     $config['meta_gender_titles'] = $_POST['meta_gender_titles'] ?? [];
     $config['meta_gender_descs'] = $_POST['meta_gender_descs'] ?? [];
+
+    // --- Handle custom slugs for gender/model URLs ---
+    if (isset($_POST['slugs']) && is_array($_POST['slugs'])) {
+        foreach (['f','m','t','c','model'] as $k) {
+            if (isset($_POST['slugs'][$k]) && $_POST['slugs'][$k] !== '') {
+                $config['slugs'][$k] = trim($_POST['slugs'][$k]);
+            }
+        }
+    }
     //----------------------------------------
     if(!empty($_FILES['logo_file']['tmp_name'])) {
         $fn = 'assets/logo.png';
@@ -108,6 +129,19 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="cams_per_page" type="number" min="1" max="500" value="<?=htmlspecialchars($config['cams_per_page']??20)?>">
     <label>Whitelabel Domain (e.g. cam.mysite.com, no http://)</label>
     <input name="whitelabel_domain" value="<?=htmlspecialchars($config['whitelabel_domain'] ?? 'chaturbate.com')?>">
+
+    <h3>URL Slugs</h3>
+    <label>Slug for Female</label>
+    <input name="slugs[f]" value="<?=htmlspecialchars($config['slugs']['f'] ?? 'girls')?>">
+    <label>Slug for Male</label>
+    <input name="slugs[m]" value="<?=htmlspecialchars($config['slugs']['m'] ?? 'guys')?>">
+    <label>Slug for Trans</label>
+    <input name="slugs[t]" value="<?=htmlspecialchars($config['slugs']['t'] ?? 'trans')?>">
+    <label>Slug for Couple</label>
+    <input name="slugs[c]" value="<?=htmlspecialchars($config['slugs']['c'] ?? 'couples')?>">
+    <label>Slug for Model Profiles</label>
+    <input name="slugs[model]" value="<?=htmlspecialchars($config['slugs']['model'] ?? 'model')?>">
+
     <h3>SEO Meta Tags</h3>
     <label>Meta Title (Homepage)</label>
     <input name="meta_home_title" value="<?=htmlspecialchars($config['meta_home_title'] ?? '')?>">
