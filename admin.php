@@ -3,7 +3,6 @@ session_start();
 $CONFIG_FILE = "config.php";
 $config = include($CONFIG_FILE);
 $genders = ['f'=>'Female','m'=>'Male','t'=>'Trans','c'=>'Couple'];
-
 // Set default slugs if missing
 if (empty($config['slugs']) || !is_array($config['slugs'])) {
     $config['slugs'] = [
@@ -15,24 +14,20 @@ if (empty($config['slugs']) || !is_array($config['slugs'])) {
     ];
     file_put_contents($CONFIG_FILE, "<?php\nreturn ".var_export($config,true).";\n");
 }
-// Ensure privacy email field
 if (!isset($config['privacy_email'])) $config['privacy_email'] = 'youremail@example.com';
-// Ensure Google Analytics ID
 if (!isset($config['google_analytics_id'])) $config['google_analytics_id'] = '';
-
 // --- Ensure a hash even if upgrading from plaintext (legacy) ---
 if (empty($config['admin_password_hash'])) {
     $config['admin_password_hash'] = password_hash('changeme', PASSWORD_DEFAULT);
     file_put_contents($CONFIG_FILE, "<?php\nreturn ".var_export($config,true).";\n");
 }
-
 // --- Authentication ---
 if (!isset($_SESSION['admin_logged_in'])) {
     if ($_SERVER['REQUEST_METHOD'] === "POST"
         && isset($_POST['admin_password'])
         && password_verify($_POST['admin_password'], $config['admin_password_hash'])) {
         $_SESSION['admin_logged_in'] = true;
-        header('Location: admin.php');
+        header('Location: /admin');
         exit;
     } else {
         ?>
@@ -48,10 +43,9 @@ if (!isset($_SESSION['admin_logged_in'])) {
 // --- Handle logout ---
 if (isset($_GET['logout'])) {
     session_destroy();
-    header("Location: admin.php");
+    header("Location: /admin");
     exit;
 }
-
 // --- Update/settings/password/contacts handler ---
 if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['site_name'] = $_POST['site_name'];
@@ -62,16 +56,13 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['whitelabel_domain'] = trim($_POST['whitelabel_domain'] ?? 'chaturbate.com');
     $config['login_url'] = trim($_POST['login_url'] ?? '');
     $config['broadcast_url'] = trim($_POST['broadcast_url'] ?? '');
-
     $config['google_analytics_id'] = trim($_POST['google_analytics_id'] ?? '');
-    $config['privacy_email'] = trim($_POST['privacy_email'] ?? ''); // NEW
-
+    $config['privacy_email'] = trim($_POST['privacy_email'] ?? '');
     // --- SEO meta tag fields ---
     $config['meta_home_title'] = $_POST['meta_home_title'];
     $config['meta_home_desc'] = $_POST['meta_home_desc'];
     $config['meta_gender_titles'] = $_POST['meta_gender_titles'] ?? [];
     $config['meta_gender_descs'] = $_POST['meta_gender_descs'] ?? [];
-
     // handle slugs
     if (isset($_POST['slugs']) && is_array($_POST['slugs'])) {
         foreach (['f','m','t','c','model'] as $k) {
@@ -140,7 +131,6 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="cams_per_page" type="number" min="1" max="500" value="<?=htmlspecialchars($config['cams_per_page']??20)?>">
     <label>Whitelabel Domain (e.g. cam.mysite.com, no http://)</label>
     <input name="whitelabel_domain" value="<?=htmlspecialchars($config['whitelabel_domain'] ?? 'chaturbate.com')?>">
-
     <h3>URL Slugs</h3>
     <label>Slug for Female</label>
     <input name="slugs[f]" value="<?=htmlspecialchars($config['slugs']['f'] ?? 'girls')?>">
@@ -152,7 +142,6 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="slugs[c]" value="<?=htmlspecialchars($config['slugs']['c'] ?? 'couples')?>">
     <label>Slug for Model Profiles</label>
     <input name="slugs[model]" value="<?=htmlspecialchars($config['slugs']['model'] ?? 'model')?>">
-
     <h3>SEO Meta Tags</h3>
     <label>Meta Title (Homepage)</label>
     <input name="meta_home_title" value="<?=htmlspecialchars($config['meta_home_title'] ?? '')?>">
@@ -181,7 +170,7 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
 <p style="text-align:center; margin-top:35px;">
     <a href="index.php">Back to site</a>
     &nbsp;|&nbsp;
-    <a href="admin.php?logout=1" onclick="return confirm('Log out?')">Log out</a>
+    <a href="/admin?logout=1" onclick="return confirm('Log out?')">Log out</a>
 </p>
 <?php
 if ($config['admin_password_hash'] && password_verify('changeme', $config['admin_password_hash'])) {
