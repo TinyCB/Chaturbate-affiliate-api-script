@@ -6,6 +6,9 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
+# Pretty Privacy Policy URL
+RewriteRule ^privacy/?$ privacy.php [L,QSA]
+
 # Model profile, only for current base slug (default: model)
 RewriteRule ^model/([\w\-]+)$ model.php?username=$1 [L,QSA]
 
