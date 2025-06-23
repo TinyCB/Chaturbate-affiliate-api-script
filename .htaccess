@@ -9,7 +9,7 @@ RewriteRule ^ - [L]
 # Pretty Privacy Policy URL
 RewriteRule ^privacy/?$ privacy.php [L,QSA]
 
-# Pretty Privacy Policy URL
+# Pretty Admin URL
 RewriteRule ^admin/?$ admin.php [L,QSA]
 
 # Model profile, only for current base slug (default: model)
