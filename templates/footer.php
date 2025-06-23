@@ -7,6 +7,21 @@
     <a href="/privacy/" style="color:var(--primary-color); text-decoration:underline;">Privacy Policy</a>
   </p>
 </footer>
+
+<!-- Age Restriction Notice BEGIN -->
+<div id="age-overlay" style="display:none;">
+  <div class="age-box">
+    <div>
+      <b>Age Verification</b><br>
+      This website contains adult content. By entering, you confirm that you are at least <b>18 years old</b> (or the legal age in your jurisdiction).<br>
+      <br>
+      <button class="age-btn" id="age-enter">I am 18 or older – Enter Site</button>
+      <button class="age-btn-secondary" id="age-leave">Leave/Exit</button>
+    </div>
+  </div>
+</div>
+<!-- Age Restriction Notice END -->
+
 <!-- Cookie Notice BEGIN -->
 <div id="cookie-notice" style="display:none;">
   <div class="cookie-box">
@@ -93,13 +108,88 @@
 #ga-opt:checked + .slider:before {
   transform: translateX(16px);
 }
+
+#age-overlay {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(32,33,44,0.94);
+  z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+}
+.age-box {
+  background: #fffbea;
+  border-radius: 14px;
+  box-shadow: 0 8px 38px #1e215011;
+  color: #87621d;
+  padding: 35px 30px 28px 30px;
+  max-width: 430px;
+  width: 98vw;
+  font-size: 1.12em;
+  text-align: center;
+  line-height: 1.66;
+}
+.age-btn {
+  margin-top: 28px;
+  background: var(--primary-color, #ffa927);
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  padding: 12px 29px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.08em;
+  margin-right: 10px;
+}
+.age-btn-secondary {
+  margin-top: 28px;
+  background: #e8dbaf;
+  color: #a9611a;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.08em;
+}
 @media (max-width: 700px) {
   #cookie-notice {left:5vw; right:5vw; max-width:95vw;}
+}
+@media (max-width:600px){
+  .age-box {padding:7vw 1vw;}
 }
 </style>
 <script>
 window.GA_MEASUREMENT_ID = <?=json_encode($c['google_analytics_id'] ?? '')?>;
 (function() {
+  // Age Overlay Logic
+  function setAgeConfirmed(days) {
+    var d = new Date(); d.setTime(d.getTime() + (days*24*60*60*1000));
+    document.cookie = "tinycb_age_confirmed=1; expires="+d.toUTCString()+"; path=/";
+  }
+  function getAgeConfirmed() {
+    return document.cookie.indexOf("tinycb_age_confirmed=1") > -1;
+  }
+  function showAgeOverlay() {
+    document.getElementById('age-overlay').style.display='';
+    document.body.style.overflow = 'hidden';
+  }
+  function hideAgeOverlay() {
+    document.getElementById('age-overlay').style.display='none';
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    if (!getAgeConfirmed()) {
+      showAgeOverlay();
+      document.getElementById('age-enter').onclick = function(){
+        setAgeConfirmed(30);
+        hideAgeOverlay();
+      };
+      document.getElementById('age-leave').onclick = function(){
+        window.location.href = "https://www.google.com/";
+      };
+    }
+  });
+
+  // Cookie Consent Logic
   function getCookie(n) {
     let m = document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');
     return m ? m.pop() : null;
