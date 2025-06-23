@@ -1,20 +1,26 @@
 <?php $c = include(__DIR__.'/../config.php'); ?>
 </main>
 <footer>
-  <p><?=htmlspecialchars($c['footer_text'])?></p>
+  <p>
+    <?=htmlspecialchars($c['footer_text'])?>
+    &nbsp; | &nbsp;
+    <a href="/privacy/" style="color:var(--primary-color); text-decoration:underline;">Privacy Policy</a>
+  </p>
 </footer>
-
 <!-- Cookie Notice BEGIN -->
 <div id="cookie-notice" style="display:none;">
   <div class="cookie-box">
     <div>
-      This site uses cookies for essential functionality (filters, login).
+      This website uses essential cookies to function.<br><br>
+      We also use optional tracking cookies (Google Analytics) to help us measure traffic and improve performance.<br>
       <br>
+      You can disable tracking cookies below if you do not want to be tracked.<br>
+      <a href="/privacy/" style="color:var(--primary-color);text-decoration:underline;font-size:0.97em;display:inline-block;margin:7px 0 3px 0;" tabindex="0">Read our Privacy Policy</a>
       <label style="font-weight:500;display:flex;align-items:center;gap:7px;margin-top:14px;">
-        Google Analytics: 
+        Allow Google Analytics:
         <input type="checkbox" id="ga-opt" checked>
         <span class="slider"></span>
-        <span style="font-size:0.95em;font-weight:400;">Allow tracking</span>
+        <span style="font-size:0.95em;font-weight:400;">Tracking cookies</span>
       </label>
     </div>
     <div class="cookie-actions">
@@ -91,7 +97,6 @@
   #cookie-notice {left:5vw; right:5vw; max-width:95vw;}
 }
 </style>
-
 <script>
 window.GA_MEASUREMENT_ID = <?=json_encode($c['google_analytics_id'] ?? '')?>;
 (function() {
@@ -131,7 +136,6 @@ window.GA_MEASUREMENT_ID = <?=json_encode($c['google_analytics_id'] ?? '')?>;
   });
 })();
 </script>
-<!-- Google Analytics: load only if allowed and tag is set -->
 <?php if (!empty($c['google_analytics_id']) && (empty($_COOKIE['cb_ga']) || $_COOKIE['cb_ga'] === '1')): ?>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=<?=htmlspecialchars($c['google_analytics_id'])?>"></script>
@@ -142,6 +146,5 @@ gtag('js', new Date());
 gtag('config', '<?=$c['google_analytics_id']?>');
 </script>
 <?php endif; ?>
-
 </body>
 </html>
