@@ -1,15 +1,15 @@
 <?php
 return array (
   'site_name' => 'TinyCB',
-  'broadcast_url' => 'https://chaturbate.com/broadcast/',
-  'login_url' => 'https://chaturbate.com/auth/login/',
-  'affiliate_id' => 'YOUR-AFFILIATE-ID',
+  'broadcast_url' => 'https://my.tinycb.com/accounts/register/?src=broadcast&next=/b/',
+  'login_url' => 'https://my.tinycb.com/auth/login/',
+  'affiliate_id' => '2DLMP',
   'google_analytics_id' => '',
-  'privacy_email' => 'youremail@example.com',
-  'primary_color' => '#294cff',
-  'footer_text' => '© 2024 TinyCB.',
+  'privacy_email' => 'info@tinycb.com',
+  'primary_color' => '#808085',
+  'footer_text' => '© 2025 TinyCB.',
   'logo_path' => 'assets/logo.png',
-  'whitelabel_domain' => 'chaturbate.com',
+  'whitelabel_domain' => 'my.tinycb.com',
   'meta_home_title' => 'TinyCB – Free Live Sex Chat & Webcams',
   'meta_home_desc' => 'Watch thousands of live webcams instantly! Free chat, models, and more 24/7.',
   'meta_gender_titles' => 
@@ -30,8 +30,8 @@ return array (
   'admin_password_hash' => '$2y$10$u8hoo8GnYVESopAJTGT4Fu6Dyknu6EFF4OP53xgTah5e9F9C7/EdG',
   'slugs' => 
   array (
-    'f' => 'girls',
-    'm' => 'guys',
+    'f' => 'female',
+    'm' => 'male',
     't' => 'trans',
     'c' => 'couples',
     'model' => 'model',
