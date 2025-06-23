@@ -26,7 +26,7 @@ return array (
     ),
   'cams_per_page' => 96,
   // The hash below is password_hash('changeme', PASSWORD_DEFAULT)
-  'admin_password_hash' => '$2y$10$Ye6QftOAcRP4i57dt2oa7OtQOiHOOtx6k14CgP0pfxckU.1qwk4OW',
+  'admin_password_hash' => '$2y$10$u8hoo8GnYVESopAJTGT4Fu6Dyknu6EFF4OP53xgTah5e9F9C7/EdG',
   'slugs' => array(
     'f' => 'girls',
     'm' => 'guys',
