@@ -7,7 +7,7 @@ return array (
   'google_analytics_id' => '',
   'privacy_email' => 'info@tinycb.com',
   'primary_color' => '#808085',
-  'footer_text' => '© 2025 TinyCB.',
+  'footer_text' => '© 2024 TinyCB.',
   'logo_path' => 'assets/logo.png',
   'whitelabel_domain' => 'my.tinycb.com',
   'meta_home_title' => 'TinyCB – Free Live Sex Chat & Webcams',
