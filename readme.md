@@ -63,6 +63,7 @@ Go to your site root (e.g., `https://yourdomain.com/`) – you’ll see the live
 - SEO/meta for homepage and gender pages
 - Nav bar links for "Login" and "Broadcast Yourself" (URLs set in the admin panel)
 - Affiliate ID, whitelabel domain
+- Change URLs/slugs for pretty URLs.
 
 _All settings are saved instantly to `config.php`._
 
@@ -74,7 +75,6 @@ _All settings are saved instantly to `config.php`._
 - **No database:** All data/settings are stored in flat files.
 - **Cache:** Only the models listed in your cache are shown. Update with the fetch script.
 - All URLs are pretty (`/girls/page/2`), no query strings for filters or pages.
-- I will implement a feature in the admin page that allows users to change URLs/slugs for pretty URLs.
 - Additional customization options will be added to the admin backend page.
 - If you have any feature requests, please open an issue.
 
