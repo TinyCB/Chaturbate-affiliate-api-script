@@ -3,6 +3,8 @@
 A minimal PHP-powered Chaturbate aggregator for your own whitelabel or promo site.  
 Grid view, model profiles, and live filters. All data is local/cached. No database required.
 
+Demo: https://tinycb.com/
+
 If you want to thank me, please don't forget to sign up via my [affiliate link](https://chaturbate.com/in/?tour=9O7D&campaign=2DLMP&track=default)
 
 ---
