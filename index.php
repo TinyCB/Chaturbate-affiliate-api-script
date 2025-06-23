@@ -253,6 +253,12 @@ function toggleSidebar() {
   }
 }
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Auto-close sidebar on mobile screens ---
+    if (window.innerWidth <= 700) {
+        var sidebar = document.getElementById('filter-sidebar');
+        if (sidebar) sidebar.classList.remove('open');
+    }
+
     var filterBtn = document.getElementById('filter-toggle');
     if (filterBtn) filterBtn.onclick = toggleSidebar;
     var closeBtn = document.querySelector('#filter-sidebar .close-btn');
