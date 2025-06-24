@@ -12,6 +12,8 @@ return array (
   'whitelabel_domain' => 'my.tinycb.com',
   'meta_home_title' => 'TinyCB – Free Live Sex Chat & Webcams',
   'meta_home_desc' => 'Watch thousands of live webcams instantly! Free chat, models, and more 24/7.',
+  'google_site_verification' => '',
+  'bing_site_verification' => '',
   'meta_gender_titles' => 
   array (
     'f' => 'Watch Free Live Female Cams – TinyCB',

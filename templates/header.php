@@ -1,14 +1,8 @@
 <?php
 $c = include(__DIR__.'/../config.php');
-
-// Compute the home/root URL, regardless of protocol (http/https) and domain.
 $site_url = (
     (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' && $_SERVER['HTTPS'] !== '0') ? "https" : "http"
 ) . "://" . $_SERVER['HTTP_HOST'] . "/";
-// If your site is in a subdirectory and you want the home link to land there, use this instead:
-// $site_url = ( (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' && $_SERVER['HTTPS'] !== '0') ? "https" : "http" )
-//     . "://" . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . '/';
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +11,12 @@ $site_url = (
   <title><?=isset($meta_title) ? htmlspecialchars($meta_title) : htmlspecialchars($c['site_name'])?></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="<?=isset($meta_desc) ? htmlspecialchars($meta_desc) : htmlspecialchars($c['meta_home_desc'] ?? '')?>">
-  <!-- SEO: Open Graph tags for richer sharing -->
+  <?php if (!empty($c['google_site_verification'])): ?>
+    <meta name="google-site-verification" content="<?=htmlspecialchars($c['google_site_verification'])?>">
+  <?php endif; ?>
+  <?php if (!empty($c['bing_site_verification'])): ?>
+    <meta name="msvalidate.01" content="<?=htmlspecialchars($c['bing_site_verification'])?>">
+  <?php endif; ?>
   <meta property="og:title" content="<?=isset($meta_title)?htmlspecialchars($meta_title):htmlspecialchars($c['site_name']??'')?>" />
   <meta property="og:description" content="<?=isset($meta_desc)?htmlspecialchars($meta_desc):htmlspecialchars($c['meta_home_desc']??'')?>" />
   <?php if (isset($model) && isset($model['image_url'])): ?>

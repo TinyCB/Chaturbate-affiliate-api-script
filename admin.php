@@ -3,7 +3,6 @@ session_start();
 $CONFIG_FILE = "config.php";
 $config = include($CONFIG_FILE);
 $genders = ['f'=>'Female','m'=>'Male','t'=>'Trans','c'=>'Couple'];
-// Set default slugs if missing
 if (empty($config['slugs']) || !is_array($config['slugs'])) {
     $config['slugs'] = [
         'f' => 'girls',
@@ -16,12 +15,12 @@ if (empty($config['slugs']) || !is_array($config['slugs'])) {
 }
 if (!isset($config['privacy_email'])) $config['privacy_email'] = 'youremail@example.com';
 if (!isset($config['google_analytics_id'])) $config['google_analytics_id'] = '';
-// --- Ensure a hash even if upgrading from plaintext (legacy) ---
+if (!isset($config['google_site_verification'])) $config['google_site_verification'] = '';
+if (!isset($config['bing_site_verification'])) $config['bing_site_verification'] = '';
 if (empty($config['admin_password_hash'])) {
     $config['admin_password_hash'] = password_hash('changeme', PASSWORD_DEFAULT);
     file_put_contents($CONFIG_FILE, "<?php\nreturn ".var_export($config,true).";\n");
 }
-// --- Authentication ---
 if (!isset($_SESSION['admin_logged_in'])) {
     if ($_SERVER['REQUEST_METHOD'] === "POST"
         && isset($_POST['admin_password'])
@@ -40,13 +39,11 @@ if (!isset($_SESSION['admin_logged_in'])) {
         <?php exit;
     }
 }
-// --- Handle logout ---
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: /admin");
     exit;
 }
-// --- Update/settings/password/contacts handler ---
 if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['site_name'] = $_POST['site_name'];
     $config['affiliate_id'] = $_POST['affiliate_id'];
@@ -58,12 +55,12 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['broadcast_url'] = trim($_POST['broadcast_url'] ?? '');
     $config['google_analytics_id'] = trim($_POST['google_analytics_id'] ?? '');
     $config['privacy_email'] = trim($_POST['privacy_email'] ?? '');
-    // --- SEO meta tag fields ---
+    $config['google_site_verification'] = trim($_POST['google_site_verification'] ?? '');
+    $config['bing_site_verification'] = trim($_POST['bing_site_verification'] ?? '');
     $config['meta_home_title'] = $_POST['meta_home_title'];
     $config['meta_home_desc'] = $_POST['meta_home_desc'];
     $config['meta_gender_titles'] = $_POST['meta_gender_titles'] ?? [];
     $config['meta_gender_descs'] = $_POST['meta_gender_descs'] ?? [];
-    // handle slugs
     if (isset($_POST['slugs']) && is_array($_POST['slugs'])) {
         foreach (['f','m','t','c','model'] as $k) {
             if (isset($_POST['slugs'][$k]) && $_POST['slugs'][$k] !== '') {
@@ -71,13 +68,11 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
             }
         }
     }
-    //----------------------------------------
     if(!empty($_FILES['logo_file']['tmp_name'])) {
         $fn = 'assets/logo.png';
         move_uploaded_file($_FILES['logo_file']['tmp_name'], $fn);
         $config['logo_path']=$fn;
     }
-    // --- Password updating ---
     if (!empty($_POST['current_admin_password']) && !empty($_POST['new_admin_password'])) {
         if (password_verify($_POST['current_admin_password'], $config['admin_password_hash'])) {
             $config['admin_password_hash'] = password_hash($_POST['new_admin_password'], PASSWORD_DEFAULT);
@@ -86,7 +81,6 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
             $error = "Current admin password was incorrect. Password not changed.";
         }
     }
-    // --- Write config (always, so settings save even if password section errored) ---
     file_put_contents($CONFIG_FILE, "<?php\nreturn ".var_export($config,true).";\n");
     if (empty($error)) $success = ($success ?? '') . " Settings saved.";
 }
@@ -123,6 +117,10 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="google_analytics_id" placeholder="G-XXXXXXXXXX" value="<?=htmlspecialchars($config['google_analytics_id'] ?? '')?>">
     <label>Privacy Policy Contact Email</label>
     <input name="privacy_email" type="email" value="<?=htmlspecialchars($config['privacy_email'] ?? '')?>">
+    <label>Google Site Verification Tag <span style="font-weight: normal">(content only)</span></label>
+    <input name="google_site_verification" value="<?=htmlspecialchars($config['google_site_verification'] ?? '')?>">
+    <label>Bing Site Verification Tag <span style="font-weight: normal">(content only)</span></label>
+    <input name="bing_site_verification" value="<?=htmlspecialchars($config['bing_site_verification'] ?? '')?>">
     <label>Primary Color Website</label>
     <input type="color" name="primary_color" value="<?=htmlspecialchars($config['primary_color'])?>">
     <label>Footer Text</label>
