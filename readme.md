@@ -15,7 +15,7 @@ In addition to signing up via my affiliate link, I would also appreciate it if y
 - **Lightning-fast local caching:** All cam grid and model data is fetched and stored as flat JSON files for speed and reliability.
 - **Live grid filtering:** Filter models instantly by gender, region, room size, age, and tag (#hashtags).
 - **Pretty, clean URLs:** Navigate via `/girls/`, `/guys/`, `/trans/`, `/couples/`, or directly by `/model/username`.
-- **Clickable tags everywhere:** Hashtags (in grid & model pages) instantly update filters, for super quick navigation.
+- **Clickable tags everywhere:** Hashtags (in grid & sidebar) instantly update filters, for super quick navigation.
 - **Auto-refresh mode (desktop):** Optional toggle in the header. When enabled, automatically refreshes the grid every minute—new models appear, offline models disappear, and all data stays up-to-date (subject line, viewer counts, even thumbnails!).
 - **Profile fallback for offline models:** If a model goes offline, their profile page (avatar, stats, bio, tags, etc) is still preserved and accessible at `/model/username`.
 - **Modern tooltips & hover highlights:** All tags/controls give clear hover feedback (with colored backgrounds), and tooltips use Font Awesome icons for a polished feel.
