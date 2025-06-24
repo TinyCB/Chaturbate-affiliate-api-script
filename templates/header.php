@@ -1,4 +1,15 @@
-<?php $c = include(__DIR__.'/../config.php'); ?>
+<?php
+$c = include(__DIR__.'/../config.php');
+
+// Compute the home/root URL, regardless of protocol (http/https) and domain.
+$site_url = (
+    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' && $_SERVER['HTTPS'] !== '0') ? "https" : "http"
+) . "://" . $_SERVER['HTTP_HOST'] . "/";
+// If your site is in a subdirectory and you want the home link to land there, use this instead:
+// $site_url = ( (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' && $_SERVER['HTTPS'] !== '0') ? "https" : "http" )
+//     . "://" . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . '/';
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,12 +29,18 @@
   <link rel="stylesheet" href="/assets/style.css">
   <style>
     :root { --primary-color: <?=htmlspecialchars($c['primary_color'])?>; }
+    a.site-home-link { text-decoration: none; color: inherit; display: flex; align-items: center; }
+    a.site-home-link:focus, a.site-home-link:hover { text-decoration: underline; }
+    #logo { margin-right: 9px; border-radius: 5px; }
+    header h1 { margin: 0; font-size: 1.22em; font-weight: 700; letter-spacing: 0.04em; }
   </style>
 </head>
 <body>
 <header>
-  <img src="/<?=htmlspecialchars($c['logo_path'])?>" alt="<?=htmlspecialchars($c['site_name'])?> Logo" id="logo" />
-  <h1><?=htmlspecialchars($c['site_name'])?></h1>
+  <a href="<?=htmlspecialchars($site_url)?>" class="site-home-link">
+    <img src="/<?=htmlspecialchars($c['logo_path'])?>" alt="<?=htmlspecialchars($c['site_name'])?> Logo" id="logo" />
+    <h1><?=htmlspecialchars($c['site_name'])?></h1>
+  </a>
 </header>
 <nav class="main-navbar">
   <div class="nav-left">
