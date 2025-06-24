@@ -111,6 +111,30 @@ body { background: #fafafd; }
 @media (max-width: 700px) {
   #filter-sidebar { width: 92vw; }
 }
+/* For clickable #tags in model subjects, e.g. <a class="tag-cb subject-tag" ...> */
+a.tag-cb.subject-tag {
+  color: #487bb7;
+  background: transparent;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: background .13s, color .13s;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* On hover/focus, change background and color only */
+a.tag-cb.subject-tag:hover,
+a.tag-cb.subject-tag:focus {
+  background: #d2e1fb;
+  color: #174377;
+  outline: none;
+}
+
+/* Optional: accessibility focus indicator */
+a.tag-cb.subject-tag:focus {
+  outline: 1.5px dotted #3f63ad;
+  outline-offset: 2px;
+}
 </style>
 <div id="main-flex-wrap">
 <aside id="filter-sidebar" class="open">
