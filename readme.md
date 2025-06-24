@@ -18,7 +18,7 @@ In addition to signing up via my affiliate link, I would also appreciate it if y
 - **Clickable tags everywhere:** Hashtags (in grid & sidebar) instantly update filters, for super quick navigation.
 - **Auto-refresh mode (desktop):** Optional toggle in the header. When enabled, automatically refreshes the grid every minute—new models appear, offline models disappear, and all data stays up-to-date (subject line, viewer counts, even thumbnails!).
 - **Profile fallback for offline models:** If a model goes offline, their profile page (avatar, stats, bio, tags, etc) is still preserved and accessible at `/model/username`.
-- **Modern tooltips & hover highlights:** All tags/controls give clear hover feedback (with colored backgrounds), and tooltips use Font Awesome icons for a polished feel.
+- **Modern tooltips & hover highlights:** All tags/controls give clear hover feedback (with colored backgrounds) for a polished feel.
 - **Full admin panel:** Edit all nav links, meta tags, site colors, slugs, logo, and more—instantly, via the browser.
 - **True 404 error handling:** Offline/missing model pages return a real HTTP 404 Not Found code for proper SEO.
 - **No database required:** Portable and easy to deploy anywhere PHP runs.
