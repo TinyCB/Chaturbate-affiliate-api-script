@@ -271,6 +271,27 @@ document.addEventListener('DOMContentLoaded', function() {
     var resetEl = document.getElementById('reset-filters-link');
     if (resetEl) resetEl.onclick = resetFilters;
     updateResetFiltersLink();
+    // Auto-refresh bar: show only on desktop
+    const bar = document.getElementById('auto-refresh-bar');
+    if (isDesktop() && bar) {
+        bar.style.display = '';
+        // Load last setting from sessionStorage if present
+        const stored = sessionStorage.getItem("livecams_auto_refresh") === "1";
+        document.getElementById('toggle-auto-refresh').checked = stored;
+        isAutoRefreshEnabled = stored;
+        if (stored) startAutoRefresh();
+    }
+    if (bar) {
+        document.getElementById('toggle-auto-refresh').addEventListener('change', function() {
+            isAutoRefreshEnabled = this.checked;
+            sessionStorage.setItem("livecams_auto_refresh", (isAutoRefreshEnabled ? "1" : "0"));
+            if (isAutoRefreshEnabled) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        });
+    }
 });
 function genderToPath() {
     if (FILTERS.gender && FILTERS.gender.length) {
@@ -400,7 +421,6 @@ function renderModels(models) {
     `;
   }).join('');
 
-  // -- TAG LINK CHANGES START --
   // Add event handlers to subject #tag links
   document.querySelectorAll('.tag-cb.subject-tag').forEach(el => {
     el.addEventListener('click', function(e) {
@@ -413,8 +433,8 @@ function renderModels(models) {
       }
     });
   });
-  // -- TAG LINK CHANGES END --
 }
+
 function renderPagination() {
   let totalPages = Math.ceil(totalCount / camsPerPage);
   let page = FILTERS.page || 1;
@@ -529,6 +549,184 @@ function resetFilters(ev) {
   saveGridFilters();
   window.location.href = "/";
 }
+
+// ========== AUTO-REFRESH FEATURE ==========
+// Configurable interval
+const AUTO_REFRESH_INTERVAL = 60000;
+
+// Check if device is desktop (not touch/mobile)
+function isDesktop() {
+  return window.matchMedia("(pointer: fine)").matches
+    && !/android|iphone|ipad|ipod|mobile|blackberry|iemobile|opera mini/i.test(navigator.userAgent);
+}
+
+let autoRefreshTimer = null; // for interval
+let isAutoRefreshEnabled = false;
+
+// Compute the fetch URL with current filters
+function getAutoRefreshUrl() {
+  let params = [];
+  if(FILTERS.region.length)
+    params.push('region='+FILTERS.region.map(encodeURIComponent).join(','));
+  FILTERS.tag.forEach(t=>params.push('tag='+encodeURIComponent(t)));
+  FILTERS.gender.forEach(g=>params.push('gender='+encodeURIComponent(g)));
+  if(FILTERS.size) params.push('size='+encodeURIComponent(FILTERS.size));
+  params.push('limit='+camsPerPage);
+  params.push('offset='+(camsPerPage*((FILTERS.page||1)-1)));
+  if(FILTERS.minAge) params.push('minAge='+FILTERS.minAge);
+  if(FILTERS.maxAge) params.push('maxAge='+FILTERS.maxAge);
+  return API + '?' + params.join('&');
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  if (!isDesktop() || !isAutoRefreshEnabled) return;
+  autoRefreshTimer = setInterval(doAutoRefresh, AUTO_REFRESH_INTERVAL);
+  doAutoRefresh();
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = null;
+}
+
+// On every model grid refresh, we must setup events again.
+function attachAutoRefreshEventHandler() {
+  const checkbox = document.getElementById('toggle-auto-refresh');
+  if (!checkbox) return;
+  checkbox.checked = isAutoRefreshEnabled;
+  checkbox.onchange = function() {
+    isAutoRefreshEnabled = this.checked;
+    sessionStorage.setItem("livecams_auto_refresh", isAutoRefreshEnabled ? "1" : "0");
+    if (isAutoRefreshEnabled) startAutoRefresh();
+    else stopAutoRefresh();
+  };
+}
+
+function setupAutoRefreshCheckboxBar() {
+  const bar = document.getElementById('auto-refresh-bar');
+  if (bar && isDesktop() && typeof FILTERS !== 'undefined') { // Must have filters
+    bar.style.display = '';
+    isAutoRefreshEnabled = sessionStorage.getItem("livecams_auto_refresh") === "1";
+    attachAutoRefreshEventHandler();
+    if (isAutoRefreshEnabled) startAutoRefresh();
+  } else if (bar) {
+    bar.style.display = 'none';
+    stopAutoRefresh();
+  }
+}
+
+// -- The soft refresh grid logic is as before --
+function doAutoRefresh() {
+  fetch(getAutoRefreshUrl())
+    .then(r => r.json())
+    .then(d => {
+      if (!Array.isArray(d.results)) return;
+      const newModels = d.results;
+      // Only grab username from username-cb <a>
+      let curModels = {};
+      document.querySelectorAll('.model-card-cb').forEach(card => {
+        const user = card.querySelector('.username-cb');
+        if (user) curModels[user.textContent.trim().toLowerCase()] = card;
+      });
+      let newUsernames = new Set(newModels.map(m => (m.username || '').toLowerCase()));
+      // Remove cards whose user no longer in new set
+      for (const uname in curModels) {
+        if (!newUsernames.has(uname)) {
+          curModels[uname].remove();
+        }
+      }
+      // Add or update models in order they appear
+      const grid = document.getElementById('model-grid');
+      if (!grid) return;
+      // We'll use a fragment to reconstruct the grid smoothly
+      let frag = document.createDocumentFragment();
+      for (const m of newModels) {
+        const uname = (m.username || '').toLowerCase();
+        // build card html same way as in renderModels
+        let rawSubject = m.room_subject ? m.room_subject : '';
+        let subjectWithTags = rawSubject.replace(
+          /#(\w+)/g,
+          '<a href="#" class="tag-cb subject-tag" data-tag="$1">#$1</a>'
+        );
+        let tmpDiv = document.createElement('div');
+        tmpDiv.innerHTML = subjectWithTags;
+        let nodes = Array.from(tmpDiv.childNodes);
+        let displaySubject = '';
+        let charCount = 0;
+        for (let node of nodes) {
+          let text = node.nodeType === 3 ? node.textContent : node.outerHTML;
+          let c = node.nodeType === 3 ? text.length : node.textContent.length;
+          if (charCount + c > 63) {
+            if (node.nodeType === 3) {
+              displaySubject += text.slice(0, 63 - charCount) + '...';
+            } else {
+              break;
+            }
+            break;
+          }
+          displaySubject += text;
+          charCount += c;
+        }
+        let arrMeta = [];
+        arrMeta.push(`<span class="age-cb">${m.age}</span>`);
+        if (m.gender) arrMeta.push(getGenderIcon(m.gender));
+        if (m.country) arrMeta.push(`<span class="country-cb"><img class="flag-cb" src="https://flagcdn.com/16x12/${m.country.toLowerCase()}.png" alt="${m.country}"></span>`);
+        let metaRow = `<div class="row-meta-cb">${arrMeta.join('')}</div>`;
+        let href = "/model/" + encodeURIComponent(m.username);
+        let timeString = (m.seconds_online >= 3600) ? ((m.seconds_online / 3600).toFixed(1) + ' hrs') : (Math.floor((m.seconds_online % 3600) / 60) + ' mins');
+        let viewers = (m.num_users ? `${m.num_users} viewers` : '');
+        // -------- CACHE-BUST THUMBNAIL START ---------
+        let imgUrl = (m.image_url_360x270 || m.image_url);
+        imgUrl += (imgUrl.indexOf('?') === -1 ? '?' : '&') + 'cb=' + Date.now();
+        // -------- CACHE-BUST THUMBNAIL END -----------
+        let cardHTML = `
+        <div class="model-card-cb">
+          <div class="model-img-wrap-cb">
+            <a href="${href}">
+              <img src="${imgUrl}" class="model-img-cb" alt="${m.username}">
+            </a>
+          </div>
+          <div class="model-info-cb">
+            <div class="row-top-cb">
+              <a href="${href}" class="username-cb">${m.username}</a>
+              ${metaRow}
+            </div>
+            <div class="subject-cb">${displaySubject}</div>
+            <div class="meta-row-cb">
+              <span class="meta-group-cb"><span class="icon-cb">&#128065;</span><span>${viewers}</span></span>
+              <span class="meta-group-cb"><span class="icon-cb">&#9201;</span><span>${timeString}</span></span>
+            </div>
+          </div>
+        </div>
+        `;
+        // Create & append card
+        let outer = document.createElement('div');
+        outer.innerHTML = cardHTML.trim();
+        frag.appendChild(outer.firstChild);
+      }
+      // Clear and rebuild entire grid
+      grid.innerHTML = '';
+      grid.appendChild(frag);
+      // Re-attach events for tag-cb clicks
+      document.querySelectorAll('.tag-cb.subject-tag').forEach(el => {
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+          let tag = el.dataset.tag;
+          if (!FILTERS.tag.includes(tag)) {
+            if (FILTERS.tag.length >= 5) FILTERS.tag.shift();
+            FILTERS.tag.push(tag);
+            onFilterChange();
+          }
+        });
+      });
+    });
+}
+
+// On DOMContentLoaded or after AJAX/PJAX navigation, always re-run:
+document.addEventListener('DOMContentLoaded', setupAutoRefreshCheckboxBar);
+// ----------- END AUTO-REFRESH -----------
+
 fetchModels();
 updateSelected();
 updateResetFiltersLink();
