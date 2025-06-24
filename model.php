@@ -51,6 +51,7 @@ if (!empty($model['tags'])) {
 }
 $meta_title = $model['username'] . " - $gender_label Live Cam$title_tags | " . ($config['site_name'] ?? 'Live Cams');
 $meta_desc = !empty($model['room_subject']) ? $model['room_subject'] : ("Watch {$model['username']} streaming live now.");
+
 function chaturbate_whitelabel_replace($html, $wldomain) {
     if (!$wldomain || $wldomain === "chaturbate.com") return $html;
     return preg_replace_callback(
@@ -61,7 +62,6 @@ function chaturbate_whitelabel_replace($html, $wldomain) {
         $html
     );
 }
-// Mobile detection (server-side best guess)
 function is_mobile_device() {
     $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
     return (preg_match('/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i', $ua));
@@ -208,7 +208,6 @@ body {
 .model-fallback-msg {
   display:none; color:#e44; margin:18px 0 8px 0; text-align:center; font-size:1.08em;
 }
-/* Meta-wrap, 2 columns: left (location/language/birthday), right (topic/tags) */
 .model-meta-wrap {
   width: 100%;
   background: #f7fafd;
@@ -229,23 +228,25 @@ body {
 }
 .model-meta-item {
   margin-bottom: 8px;
-}
-.model-meta-item .meta-label {
-  font-size: .99em;
-  color: #4263a5;
-  font-weight: bold;
-  margin-bottom: 1px;
-  display: block;
-  letter-spacing: 0.01em;
-}
-.model-meta-item .meta-value {
-  color: #273146;
   font-size: 1.09em;
-  line-height: 1.47;
+  color: #273146;
+  font-weight: 400;
+}
+.model-meta-item b {
+  color: #4263a5;
+  font-weight: 600;
+  font-size: 1em;
+  margin-right: 7px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.room-topic-value {
+  white-space: pre-line;
   word-break: break-word;
+  display: inline;
 }
 .model-tags {
-  margin-top: 3px;
+  display: inline;
 }
 .model-tag-chip {
   display: inline-block;
@@ -254,8 +255,9 @@ body {
   font-size: .99em;
   border-radius: 11px;
   padding: 2px 9px;
-  margin: 1.4px 5px 1px 0;
   font-weight: 500;
+  margin-right: 4px;
+  margin-bottom: 1px;
 }
 @media (max-width: 900px) {
   .model-profile-main {max-width:99vw;}
@@ -327,38 +329,33 @@ body {
       <div class="model-meta-col">
         <?php if(!empty($model['location'])): ?>
           <div class="model-meta-item">
-            <span class="meta-label">Location:</span>
-            <span class="meta-value"><?=htmlspecialchars($model['location'])?></span>
+            <b>Location:</b> <?=htmlspecialchars($model['location'])?>
           </div>
         <?php endif; ?>
         <?php if(!empty($model['spoken_languages'])): ?>
           <div class="model-meta-item">
-            <span class="meta-label">Language:</span>
-            <span class="meta-value"><?=htmlspecialchars($model['spoken_languages'])?></span>
+            <b>Language:</b> <?=htmlspecialchars($model['spoken_languages'])?>
           </div>
         <?php endif; ?>
         <?php if(!empty($model['birthday'])): ?>
           <div class="model-meta-item">
-            <span class="meta-label">Birthday:</span>
-            <span class="meta-value"><?=human_birthday($model['birthday'])?></span>
+            <b>Birthday:</b> <?=human_birthday($model['birthday'])?>
           </div>
         <?php endif; ?>
       </div>
       <div class="model-meta-col">
         <?php if(!empty($model['room_subject'])): ?>
           <div class="model-meta-item">
-            <span class="meta-label">Room Topic:</span>
-            <span class="meta-value"><?=htmlspecialchars($model['room_subject'])?></span>
+            <b>Room Topic:</b>
+            <span class="room-topic-value"><?=preg_replace('/<br\s*\/?>/i', ' ', $model['room_subject'])?></span>
           </div>
         <?php endif; ?>
         <?php if(!empty($model['tags'])): ?>
           <div class="model-meta-item">
-            <span class="meta-label">Tags:</span>
-            <span class="model-tags">
-              <?php foreach(array_slice($model['tags'],0,18) as $t): ?>
-                <span class="model-tag-chip">#<?=htmlspecialchars($t)?></span>
-              <?php endforeach; ?>
-            </span>
+            <b>Tags:</b>
+            <?php foreach(array_slice($model['tags'],0,18) as $t): ?>
+              <span class="model-tag-chip">#<?=htmlspecialchars($t)?></span>
+            <?php endforeach; ?>
           </div>
         <?php endif; ?>
       </div>
