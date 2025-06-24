@@ -17,7 +17,6 @@ if (isset($_GET['gender']) && count((array)$_GET['gender']) == 1) {
 }
 include('templates/header.php');
 ?>
-
 <!-- Make the dynamic gender slugs available to JS -->
 <script>
 window.GENDER_SLUGS = <?=json_encode($slugs, JSON_UNESCAPED_SLASHES)?>;
@@ -27,7 +26,6 @@ for (const key in window.GENDER_SLUGS) {
   window.SLUG_TO_GENDER[window.GENDER_SLUGS[key]] = key;
 }
 </script>
-
 <style>
 #main-flex-wrap {
   display: flex;
@@ -114,7 +112,6 @@ body { background: #fafafd; }
   #filter-sidebar { width: 92vw; }
 }
 </style>
-
 <div id="main-flex-wrap">
 <aside id="filter-sidebar" class="open">
   <button class="close-btn" onclick="toggleSidebar()" title="Hide Filters">&#10006; Hide Sidebar</button>
@@ -193,7 +190,6 @@ function getFlag(country) {
   if (!country) return '';
   return `<span class="country-cb"><img class="flag-cb" src="https://flagcdn.com/16x12/${country.toLowerCase()}.png" alt="${country}"></span>`;
 }
-
 // ---- DYNAMIC PATH PARSING BASED ON SLUGS ----
 function parsePrettyPath() {
     const GSLUGS = window.GENDER_SLUGS || {};
@@ -221,7 +217,6 @@ function parsePrettyPath() {
     }
     return { gender, page };
 }
-
 let pretty = parsePrettyPath();
 let sessionFilters = loadGridFilters() || {};
 let urlFilters = {};
@@ -258,7 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var sidebar = document.getElementById('filter-sidebar');
         if (sidebar) sidebar.classList.remove('open');
     }
-
     var filterBtn = document.getElementById('filter-toggle');
     if (filterBtn) filterBtn.onclick = toggleSidebar;
     var closeBtn = document.querySelector('#filter-sidebar .close-btn');
@@ -347,9 +341,16 @@ function fetchModels() {
 function renderModels(models) {
   let el = document.getElementById('model-grid');
   if(models.length===0) { el.innerHTML = "<b>No results.</b>"; return; }
+
   el.innerHTML = models.map(m=>{
     let rawSubject = m.room_subject ? m.room_subject : '';
-    let subjectWithTags = rawSubject.replace(/#(\w+)/g, '<span class="tag-cb">#$1</span>');
+    // -- TAG LINK CHANGES START --
+    // Convert #tag to anchor with data-tag
+    let subjectWithTags = rawSubject.replace(
+      /#(\w+)/g,
+      '<a href="#" class="tag-cb subject-tag" data-tag="$1">#$1</a>'
+    );
+    // -- TAG LINK CHANGES END --
     let tmpDiv = document.createElement('div');
     tmpDiv.innerHTML = subjectWithTags;
     let nodes = Array.from(tmpDiv.childNodes);
@@ -398,6 +399,21 @@ function renderModels(models) {
     </div>
     `;
   }).join('');
+
+  // -- TAG LINK CHANGES START --
+  // Add event handlers to subject #tag links
+  document.querySelectorAll('.tag-cb.subject-tag').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      let tag = el.dataset.tag;
+      if(!FILTERS.tag.includes(tag)) {
+        if(FILTERS.tag.length>=5) FILTERS.tag.shift();
+        FILTERS.tag.push(tag);
+        onFilterChange();
+      }
+    });
+  });
+  // -- TAG LINK CHANGES END --
 }
 function renderPagination() {
   let totalPages = Math.ceil(totalCount / camsPerPage);
