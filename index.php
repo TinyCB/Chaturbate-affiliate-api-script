@@ -138,7 +138,11 @@ a.tag-cb.subject-tag:focus {
 
 @media (max-width: 600px) {
   .guest-area-text-desktop { display: none !important; }
-  .guest-area-text-mobile { display: inline !important; }
+  .guest-area-text-mobile  { display: inline !important; }
+}
+@media (min-width: 601px) {
+  .guest-area-text-desktop { display: inline !important; }
+  .guest-area-text-mobile  { display: none !important; }
 }
 #guest-area-msg button:hover,
 #guest-area-msg button:focus {
@@ -196,32 +200,33 @@ a.tag-cb.subject-tag:focus {
 </aside>
 <div class="main-content">
   <div id="guest-area-msg"
-       style="font-size:13px; padding:0 8px; border-radius:4px; margin:2px 0 3px 0; vertical-align:middle; display:block;">
+       style="font-size:13px;padding:0 8px;border-radius:4px;margin:5px 0 5px 0;vertical-align:middle;display:block;max-width:100%;">
     <span class="guest-area-text-desktop">
       You’re currently browsing the guest area. For the full experience,
       <a href="<?=htmlspecialchars($config['signup_url'] ?? $config['login_url'] ?? '#')?>"
-         style="color:#2068b6; text-decoration:underline; font-weight:500;">sign up</a>
-      and visit our members area.
+         style="color:#2068b6;text-decoration:underline;font-weight:500;">sign up</a>
+      and visit our <a href="https://<?=htmlspecialchars($config['whitelabel_domain'] ?? '')?>/"
+         style="color:#2068b6;text-decoration:underline;font-weight:500;">members area</a>.
     </span>
     <span class="guest-area-text-mobile" style="display:none;">
-      Guest area: For the full experience, 
+      Browsing as Guest. Full experience?
       <a href="<?=htmlspecialchars($config['signup_url'] ?? $config['login_url'] ?? '#')?>"
-         style="color:#2068b6; text-decoration:underline; font-weight:500; font-size:1em;">sign up</a>
-      and visit members area.
+         style="color:#2068b6;text-decoration:underline;font-weight:500;">Sign up</a>
+      /
+      <a href="https://<?=htmlspecialchars($config['whitelabel_domain'] ?? '')?>/"
+         style="color:#2068b6;text-decoration:underline;font-weight:500;">Members</a>
     </span>
     <button type="button" aria-label="Close guest notice"
       onclick="this.parentNode.style.display='none'"
       onmouseover="this.style.background='#e9e9ee';this.style.color='#c32';"
       onmouseout="this.style.background='transparent';this.style.color='#777';"
-      style="background:transparent; border:none; font-size:15px; color:#777; cursor:pointer; line-height:1;
-             padding:0 2.5px; margin-left:7px; vertical-align:middle; display:inline; border-radius:3px; transition:background .14s;">
+      style="background:transparent;border:none;font-size:15px;color:#777;cursor:pointer;line-height:1;
+             padding:0 2.5px;margin-left:7px;vertical-align:middle;display:inline;border-radius:3px;transition:background .14s;">
       &times;
     </button>
   </div>
-  <div style="flex: 1 1 0;">
-    <div class="model-grid" id="model-grid"></div>
-    <div class="pagination-bar" id="pagination-bar"></div>
-  </div>
+  <div class="model-grid" id="model-grid"></div>
+  <div class="pagination-bar" id="pagination-bar"></div>
 </div>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <script>
