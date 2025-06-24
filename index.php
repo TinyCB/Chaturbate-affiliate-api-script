@@ -135,6 +135,17 @@ a.tag-cb.subject-tag:focus {
   outline: 1.5px dotted #3f63ad;
   outline-offset: 2px;
 }
+
+@media (max-width: 600px) {
+  .guest-area-text-desktop { display: none !important; }
+  .guest-area-text-mobile { display: inline !important; }
+}
+#guest-area-msg button:hover,
+#guest-area-msg button:focus {
+  background: #e9e9ee !important;
+  color: #c32;
+  outline: none;
+}
 </style>
 <div id="main-flex-wrap">
 <aside id="filter-sidebar" class="open">
@@ -184,9 +195,33 @@ a.tag-cb.subject-tag:focus {
   </div>
 </aside>
 <div class="main-content">
-  <div class="model-grid" id="model-grid"></div>
-  <div class="pagination-bar" id="pagination-bar"></div>
-</div>
+  <div id="guest-area-msg"
+       style="font-size:13px; padding:0 8px; border-radius:4px; margin:2px 0 3px 0; vertical-align:middle; display:block;">
+    <span class="guest-area-text-desktop">
+      You’re currently browsing the guest area. For the full experience,
+      <a href="<?=htmlspecialchars($config['signup_url'] ?? $config['login_url'] ?? '#')?>"
+         style="color:#2068b6; text-decoration:underline; font-weight:500;">sign up</a>
+      and visit our members area.
+    </span>
+    <span class="guest-area-text-mobile" style="display:none;">
+      Guest area: For the full experience, 
+      <a href="<?=htmlspecialchars($config['signup_url'] ?? $config['login_url'] ?? '#')?>"
+         style="color:#2068b6; text-decoration:underline; font-weight:500; font-size:1em;">sign up</a>
+      and visit members area.
+    </span>
+    <button type="button" aria-label="Close guest notice"
+      onclick="this.parentNode.style.display='none'"
+      onmouseover="this.style.background='#e9e9ee';this.style.color='#c32';"
+      onmouseout="this.style.background='transparent';this.style.color='#777';"
+      style="background:transparent; border:none; font-size:15px; color:#777; cursor:pointer; line-height:1;
+             padding:0 2.5px; margin-left:7px; vertical-align:middle; display:inline; border-radius:3px; transition:background .14s;">
+      &times;
+    </button>
+  </div>
+  <div style="flex: 1 1 0;">
+    <div class="model-grid" id="model-grid"></div>
+    <div class="pagination-bar" id="pagination-bar"></div>
+  </div>
 </div>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <script>

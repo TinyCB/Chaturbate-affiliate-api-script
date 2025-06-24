@@ -52,6 +52,7 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['cams_per_page'] = (int)($_POST['cams_per_page'] ?? 20);
     $config['whitelabel_domain'] = trim($_POST['whitelabel_domain'] ?? 'chaturbate.com');
     $config['login_url'] = trim($_POST['login_url'] ?? '');
+    $config['signup_url'] = trim($_POST['signup_url'] ?? '');
     $config['broadcast_url'] = trim($_POST['broadcast_url'] ?? '');
     $config['google_analytics_id'] = trim($_POST['google_analytics_id'] ?? '');
     $config['privacy_email'] = trim($_POST['privacy_email'] ?? '');
@@ -111,6 +112,8 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="affiliate_id" value="<?=htmlspecialchars($config['affiliate_id'])?>">
     <label>Login URL</label>
     <input name="login_url" value="<?=htmlspecialchars($config['login_url'] ?? '')?>">
+    <label>Sign Up URL</label>
+    <input name="signup_url" value="<?=htmlspecialchars($config['signup_url'] ?? '')?>">
     <label>Broadcast Yourself URL</label>
     <input name="broadcast_url" value="<?=htmlspecialchars($config['broadcast_url'] ?? '')?>">
     <label>Google Analytics Tag (Measurement ID)</label>
