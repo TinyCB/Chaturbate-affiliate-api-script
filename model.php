@@ -23,6 +23,9 @@ if (!empty($_GET['gender']) && !is_array($_GET['gender'])) {
 $cache_dir = __DIR__."/cache/";
 $regions = ['northamerica', 'europe_russia', 'southamerica', 'asia', 'other'];
 $model = null;
+$model_online = false;
+
+// 1. Try to find model in online caches
 foreach ($regions as $region) {
     $file = $cache_dir . "cams_{$region}.json";
     if (!file_exists($file)) continue;
@@ -31,18 +34,45 @@ foreach ($regions as $region) {
     foreach ($json['results'] as $m) {
         if(strtolower($m['username']) === strtolower($username)) {
             $model = $m;
+            $model_online = true;
             break 2;
         }
     }
 }
-if(!$model || empty($model['iframe_embed'])) {
-    $meta_title = "Model offline | ".$config['site_name'];
-    $meta_desc = "";
+
+// 2. Fallback: Try to load from model_profiles.json if not online
+if(!$model) {
+    $profile_file = $cache_dir . "model_profiles.json";
+    if (file_exists($profile_file)) {
+        $profiles = json_decode(file_get_contents($profile_file), true);
+        if (is_array($profiles)) {
+            foreach ($profiles as $m) {
+                if(strtolower($m['username']) === strtolower($username)) {
+                    $model = $m;
+                    $model_online = false;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+if(!$model) {
+    header("HTTP/1.0 404 Not Found");
+    $meta_title = "Model not found | ".$config['site_name'];
+    $meta_desc  = "";
     include('templates/header.php');
-    echo "<h2>Model not online.</h2>";
+    echo "<h2>User not found.</h2>";
     include('templates/footer.php');
     exit;
 }
+
+// Treat as offline if no embed
+if(empty($model['iframe_embed'])) $model_online = false;
+// If offline, force current_show to "offline"
+if (!$model_online) $model['current_show'] = 'offline';
+
+// ----- SEO meta -----
 $genders = array('f'=>'Female','m'=>'Male','c'=>'Couple','t'=>'Trans');
 $gender_label = isset($genders[$model['gender']]) ? $genders[$model['gender']] : ucfirst($model['gender']);
 $title_tags = '';
@@ -89,6 +119,7 @@ $gender_colors = [
 ];
 $this_gender_color = $gender_colors[$model['gender']] ?? $pri;
 $iframe_height = is_mobile_device() ? '425px' : '600px';
+
 include('templates/header.php');
 ?>
 <style>
@@ -96,9 +127,8 @@ include('templates/header.php');
   --primary-color: <?=$pri?>;
   --gender-color: <?=$this_gender_color?>;
 }
-body {
-  background: #f7f8fa;
-}
+/* -- your existing CSS here, as in your code -- */
+body { background: #f7f8fa; }
 .model-profile-main {
   position: relative;
   width: 98vw;
@@ -294,24 +324,32 @@ body {
           <?php if($model['is_new']): ?>
             <span class="model-badge new">NEW</span>
           <?php endif; ?>
+          <?php if(!$model_online): ?>
+            <span class="model-badge" style="background:#e5e5e5; color:#6d6d6d;">OFFLINE</span>
+          <?php endif; ?>
         </div>
         <div class="model-pp-stats">
-          <span class="stat-pill"><span class="icon">&#128065;</span> <?=intval($model['num_users'])?> Viewers</span>
+          <?php if($model_online && isset($model['num_users'])): ?>
+            <span class="stat-pill"><span class="icon">&#128065;</span> <?=intval($model['num_users'])?> Viewers</span>
+          <?php endif; ?>
           <?php if(isset($model['num_followers'])): ?>
             <span class="stat-pill"><span class="icon">&#128100;</span><?=intval($model['num_followers'])?> Followers</span>
           <?php endif; ?>
-          <span class="stat-pill"><span class="icon">&#9201;</span>
-          <?php $h = floor($model['seconds_online']/3600); $m = floor(($model['seconds_online']%3600)/60);
-            echo ($h>0?"$h hr ":'')."$m min";
-          ?> Online</span>
+          <?php if($model_online && isset($model['seconds_online'])): ?>
+            <span class="stat-pill"><span class="icon">&#9201;</span>
+            <?php $h = floor($model['seconds_online']/3600); $m = floor(($model['seconds_online']%3600)/60);
+              echo ($h>0?"$h hr ":'')."$m min";
+            ?> Online</span>
+          <?php endif; ?>
           <span class="stat-pill"><b>Show:</b>
-            <?php $show_map=['public'=>'Public','private'=>'Private','group'=>'Group','away'=>'Away'];
+            <?php $show_map=['public'=>'Public','private'=>'Private','group'=>'Group','away'=>'Away','offline'=>'Offline'];
               echo $show_map[$model['current_show']] ?? ucfirst($model['current_show']);
             ?>
           </span>
         </div>
       </div>
     </div>
+    <?php if($model_online): ?>
     <?=ensure_iframe_fullscreen(chaturbate_whitelabel_replace($model['iframe_embed'], $config['whitelabel_domain']), $iframe_height)?>
     <div class="model-fallback-msg" id="cb-embed-fallback">
       The cam video may be blocked by your browser, privacy, or adblocker settings. Try disabling shields or using a different browser if the cam does not display.
@@ -325,6 +363,7 @@ body {
       }
     }, 2600);
     </script>
+    <?php endif; ?>
     <div class="model-meta-wrap">
       <div class="model-meta-col">
         <?php if(!empty($model['location'])): ?>
