@@ -73,10 +73,6 @@ Browse to your site root (e.g., `https://yourdomain.com/`) – you’ll see the 
 - Use the “Change Admin Password” fields at the bottom of the admin page.
 - After saving, your new password is instantly active.
 
-Absolutely! Here's an updated **"What You Can Configure"** section for your README, covering everything visible on your admin page, in clear language:
-
----
-
 ### **What You Can Configure**
 
 - Site name, affiliate ID, and main logo
