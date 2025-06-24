@@ -387,7 +387,7 @@ function renderModels(models) {
       </div>
       <div class="model-info-cb">
         <div class="row-top-cb">
-          <span class="username-cb">${m.username}</span>
+          <a href="${href}" class="username-cb">${m.username}</a>
           ${metaRow}
         </div>
         <div class="subject-cb">${displaySubject}</div>
