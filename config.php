@@ -15,6 +15,7 @@ return array (
   'meta_home_desc' => 'Watch thousands of live webcams instantly! Free chat, models, and more 24/7.',
   'google_site_verification' => '',
   'bing_site_verification' => '',
+  'site_base_url' => 'https://yourdomain.com',
   'meta_gender_titles' => 
   array (
     'f' => 'Watch Free Live Female Cams – TinyCB',

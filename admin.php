@@ -58,6 +58,7 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['privacy_email'] = trim($_POST['privacy_email'] ?? '');
     $config['google_site_verification'] = trim($_POST['google_site_verification'] ?? '');
     $config['bing_site_verification'] = trim($_POST['bing_site_verification'] ?? '');
+    $config['site_base_url'] = trim($_POST['site_base_url'] ?? '');
     $config['meta_home_title'] = $_POST['meta_home_title'];
     $config['meta_home_desc'] = $_POST['meta_home_desc'];
     $config['meta_gender_titles'] = $_POST['meta_gender_titles'] ?? [];
@@ -124,6 +125,8 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="google_site_verification" value="<?=htmlspecialchars($config['google_site_verification'] ?? '')?>">
     <label>Bing Site Verification Tag <span style="font-weight: normal">(content only)</span></label>
     <input name="bing_site_verification" value="<?=htmlspecialchars($config['bing_site_verification'] ?? '')?>">
+    <label>Site Base URL (for sitemap and SEO, no trailing slash)</label>
+    <input name="site_base_url" value="<?=htmlspecialchars($config['site_base_url'] ?? '')?>" placeholder="https://yourdomain.com">
     <label>Primary Color Website</label>
     <input type="color" name="primary_color" value="<?=htmlspecialchars($config['primary_color'])?>">
     <label>Footer Text</label>

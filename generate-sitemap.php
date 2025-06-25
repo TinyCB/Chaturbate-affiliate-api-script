@@ -2,11 +2,21 @@
 // generate-sitemap.php: Run via CLI or browser to create sitemap.xml
 
 $config    = include('config.php');
-$base      = (empty($_SERVER['HTTPS']) ? "http" : "https") . "://".$_SERVER['HTTP_HOST'];
-$cache_dir = __DIR__ . "/cache/";
+
+// Robust base URL detection for CLI and web
+if (!empty($config['site_base_url'])) {
+    $base = rtrim($config['site_base_url'], '/');
+} elseif (!empty($_SERVER['HTTP_HOST'])) {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $base = $scheme . '://' . $_SERVER['HTTP_HOST'];
+} else {
+    // LAST RESORT: Hardcode for CLI as fallback
+    $base = 'https://yourdomain.com';
+}
+
+$cache_dir = __DIR__ . '/cache/';
 $regions   = ['northamerica', 'europe_russia', 'southamerica', 'asia', 'other'];
 $slugs     = $config['slugs'] ?? ['f'=>'girls','m'=>'guys','t'=>'trans','c'=>'couples','model'=>'model'];
-
 $urls = [];
 
 // Homepage & main category pages
@@ -52,7 +62,7 @@ if (file_exists($offline)) {
     }
 }
 
-// Add static legal pages if present
+// Add static legal/privacy page if present
 foreach (['/privacy'] as $static) {
     if (file_exists(__DIR__ . $static . ".php")) {
         $urls[] = ['loc' => $base . $static, 'priority' => '0.1'];
@@ -74,5 +84,5 @@ $xml .= "</urlset>\n";
 $sitemap_path = __DIR__ . "/sitemap.xml";
 file_put_contents($sitemap_path, $xml);
 
-echo "Sitemap saved to $sitemap_path (".count($urls)." URLs)\n";
+echo "Sitemap saved to $sitemap_path (" . count($urls) . " URLs)\n";
 ?>
