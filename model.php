@@ -68,7 +68,7 @@ if(!$model) {
 }
 
 // Treat as offline if no embed
-if(empty($model['iframe_embed'])) $model_online = false;
+if(empty($model['iframe_embed_revshare'])) $model_online = false;
 // If offline, force current_show to "offline"
 if (!$model_online) $model['current_show'] = 'offline';
 
@@ -350,7 +350,7 @@ body { background: #f7f8fa; }
       </div>
     </div>
     <?php if($model_online): ?>
-    <?=ensure_iframe_fullscreen(chaturbate_whitelabel_replace($model['iframe_embed'], $config['whitelabel_domain']), $iframe_height)?>
+    <?=ensure_iframe_fullscreen(chaturbate_whitelabel_replace($model['iframe_embed_revshare'], $config['whitelabel_domain']), $iframe_height)?>
     <div class="model-fallback-msg" id="cb-embed-fallback">
       The cam video may be blocked by your browser, privacy, or adblocker settings. Try disabling shields or using a different browser if the cam does not display.
     </div>
