@@ -1,3 +1,11 @@
+# TinyCB V2 .htaccess
+
+# Security: block fetch-and-cache and generate-sitemap from web (but allow CLI)
+<FilesMatch "^(fetch-and-cache\.php|generate-sitemap\.php)$">
+    Require all denied
+</FilesMatch>
+
+# --- Pretty URLs and Front Controller ---
 RewriteEngine On
 RewriteBase /
 
