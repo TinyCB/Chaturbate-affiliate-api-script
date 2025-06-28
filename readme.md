@@ -94,7 +94,10 @@ _All edits are live—no need to edit files manually!_
 ---
 
 ## ℹ️ Notes
-
+- **memory_limit:** Set this to at least `256M` or `512M` in your `php.ini`, as `model_profiles.json` (used for offline profile pages) can quickly grow past 50MB and will require more memory. If you do not have access to `php.ini`, you can also set the limit at the very top of `model.php` (or any relevant script) with:
+  ```php
+  ini_set('memory_limit', '256M');
+  ```
 - **Mobile design:** Not fully responsive yet—best viewed on desktop for now.
 - **No database:** All data/settings stored as flat files.
 - **Cached listings/grid:** Only models present in your most recent cache appear in the grid. Update with `fetch-and-cache.php`.
