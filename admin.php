@@ -75,6 +75,46 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
         move_uploaded_file($_FILES['logo_file']['tmp_name'], $fn);
         $config['logo_path']=$fn;
     }
+    // ------ FAVICON UPLOAD: PNG/ICO only ------
+    if(!empty($_FILES['favicon_file']['tmp_name'])) {
+        $allowed = ['ico','png'];
+        $ext = strtolower(pathinfo($_FILES['favicon_file']['name'], PATHINFO_EXTENSION));
+        if (in_array($ext, $allowed)) {
+            $upload_path = 'assets/favicon-upload.' . $ext;
+            if (!move_uploaded_file($_FILES['favicon_file']['tmp_name'], $upload_path)) {
+                $error = "Failed to upload image. Check permissions!";
+            } elseif ($ext === 'ico') {
+                copy($upload_path, 'assets/favicon.ico');
+                $config['favicon_path'] = 'assets/favicon.ico';
+            } elseif ($ext === 'png') {
+                $src_img = @imagecreatefrompng($upload_path);
+                if (!$src_img) {
+                    $error = "Could not read PNG. Try saving as a regular PNG in your image software and re-upload.";
+                } else {
+                    $w = imagesx($src_img); $h = imagesy($src_img);
+                    $max_dim = min($w, $h, 450);
+                    $x = intval(($w - $max_dim) / 2); $y = intval(($h - $max_dim) / 2);
+                    $target_size = 32;
+                    $out_path = 'assets/favicon.png';
+                    $crop = imagecreatetruecolor($target_size, $target_size);
+                    imagesavealpha($crop, true);
+                    imagealphablending($crop, false);
+                    $trans = imagecolorallocatealpha($crop, 0, 0, 0, 127);
+                    imagefill($crop, 0, 0, $trans);
+                    imagecopyresampled($crop, $src_img, 0, 0, $x, $y, $target_size, $target_size, $max_dim, $max_dim);
+                    if (imagepng($crop, $out_path, 6)) {
+                        $config['favicon_path'] = $out_path;
+                    } else {
+                        $error = "Failed to save PNG.";
+                    }
+                    imagedestroy($crop); imagedestroy($src_img);
+                }
+            }
+            @unlink($upload_path);
+        } else {
+            $error = "Only .ico or .png files up to 450x450px are allowed for favicon.";
+        }
+    }
     if (!empty($_POST['current_admin_password']) && !empty($_POST['new_admin_password'])) {
         if (password_verify($_POST['current_admin_password'], $config['admin_password_hash'])) {
             $config['admin_password_hash'] = password_hash($_POST['new_admin_password'], PASSWORD_DEFAULT);
@@ -164,6 +204,11 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <label>Logo</label>
     <input type="file" name="logo_file"><br>
     <img src="<?=$config['logo_path']?>" style="max-width:100px;"><br>
+    <label>Favicon (.ico or .png; up to 450×450px)</label>
+    <input type="file" name="favicon_file"><br>
+    <?php if (!empty($config['favicon_path'])): ?>
+    <img src="<?=htmlspecialchars($config['favicon_path'])?>" style="max-width:32px; max-height:32px;"><br>
+    <?php endif; ?>
     <h3>Change Admin Password</h3>
     <label>Current Password</label>
     <input type="password" name="current_admin_password" autocomplete="current-password">

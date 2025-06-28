@@ -24,6 +24,12 @@ $site_url = (
   <?php else: ?>
     <meta property="og:image" content="/<?=htmlspecialchars($c['logo_path'])?>" />
   <?php endif; ?>
+  <?php if (!empty($c['favicon_path'])): ?>
+    <link rel="icon" href="/<?=htmlspecialchars($c['favicon_path'])?>" sizes="any">
+    <?php if (preg_match('/\.png$/i', $c['favicon_path'])): ?>
+      <link rel="icon" type="image/png" href="/<?=htmlspecialchars($c['favicon_path'])?>">
+    <?php endif; ?>
+  <?php endif; ?>
   <meta property="og:type" content="website" />
   <link rel="stylesheet" href="/assets/style.css">
   <!-- Font Awesome for info icon -->
@@ -34,7 +40,6 @@ $site_url = (
     a.site-home-link:focus, a.site-home-link:hover { text-decoration: underline; }
     #logo { margin-right: 9px; border-radius: 5px; }
     header h1 { margin: 0; font-size: 1.22em; font-weight: 700; letter-spacing: 0.04em; }
-
     /* Auto-refresh label matching header link style */
     #auto-refresh-bar label {
       font-family: inherit;

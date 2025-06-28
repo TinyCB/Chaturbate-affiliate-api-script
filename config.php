@@ -10,6 +10,7 @@ return array (
   'primary_color' => '#808085',
   'footer_text' => '© 2024 TinyCB.',
   'logo_path' => 'assets/logo.png',
+  'favicon_path' => 'assets/favicon.ico',
   'whitelabel_domain' => 'my.tinycb.com',
   'meta_home_title' => 'TinyCB – Free Live Sex Chat & Webcams',
   'meta_home_desc' => 'Watch thousands of live webcams instantly! Free chat, models, and more 24/7.',
