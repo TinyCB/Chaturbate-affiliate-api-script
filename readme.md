@@ -99,7 +99,7 @@ _All edits are live—no need to edit files manually!_
 - **No database:** All data/settings stored as flat files.
 - **Cached listings/grid:** Only models present in your most recent cache appear in the grid. Update with `fetch-and-cache.php`.
 - **Offline profiles:** Only *online* models appear in the grid, but the profile page for *any* model ever seen is preserved and accessible (does **not** show cam if offline).
-- **memory_limit:** Set this to at least `256M` or `512M` in `php.ini`, as `model_profiles.json` may quickly reach 50MB+ and require additional memory for reliable operation.
+- **memory_limit:** Set this to at least `256M` or `512M` in `php.ini`, as `model_profiles.json` (used to display offline profile pages) may quickly reach 50MB+ and require additional memory for reliable operation.
 - All URLs are pretty (`/girls/page/2` etc.), no query strings.
 - More admin customization is coming in future versions.
 - Feature requests & issues are very welcome!
