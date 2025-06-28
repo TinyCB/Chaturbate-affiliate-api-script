@@ -24,6 +24,8 @@ $cache_dir = __DIR__."/cache/";
 $regions = ['northamerica', 'europe_russia', 'southamerica', 'asia', 'other'];
 $model = null;
 $model_online = false;
+$now = time();
+$last_online = null;
 
 // 1. Try to find model in online caches
 foreach ($regions as $region) {
@@ -35,11 +37,11 @@ foreach ($regions as $region) {
         if(strtolower($m['username']) === strtolower($username)) {
             $model = $m;
             $model_online = true;
+            $last_online = $now;
             break 2;
         }
     }
 }
-
 // 2. Fallback: Try to load from model_profiles.json if not online
 if(!$model) {
     $profile_file = $cache_dir . "model_profiles.json";
@@ -50,6 +52,7 @@ if(!$model) {
                 if(strtolower($m['username']) === strtolower($username)) {
                     $model = $m;
                     $model_online = false;
+                    $last_online = isset($m['last_online']) ? (int)$m['last_online'] : 0;
                     break;
                 }
             }
@@ -67,20 +70,37 @@ if(!$model) {
     exit;
 }
 
+// --- Staged status logic
+$days_offline = 9999;
+if ($last_online) $days_offline = floor(($now - $last_online) / 86400);
+
+if ($days_offline > 120) { // PERMANENTLY GONE
+    header("HTTP/1.1 410 Gone");
+    $meta_title = "Model permanently removed | " . $config['site_name'];
+    $meta_desc = "";
+    include('templates/header.php');
+    echo "<h2>User permanently removed.</h2>";
+    include('templates/footer.php');
+    exit;
+} elseif ($days_offline > 90) {
+    $soft_error = true;
+} else {
+    $soft_error = false;
+}
+
 // Treat as offline if no embed
 if(empty($model['iframe_embed_revshare'])) $model_online = false;
-// If offline, force current_show to "offline"
 if (!$model_online) $model['current_show'] = 'offline';
 
 // ----- SEO meta -----
 $genders = array('f'=>'Female','m'=>'Male','c'=>'Couple','t'=>'Trans');
-$gender_label = isset($genders[$model['gender']]) ? $genders[$model['gender']] : ucfirst($model['gender']);
+$gender_label = isset($genders[$model['gender'] ?? null]) ? $genders[$model['gender']] : ucfirst($model['gender'] ?? '');
 $title_tags = '';
 if (!empty($model['tags'])) {
     $title_tags = ' – #' . implode(' #', array_slice($model['tags'], 0, 3));
 }
-$meta_title = $model['username'] . " - $gender_label Live Cam$title_tags | " . ($config['site_name'] ?? 'Live Cams');
-$meta_desc = !empty($model['room_subject']) ? $model['room_subject'] : ("Watch {$model['username']} streaming live now.");
+$meta_title = ($model['username'] ?? 'Model') . " - $gender_label Live Cam$title_tags | " . ($config['site_name'] ?? 'Live Cams');
+$meta_desc = !empty($model['room_subject']) ? $model['room_subject'] : ("Watch ".($model['username'] ?? 'model')." streaming live now.");
 
 function chaturbate_whitelabel_replace($html, $wldomain) {
     if (!$wldomain || $wldomain === "chaturbate.com") return $html;
@@ -117,7 +137,7 @@ $gender_colors = [
     't' => '#a46ef7',
     'c' => '#ed7a38',
 ];
-$this_gender_color = $gender_colors[$model['gender']] ?? $pri;
+$this_gender_color = $gender_colors[$model['gender'] ?? 'f'] ?? $pri;
 $iframe_height = is_mobile_device() ? '425px' : '600px';
 
 include('templates/header.php');
@@ -303,14 +323,20 @@ body { background: #f7f8fa; }
 </style>
 <div class="model-profile-main">
   <div class="model-profile-panel">
+    <?php if (!empty($soft_error)): ?>
+      <div style='background:#fffbe2;color:#7b6800;padding:18px;font-size:1.13em;margin:26px 0 18px 0;border-radius:7px;text-align:center;'>
+        This model has been inactive for a while.<br>
+        This profile is temporarily unavailable, but may return soon.
+      </div>
+    <?php endif; ?>
     <div class="model-header-flex">
       <div class="model-pp-avatar">
-        <img src="<?=htmlspecialchars($model['image_url'])?>" alt="<?=htmlspecialchars($model['username'])?>">
+        <img src="<?=htmlspecialchars($model['image_url'] ?? '')?>" alt="<?=htmlspecialchars($model['username'] ?? '')?>">
       </div>
       <div class="model-pp-summary">
         <div class="model-pp-row">
-          <span class="model-pp-username"><?=htmlspecialchars($model['username'])?></span>
-          <span class="model-age-badge"><?= intval($model['age']) ?> yrs</span>
+          <span class="model-pp-username"><?=htmlspecialchars($model['username'] ?? '')?></span>
+          <span class="model-age-badge"><?= intval($model['age'] ?? 0) ?> yrs</span>
           <?php if(!empty($model['country'])): ?>
             <img class="model-country-flag"
                 src="https://flagcdn.com/<?= strtolower(strlen($model['country'])===2 ? $model['country'] : substr($model['country'],0,2)) ?>.svg"
@@ -318,10 +344,10 @@ body { background: #f7f8fa; }
                 alt="<?=htmlspecialchars($model['country'])?>">
           <?php endif; ?>
           <span class="model-gender-badge"><?=ucfirst($gender_label)?></span>
-          <?php if($model['is_hd']): ?>
+          <?php if(!empty($model['is_hd'])): ?>
             <span class="model-badge hd">HD</span>
           <?php endif; ?>
-          <?php if($model['is_new']): ?>
+          <?php if(!empty($model['is_new'])): ?>
             <span class="model-badge new">NEW</span>
           <?php endif; ?>
           <?php if(!$model_online): ?>
@@ -343,7 +369,7 @@ body { background: #f7f8fa; }
           <?php endif; ?>
           <span class="stat-pill"><b>Show:</b>
             <?php $show_map=['public'=>'Public','private'=>'Private','group'=>'Group','away'=>'Away','offline'=>'Offline'];
-              echo $show_map[$model['current_show']] ?? ucfirst($model['current_show']);
+              echo $show_map[$model['current_show'] ?? "offline"] ?? ucfirst($model['current_show'] ?? "offline");
             ?>
           </span>
         </div>

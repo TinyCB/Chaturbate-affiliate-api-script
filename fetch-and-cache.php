@@ -3,7 +3,6 @@
 $config = include('config.php');
 $cache_dir = __DIR__ . "/cache/";
 if (!is_dir($cache_dir)) mkdir($cache_dir);
-
 $regions = [
     'northamerica',
     'europe_russia',
@@ -11,7 +10,6 @@ $regions = [
     'asia',
     'other'
 ];
-
 $profile_file = $cache_dir . "model_profiles.json";
 
 // Load existing profiles if file exists
@@ -30,6 +28,9 @@ foreach ($modelProfiles as $idx => $entry) {
     }
 }
 
+$now = time();
+$seen_in_this_fetch = []; // array of usernames found in regions
+
 // For each region, fetch and cache
 foreach ($regions as $region) {
     echo "Fetching region: $region ... ";
@@ -46,22 +47,21 @@ foreach ($regions as $region) {
             file_put_contents($fn, json_encode($json, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
             echo "Saved to $fn (" . count($json['results']) . " rooms)\n";
             sleep(1); // polite to API
-
             // Archive/Update model profiles
             foreach ($json['results'] as $result) {
-                // Copy all result fields except volatile ones
+                $uname = strtolower($result['username']);
+                $seen_in_this_fetch[$uname] = true;
                 $profileData = $result;
                 // Remove live-only/ephemeral fields
                 unset(
                     $profileData['iframe_embed'],
+                    $profileData['iframe_embed_revshare'],
                     $profileData['num_users'],
                     $profileData['seconds_online'],
-                    $profileData['current_show'] // Optional, you may want to keep last known online state
+                    $profileData['current_show']
                 );
                 // Mark last time seen online
-                $profileData['last_online'] = time();
-
-                $uname = strtolower($result['username']);
+                $profileData['last_online'] = $now;
                 if (isset($profileMap[$uname])) {
                     $modelProfiles[$profileMap[$uname]] = array_merge($modelProfiles[$profileMap[$uname]], $profileData);
                 } else {
@@ -77,7 +77,13 @@ foreach ($regions as $region) {
     }
 }
 
+// PRUNE: Remove profiles not seen in a week (7*86400 seconds = 604800)
+// This will only preserve models seen in the regions within the last week.
+$cutoff = $now - 120 * 86400;
+$modelProfiles = array_values(array_filter($modelProfiles, function($m) use ($cutoff) {
+    return !empty($m['last_online']) && $m['last_online'] >= $cutoff;
+}));
+
 // Save back the model_profiles archive
 file_put_contents($profile_file, json_encode($modelProfiles, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-
 echo "All regions fetched, live caches & profile archive updated.\n";
