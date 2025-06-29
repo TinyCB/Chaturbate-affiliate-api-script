@@ -1,5 +1,4 @@
 # TinyCB V2 (PHP Whitelabel Chaturbate Frontend)
-
 A minimal PHP-powered Chaturbate aggregator for your own whitelabel or promo site.  
 Grid view, model profiles, and live filters. All data is local/cached. No database required.
 
@@ -11,15 +10,16 @@ In addition to signing up via my affiliate link, I would also appreciate it if y
 ---
 
 ## ✨ Features
-
 - **Lightning-fast local caching:** All cam grid and model data is fetched and stored as flat JSON files for speed and reliability.
 - **Live grid filtering:** Filter models instantly by gender, region, room size, age, and tag (#hashtags).
 - **Pretty, clean URLs:** Navigate via `/girls/`, `/guys/`, `/trans/`, `/couples/`, or directly by `/model/username`.
 - **Clickable tags everywhere:** Hashtags (in grid & sidebar) instantly update filters, for super quick navigation.
 - **Auto-refresh mode (desktop):** Optional toggle in the header. When enabled, automatically refreshes the grid every minute—new models appear, offline models disappear, and all data stays up-to-date (subject line, viewer counts, even thumbnails!).
 - **Profile fallback for offline models:** If a model goes offline, their profile page (avatar, stats, bio, tags, etc) is still preserved and accessible at `/model/username`.
+- **Automated model bio writing (AI):** Generate model bios automatically with OpenAI (e.g. GPT-4/4o/3.5-turbo) or Ollama (local, e.g. Mistral, Gemma, Qwen, etc.), with creative variety and admin control.
 - **Modern tooltips & hover highlights:** All tags/controls give clear hover feedback (with colored backgrounds) for a polished feel.
-- **Full admin panel:** Edit all nav links, meta tags, site colors, slugs, logo, and more—instantly, via the browser.
+- **Full admin panel:** Edit all nav links, meta tags, site colors, slugs, logo, LLM settings, and more instantly in your browser.
+- **"Rewrite all bios" feature:** Regenerate all bios in one batch when you want to improve style or change LLMs/backends.
 - **True 404 error handling:** Offline/missing model pages return a real HTTP 404 Not Found code for proper SEO.
 - **No database required:** Portable and easy to deploy anywhere PHP runs.
 
@@ -32,7 +32,7 @@ In addition to signing up via my affiliate link, I would also appreciate it if y
 git clone https://github.com/YOURUSERNAME/YOURREPO.git
 cd YOURREPO
 ```
-Or, download and unzip the archive [here](https://github.com/Kudocams/TinyCB/archive/master.zip).
+Or download and unzip [here](https://github.com/Kudocams/TinyCB/archive/master.zip).
 
 After downloading, [sign up at Chaturbate](https://chaturbate.com/in/?track=default&tour=9O7D&campaign=2DLMP) to get your affiliate ID.
 
@@ -47,72 +47,74 @@ Run the script to cache live model data:
 ```bash
 php fetch-and-cache.php
 ```
-
 > **NOTE:**  
 > The script also maintains `model_profiles.json` (an archive of all models ever seen), which is used to display offline profile pages.
-
 Set up a cron job to call this script every few minutes (adjust as desired for freshness).
 
-### 4. **.htaccess**
-The repo includes a ready-to-go `.htaccess` for clean URLs out of the box.  
-No changes needed unless you install in a subdirectory.
+### 4. **Generate bios with AI**
+To generate bios for all models, run:
+```bash
+php generate-bio.php
+```
+- This uses the LLM/backend/URL/model/API key you set in admin (see below).
+- Runs in batch, saves every 5 bios. Safely resumable!
+- **Don’t run at the same time as fetch-and-cache.php for huge archives.**
+- Enable "Rewrite all bios" in admin to force all bios to update.
 
-### 5. **Open in your browser**  
-Browse to your site root (e.g., `https://yourdomain.com/`) – you’ll see the live cam grid!
+### 5. **.htaccess**
+Repo includes a ready-to-go `.htaccess` for clean URLs out of the box.
+
+### 6. **Open in your browser**  
+Go to your site root (e.g. `https://yourdomain.com/`) – you’ll see the live cam grid and profiles!
 
 ---
 
 ## 🔑 Admin/Config
 
 ### **Access the Admin Page**
-- Go to `/admin.php` (ex: `https://yourdomain.com/admin.php`)
+- Go to `/admin.php` (e.g., `https://yourdomain.com/admin.php`)
 - **Default admin password:** `changeme`
 
 ### **Changing the Admin Password**
 - Log in with `changeme`
 - Use the “Change Admin Password” fields at the bottom of the admin page.
-- After saving, your new password is instantly active.
 
 ### **What You Can Configure**
-
-- Site name, affiliate ID, and main logo
-- Primary color and footer text
-- Nav bar login & broadcast links
+- Site name, affiliate ID, logo, colors, footer
+- Nav links: login & broadcast
 - Google Analytics code
-- Privacy policy/contact email
-- Google & Bing site verification tags
-- “Cams Per Page” grid limit
-- Whitelabel domain for embeds
-- URL slugs for girls, guys, trans, couples, model profiles
-- Homepage meta title & description
-- Per-gender page meta title & description
-- Change admin password (for panel access)
-- Instant logo upload (PNG)
-
-_All edits are live—no need to edit files manually!_
+- Privacy/contact email, SEO meta, verification tags
+- Cams per page limit, URL slugs for all categories and models
+- **AI/LLM backend:** Provider (OpenAI/ollama), API URL, model name, (and OpenAI API key if needed)
+- **"Rewrite all bios"**: Checkbox to force regenerate all bios on next batch
+- Homepage/gender/page meta tags, instant logo & favicon upload
+- All edits are saved instantly—no manual file editing needed!
 
 ---
 
 ## ℹ️ Notes
-- **memory_limit:** Set this to at least `256M` or `512M` in your `php.ini`, as `model_profiles.json` (used for offline profile pages) can quickly grow past 50MB and will require more memory. If you do not have access to `php.ini`, you can also set the limit at the very top of `model.php` (or any relevant script) with:
+
+- **AI Provider/model:** Choose from OpenAI (with your own API key) or run locally with Ollama or anything OpenAI-compatible.
+- **memory_limit:** Set to at least `256M` or `512M` in `php.ini` as `model_profiles.json` (used for offline profile pages) can quickly hit 50MB+.  
+  If you do not have php.ini access, set at the top of your script:
   ```php
   ini_set('memory_limit', '256M');
   ```
-- **Mobile design:** Not fully responsive yet—best viewed on desktop for now.
-- **No database:** All data/settings stored as flat files.
-- **Cached listings/grid:** Only models present in your most recent cache appear in the grid. Update with `fetch-and-cache.php`.
-- **Offline profiles:** Only *online* models appear in the grid, but the profile page for *any* model ever seen is preserved and accessible (does **not** show cam if offline).
-- All URLs are pretty (`/girls/page/2` etc.), no query strings.
-- More admin customization is coming in future versions.
-- Feature requests & issues are very welcome!
+- **Mobile design:** Not fully responsive yet—use on desktop for now.
+- **No database:** All data/settings are flat files.
+- **Grid/listings:** Only models in your latest cache appear in the public grid; profiles for all archived models remain accessible.
+- **SEO:** All URLs are pretty (`/girls/page/2` etc.), no query strings.
+- **Feature requests, issues, and PRs are welcome!**
+- **AI output:** Use safe, on-brand, non-PII prompts and review generated bios regularly if using OpenAI or other cloud providers.
 
 ---
 
 ## 🤔 Troubleshooting
 
 - Blank grid? Make sure `cache/` is writable and `fetch-and-cache.php` has run.
-- AJAX/filters blank? Check browser dev tools and confirm `/api-proxy.php` is reachable.
-- To reset admin: manually delete or edit `admin_password_hash` in `config.php`.
+- AJAX/filters not working? Use browser dev tools to check `/api-proxy.php`.
+- Can't write bios/config? Check permissions on `cache/` and `config.php`.
+- To reset admin: delete or edit `admin_password_hash` in `config.php`.
 
 ---
 
