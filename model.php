@@ -42,6 +42,23 @@ foreach ($regions as $region) {
         }
     }
 }
+// If online, merge in ai_bio from archive if present
+if ($model_online && !isset($model['ai_bio'])) {
+    $profile_file = $cache_dir . "model_profiles.json";
+    if (file_exists($profile_file)) {
+        $profiles = json_decode(file_get_contents($profile_file), true);
+        if (is_array($profiles)) {
+            foreach ($profiles as $arch) {
+                if (strtolower($arch['username']) === strtolower($model['username'])) {
+                    if (!empty($arch['ai_bio'])) {
+                        $model['ai_bio'] = $arch['ai_bio'];
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
 // 2. Fallback: Try to load from model_profiles.json if not online
 if(!$model) {
     $profile_file = $cache_dir . "model_profiles.json";
@@ -59,7 +76,6 @@ if(!$model) {
         }
     }
 }
-
 if(!$model) {
     header("HTTP/1.0 404 Not Found");
     $meta_title = "Model not found | ".$config['site_name'];
@@ -73,7 +89,6 @@ if(!$model) {
 // --- Staged status logic
 $days_offline = 9999;
 if ($last_online) $days_offline = floor(($now - $last_online) / 86400);
-
 if ($days_offline > 120) { // PERMANENTLY GONE
     header("HTTP/1.1 410 Gone");
     $meta_title = "Model permanently removed | " . $config['site_name'];
@@ -108,8 +123,7 @@ function chaturbate_whitelabel_replace($html, $wldomain) {
         '#(https?:)?//(www\.)?chaturbate\.com#i',
         function($matches) use ($wldomain) {
             return ($matches[1] ? $matches[1] : 'https:') . '//' . $wldomain;
-        },
-        $html
+        }, $html
     );
 }
 function is_mobile_device() {
@@ -139,8 +153,17 @@ $gender_colors = [
 ];
 $this_gender_color = $gender_colors[$model['gender'] ?? 'f'] ?? $pri;
 $iframe_height = is_mobile_device() ? '425px' : '600px';
-
 include('templates/header.php');
+
+function markdown_links_to_html($text) {
+    return preg_replace_callback(
+        '/\[(.*?)\]\((https?:\/\/[^\s\)]+)\)/i',
+        function($m) {
+            return '<a href="' . htmlspecialchars($m[2]) . '" target="_blank" rel="noopener">' . htmlspecialchars($m[1]) . '</a>';
+        },
+        $text
+    );
+}
 ?>
 <style>
 :root {
@@ -320,6 +343,20 @@ body { background: #f7f8fa; }
   .model-meta-wrap{flex-direction:column;gap:8px;}
   .model-meta-col{min-width:0;}
 }
+.model-meta-wrap {
+  padding: 19px 16px 13px 16px; /* example; use your current value */
+}
+.model-written-bio {
+  font-style: italic;
+  color: #594f6b;
+  background: #f6f7fc;
+  padding: 8px 0 8px 0;   /* no side padding! */
+  margin: 0 0 13px 0;
+  border-radius: 8px;
+  width: 100%;
+  text-align: left;
+  box-sizing: border-box;
+}
 </style>
 <div class="model-profile-main">
   <div class="model-profile-panel">
@@ -383,14 +420,27 @@ body { background: #f7f8fa; }
     <script>
     setTimeout(function() {
       var f=document.querySelector('.cb-cam-iframe');
-      if(f) {
-        if((!f.contentWindow&&f.offsetHeight<150)||f.offsetHeight===0)
+      if(f && ((!f.contentWindow&&f.offsetHeight<150)||f.offsetHeight===0))
           document.getElementById('cb-embed-fallback').style.display = 'block';
-      }
     }, 2600);
     </script>
     <?php endif; ?>
-    <div class="model-meta-wrap">
+	   <div class="model-meta-wrap">
+		<?php if (!empty($model['ai_bio'])): ?>
+		  <div class="model-written-bio" style="
+			font-style:italic;
+			color:#594f6b;
+			background:#f6f7fc;
+			padding:8px 0 7px 0;              /* no side padding */
+			margin:0 0 12px 0;
+			border-radius:8px;
+			width:100%;
+			text-align:left;
+			box-sizing:border-box;
+		  ">
+			<?=markdown_links_to_html($model['ai_bio'])?>
+		  </div>
+		<?php endif; ?>
       <div class="model-meta-col">
         <?php if(!empty($model['location'])): ?>
           <div class="model-meta-item">

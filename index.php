@@ -10,10 +10,39 @@ $slugs = $config['slugs'] ?? [
 ];
 $meta_title = $config['meta_home_title'];
 $meta_desc  = $config['meta_home_desc'];
+$g = '';
+$page_num = 1;
+
+// 1. Parse gender from pretty URL, e.g. /women or /girls/page/2, and get page number.
+$path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$parts = explode('/', $path);
+
+$slug_to_gender = array_flip($slugs);
+
+// Gender with possible /page/X
+if (isset($parts[0]) && isset($slug_to_gender[$parts[0]])) {
+    $g = $slug_to_gender[$parts[0]];
+    if (isset($parts[1]) && strtolower($parts[1]) === 'page' && isset($parts[2]) && is_numeric($parts[2])) {
+        $page_num = intval($parts[2]);
+    }
+}
+
+// Fallback to GET for old URLs or query filter
 if (isset($_GET['gender']) && count((array)$_GET['gender']) == 1) {
     $g = is_array($_GET['gender']) ? $_GET['gender'][0] : $_GET['gender'];
-    if (isset($config['meta_gender_titles'][$g]))   $meta_title = $config['meta_gender_titles'][$g];
-    if (isset($config['meta_gender_descs'][$g]))    $meta_desc  = $config['meta_gender_descs'][$g];
+    if (isset($_GET['page']) && is_numeric($_GET['page'])) $page_num = intval($_GET['page']);
+}
+
+// 3. Update meta tags if gender found
+if ($g && isset($config['meta_gender_titles'][$g])) {
+    $meta_title = $config['meta_gender_titles'][$g];
+    if ($page_num > 1) {
+        $meta_title .= " - Page $page_num";
+    }
+}
+if ($g && isset($config['meta_gender_descs'][$g])) {
+    $meta_desc = $config['meta_gender_descs'][$g];
+    // (optional) You could add "Page $page_num" to description too, but it's less critical.
 }
 include('templates/header.php');
 ?>

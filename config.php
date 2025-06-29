@@ -3,7 +3,7 @@ return array (
   'site_name' => 'TinyCB',
   'broadcast_url' => 'https://my.tinycb.com/accounts/register/?src=broadcast&next=/b/',
   'login_url' => 'https://my.tinycb.com/auth/login/',
-  'signup_url' => 'https://your-default-signup-link.com/',
+  'signup_url' => 'https://my.tinycb.com/accounts/register/',
   'affiliate_id' => '2DLMP',
   'google_analytics_id' => '',
   'privacy_email' => 'info@tinycb.com',
@@ -16,7 +16,9 @@ return array (
   'meta_home_desc' => 'Watch thousands of live webcams instantly! Free chat, models, and more 24/7.',
   'google_site_verification' => '',
   'bing_site_verification' => '',
-  'site_base_url' => 'https://yourdomain.com',
+  'llm_api_url' => 'http://192.168.1.7:11434/api/generate',
+  'llm_model'   => 'mistral:7b',
+  'site_base_url' => 'https://tinycb.com',
   'meta_gender_titles' => 
   array (
     'f' => 'Watch Free Live Female Cams – TinyCB',

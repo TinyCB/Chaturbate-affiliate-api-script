@@ -3,6 +3,7 @@ session_start();
 $CONFIG_FILE = "config.php";
 $config = include($CONFIG_FILE);
 $genders = ['f'=>'Female','m'=>'Male','t'=>'Trans','c'=>'Couple'];
+
 if (empty($config['slugs']) || !is_array($config['slugs'])) {
     $config['slugs'] = [
         'f' => 'girls',
@@ -59,6 +60,11 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['google_site_verification'] = trim($_POST['google_site_verification'] ?? '');
     $config['bing_site_verification'] = trim($_POST['bing_site_verification'] ?? '');
     $config['site_base_url'] = trim($_POST['site_base_url'] ?? '');
+    $config['llm_provider'] = trim($_POST['llm_provider'] ?? 'ollama');
+    $config['llm_api_url'] = trim($_POST['llm_api_url'] ?? '');
+    $config['llm_model'] = trim($_POST['llm_model'] ?? '');
+    $config['llm_api_key'] = trim($_POST['llm_api_key'] ?? '');
+    $config['llm_rewrite_all_bios'] = isset($_POST['llm_rewrite_all_bios']) && $_POST['llm_rewrite_all_bios'] === "1" ? "1" : "0";
     $config['meta_home_title'] = $_POST['meta_home_title'];
     $config['meta_home_desc'] = $_POST['meta_home_desc'];
     $config['meta_gender_titles'] = $_POST['meta_gender_titles'] ?? [];
@@ -75,7 +81,6 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
         move_uploaded_file($_FILES['logo_file']['tmp_name'], $fn);
         $config['logo_path']=$fn;
     }
-    // ------ FAVICON UPLOAD: PNG/ICO only ------
     if(!empty($_FILES['favicon_file']['tmp_name'])) {
         $allowed = ['ico','png'];
         $ext = strtolower(pathinfo($_FILES['favicon_file']['name'], PATHINFO_EXTENSION));
@@ -135,10 +140,17 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
 body{background:#fafafd;}
 form{background:#fff;margin:40px auto;max-width:460px;padding:30px 28px;border-radius:10px;box-shadow:0 3px 20px rgba(60,90,150,.10);}
 label{display:block;margin-bottom:4px;}
-input,button{padding:6px;width:98%;margin-bottom:13px;}
+input,button,select{padding:6px;width:98%;margin-bottom:13px;}
 button{background:var(--primary-color);color:#fff;border:none;width:100%;border-radius:5px;}
 @media (max-width:600px) {form{max-width:98vw;padding:1vw 2vw;}}
 </style>
+<script>
+function toggleLLMFields() {
+    var sel = document.getElementById('llm_provider');
+    var isOpenAI = sel.value === 'openai';
+    document.getElementById('openai_api_key_section').style.display = isOpenAI ? '' : 'none';
+}
+</script>
 </head>
 <body>
 <h2 style="text-align:center;">Site Admin</h2>
@@ -146,6 +158,10 @@ button{background:var(--primary-color);color:#fff;border:none;width:100%;border-
 if(!empty($error))   echo "<div style='color:red;text-align:center;'>$error</div>";
 if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success</div>";
 ?>
+<p style="text-align:center;margin-top:24px;">
+    <a href="/admin">General Settings</a> |
+    <a href="/admin-ai-status">AI Bio Status</a>
+</p>
 <form method="POST" enctype="multipart/form-data" autocomplete="off">
     <label>Site Name</label>
     <input name="site_name" value="<?=htmlspecialchars($config['site_name'])?>">
@@ -175,6 +191,40 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="cams_per_page" type="number" min="1" max="500" value="<?=htmlspecialchars($config['cams_per_page']??20)?>">
     <label>Whitelabel Domain (e.g. cam.mysite.com, no http://)</label>
     <input name="whitelabel_domain" value="<?=htmlspecialchars($config['whitelabel_domain'] ?? 'chaturbate.com')?>">
+    <label>LLM API Provider</label>
+    <select name="llm_provider" id="llm_provider" onchange="toggleLLMFields()">
+      <option value="ollama" <?=($config['llm_provider'] ?? '')==='ollama'?'selected':'';?>>Ollama/local</option>
+      <option value="openai" <?=($config['llm_provider'] ?? '')==='openai'?'selected':'';?>>OpenAI/ChatGPT</option>
+    </select>
+    <label>LLM API URL
+        <small style="display:block;font-weight:400;color:#858;">
+            Ollama/local: <b>http://127.0.0.1:11434/api/generate</b><br>
+            OpenAI: <b>https://api.openai.com/v1/chat/completions</b>
+        </small>
+    </label>
+    <input name="llm_api_url" id="llm_api_url" value="<?=htmlspecialchars($config['llm_api_url'] ?? '')?>">
+    <label>LLM Model Name
+        <small style="display:block;font-weight:400;color:#858;">
+            Examples: <b>mistral:7b</b>, <b>gemma3:4b</b>, <b>gpt-4o-mini</b>, <b>gpt-3.5-turbo</b>.
+            <span style="color:#d14545;"><br/>
+                <b>⚠️ Do not use LLMs/models that output explanations or chain-of-thought. Unexpected output can break bios or page layout.</b>
+            </span>
+        </small>
+    </label>
+    <input name="llm_model" id="llm_model" value="<?=htmlspecialchars($config['llm_model'] ?? '')?>">
+    <div id="openai_api_key_section" style="<?=($config['llm_provider'] ?? '')==='openai' ? '' : 'display:none;'?>">
+      <label>OpenAI API Key
+      <small style="display:block;font-weight:400;color:#858;">(Required for OpenAI. Not needed for Ollama!)</small>
+      </label>
+      <input name="llm_api_key" id="llm_api_key" value="<?=htmlspecialchars($config['llm_api_key'] ?? '')?>" type="password" autocomplete="off">
+    </div>
+    <label style="display:flex;align-items:center;margin-bottom:13px;">
+      <input type="checkbox" name="llm_rewrite_all_bios" value="1" <?= !empty($config['llm_rewrite_all_bios']) && $config['llm_rewrite_all_bios'] == "1" ? "checked" : "" ?>>
+      <span style="margin-left:7px;color:#a30;font-weight:500;">Rewrite <b>all</b> model bios on next batch run</span>
+    </label>
+    <div style="font-size:0.98em;color:#974d13;margin-bottom:18px;">
+      <b>Warning:</b> This will overwrite every model bio with a brand new version on your next batch run. The option will auto-disable after one run.
+    </div>
     <h3>URL Slugs</h3>
     <label>Slug for Female</label>
     <input name="slugs[f]" value="<?=htmlspecialchars($config['slugs']['f'] ?? 'girls')?>">
@@ -207,7 +257,7 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <label>Favicon (.ico or .png; up to 450×450px)</label>
     <input type="file" name="favicon_file"><br>
     <?php if (!empty($config['favicon_path'])): ?>
-    <img src="<?=htmlspecialchars($config['favicon_path'])?>" style="max-width:32px; max-height:32px;"><br>
+        <img src="<?=htmlspecialchars($config['favicon_path'])?>" style="max-width:32px; max-height:32px;"><br>
     <?php endif; ?>
     <h3>Change Admin Password</h3>
     <label>Current Password</label>
@@ -217,7 +267,7 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <button type="submit">Save Settings</button>
 </form>
 <p style="text-align:center; margin-top:35px;">
-    <a href="index.php">Back to site</a>
+    <a href="/">Back to site</a>
     &nbsp;|&nbsp;
     <a href="/admin?logout=1" onclick="return confirm('Log out?')">Log out</a>
 </p>

@@ -20,6 +20,9 @@ RewriteRule ^privacy/?$ privacy.php [L,QSA]
 # Pretty Admin URL
 RewriteRule ^admin/?$ admin.php [L,QSA]
 
+# Pretty Admin AI Status URL
+RewriteRule ^admin-ai-status/?$ admin-ai-status.php [L,QSA]
+
 # Model profile, only for current base slug (default: model)
 RewriteRule ^model/([\w\-]+)$ model.php?username=$1 [L,QSA]
 
