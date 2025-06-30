@@ -16,83 +16,100 @@ function generate_model_bio($model, $llm_provider, $llm_api_url, $llm_model, $ll
     $languages = isset($model['spoken_languages']) ? $model['spoken_languages'] : '';
     $room_subject = isset($model['room_subject']) ? $model['room_subject'] : '';
     $tags_str = (isset($model['tags']) && is_array($model['tags'])) ? implode(', ', $model['tags']) : (isset($model['tags']) ? $model['tags'] : '');
+    $display_name = isset($model['display_name']) ? $model['display_name'] : (isset($model['username']) ? $model['username'] : 'Me');
     $model_url = 'https://' . rtrim($whitelabel_domain, '/') . '/' . $model['username'];
 
-    // --- Highly varied, anti-repetitive sample bios ---
+    // Diverse CTA endings for profile links
+    $cta_phrases = [
+        "Want more? [See my full profile here!]($model_url)",
+        "Curious for the rest? [Check out my profile!]($model_url)",
+        "Don’t be shy—[click here for the full show!]($model_url)",
+        "Ready to play? [Unlock my full profile!]($model_url)",
+        "Join me for the real fun—[see everything here!]($model_url)",
+        "Can’t get enough? [Come to my profile!]($model_url)",
+        "Let’s get wilder—[see my full profile!]($model_url)",
+        "See what you’ve been missing—[visit my profile!]($model_url)",
+        "Tempted yet? [See more here!]($model_url)",
+        "Feeling naughty? [Step into my private world!]($model_url)",
+        "Come see what happens after hours—[here’s my profile!]($model_url)",
+        "The best is yet to come… [visit my profile!]($model_url)",
+        "Think you can handle more? [Join me now!]($model_url)",
+        "Don’t wait—[click here to see all my sides!]($model_url)"
+    ];
+    shuffle($cta_phrases);
+
+    // Sample bios (leave as is, mix as you like)
     $example_bios = [
-        // Action/fact/confession openers:
-        "Guaranteed at least one laugh—more if you dare me. [To see more, visit my full profile here!]",
-        "Rainy nights, soft playlists, and silly jokes = my perfect stream. Want to join in? [To see more, visit my full profile here!]",
-        "Confession: My karaoke voice is best enjoyed after midnight. 🎤 [To see more, visit my full profile here!]",
-        "My room is an open invite for snack lovers and silly dance-offs. [To see more, visit my full profile here!]",
-        "Movie marathons, spontaneous dance breaks (and pajamas) are always welcome. [To see more, visit my full profile here!]",
-        "Admit it: you wish you could pull off neon socks too. 😏🧦 [To see more, visit my full profile here!]",
-        "Nothing staged here—just silly moments, real smiles, and a splash of mischief. [To see more, visit my full profile here!]",
-        "If you've got corny jokes, bring them—I score extra points for a bad pun! 😂 [To see more, visit my full profile here!]",
-        "Confession: My favorite part of streaming is asking you what song I'm supposed to sing next. [To see more, visit my full profile here!]",
-        "Is there anything better than a cozy blanket and good company? [To see more, visit my full profile here!]",
-        "Bet you can't guess my favorite midnight snack! [To see more, visit my full profile here!]",
-        "I believe coffee and laughter can fix almost anything. ☕️ [To see more, visit my full profile here!]",
-        "My weekends are for sketching, silly voices, and finding the next great playlist. [To see more, visit my full profile here!]",
-        "Bring your best meme game. I'll show my favorite. [To see more, visit my full profile here!]",
-        "No filter, just a lot of snack breaks and very questionable dance moves. [To see more, visit my full profile here!]",
-        "If kindness was currency, my room would be a billionaire hangout. 🌸 [To see more, visit my full profile here!]",
-        "Life’s too short for boring conversations or lukewarm coffee. [To see more, visit my full profile here!]",
-        "Chocolate and karaoke are always a vibe in my room. [To see more, visit my full profile here!]",
-        "Can I get a show of hands for night owls? 🦉 [To see more, visit my full profile here!]",
-        "Extra points for bringing your pet to the camera. 🐾 [To see more, visit my full profile here!]",
-        "My specialty: silly hats and good advice (results may vary). [To see more, visit my full profile here!]",
-        "Guaranteed: at least one real laugh and a fun surprise. [To see more, visit my full profile here!]",
-        "Sometimes I stream in PJs. Sometimes it’s full glam. Always good vibes. [To see more, visit my full profile here!]",
-        "Dare you to stump me with the weirdest question you know! [To see more, visit my full profile here!]",
-        "Ask me about my weirdest talent—bonus if you can top it. [To see more, visit my full profile here!]",
-        "First album I ever owned was a total guilty pleasure (ask me!). [To see more, visit my full profile here!]",
-        "What's your go-to comfort food? Mine changes weekly. [To see more, visit my full profile here!]",
-        "Sparkly socks, dumb jokes, and plenty of late-night confessions. [To see more, visit my full profile here!]",
-        "Bet you a smile you can't guess my favorite holiday snack. [To see more, visit my full profile here!]",
-        "Cozy blankets, oversharing, and questionable singing welcome here. [To see more, visit my full profile here!]",
-        // Greeting openers (minority, still zero "I'm just..." etc):
-        "Hi! I’m Lexi. 😊 If you love flirting, dad jokes, or 90s pop, let’s talk! [See my full profile!]",
-        "Hey, I’m Zoe, a friendly nerd who loves video games, pizza 🍕, and slow mornings. Say hi if you’re shy—I don’t bite (unless you ask nicely)! [Visit my page!]",
-        "Welcome! I’m Lila, your curvy Latina bookworm who loves coffee ☕️ and long conversations. Come hang out and tell me your favorite movie! [See more about me!]",
-        "Hey! It’s Brooke, live from California. Sun and good times are my thing. [See what I’m up to!]",
-        // Occasional questions (rarer, not "Ever tried/ever wondered"):
-        "Do you think pineapple belongs on pizza? I’ll fight for it. 🍍 [To see more, visit my full profile here!]",
-        "What’s your karaoke go-to? (I’m not judging. Much.) [To see more, visit my full profile here!]",
-        "Question: spontaneous dance battles or deep chats—what's your vibe? [To see more, visit my full profile here!]",
-        // Playful invitations and bold lines
-        "Laugh first, strip later. That's my motto. [To see more, visit my full profile here!]",
-        "Themed nights, goofy games, and snack reviews are a thing in my room. [To see more, visit my full profile here!]",
-        "Let's get cozy and talk about everything (or nothing). [To see more, visit my full profile here!]",
-        "Bring your quirks—I'll show you mine. [To see more, visit my full profile here!]",
-        // Fun, direct, and weirdly honest
-        "My weakness: late-night cereal and spin-the-wheel games. [To see more, visit my full profile here!]",
-        "I collect stickers, cheesy jokes, and fun people. [To see more, visit my full profile here!]",
-        "If you catch me with a book and a giant mug, it's a perfect night. [To see more, visit my full profile here!]",
-        "Never met a snack I didn’t love or a weird story I didn’t want to hear. [To see more, visit my full profile here!]"
+        "Naughty by nature, wild by choice. Ready to tease you until you can't take it? Tip for naughtier fun. 😈 {$cta_phrases[0]}",
+        "My favorite position? In front of the cam, totally bare and ready to play. Got a wild side? Prove it to me. {$cta_phrases[1]}",
+        "Ready to strip, moan, and make you lose control—just ask nicely. 💋 {$cta_phrases[2]}",
+        "If you want shy and sweet, try someone else. If you want wild, wet, and a little taboo, get in here now. 🚨 {$cta_phrases[3]}",
+        "Lingerie, roleplay, toys—it's all on my menu. Tell me your fantasy or watch me lose myself live. {$cta_phrases[4]}",
+        "Who says good girls don't get dirty? Let me prove how wrong you are tonight. {$cta_phrases[5]}",
+        "Guaranteed at least one laugh—more if you dare me. {$cta_phrases[6]}",
+        "Rainy nights, soft playlists, and silly jokes = my perfect stream. Want to join in? {$cta_phrases[7]}",
+        "My room is an open invite for snack lovers and silly dance-offs. {$cta_phrases[8]}",
+        "Movie marathons, spontaneous dance breaks (and pajamas) are always welcome. {$cta_phrases[9]}",
+        "Nothing staged here—just silly moments, real smiles, and a splash of mischief. {$cta_phrases[10]}",
+        "If you've got corny jokes, bring them—I score extra points for a bad pun! 😂 {$cta_phrases[11]}",
+        "Confession: My favorite part of streaming is asking you what song I'm supposed to sing next. {$cta_phrases[12]}",
+        "I believe coffee and laughter can fix almost anything. ☕️ {$cta_phrases[13]}",
+        "Bring your best meme game. I'll show my favorite. {$cta_phrases[0]}",
+        "No filter, just a lot of snack breaks and very questionable dance moves. {$cta_phrases[1]}",
+        "Hi! I’m Lexi. 😊 If you love flirting, dad jokes, or 90s pop, let’s talk! {$cta_phrases[2]}",
+        "Hey, I’m Zoe, a friendly nerd who loves video games, pizza 🍕, and slow mornings. Say hi if you’re shy—I don’t bite (unless you ask nicely)! {$cta_phrases[3]}",
+        "Welcome! I’m Lila, your curvy Latina bookworm who loves coffee ☕️ and long conversations. Come hang out and tell me your favorite movie! {$cta_phrases[4]}",
+        "Hey! It’s Brooke, live from California. Sun and good times are my thing. {$cta_phrases[5]}",
+        "Do you think pineapple belongs on pizza? I’ll fight for it. 🍍 {$cta_phrases[6]}",
+        "Laugh first, strip later. That's my motto. {$cta_phrases[7]}"
     ];
     shuffle($example_bios);
-    $used_examples = array_slice($example_bios, 0, 5);
+    $used_examples = array_slice($example_bios, 0, 6);
 
+    // Prepare greeting (randomly from your list, with display name!)
+    $greetings = [
+        "What's up? I'm ",
+        "Yo! ",
+        "Hi, I'm ",
+        "Hey! My name’s ",
+        "Hola! I’m ",
+        "Greetings, I’m ",
+        "Hey, call me ",
+        "Hello there, they call me ",
+        "Hellooo, my name is ",
+        "Hey folks, it’s ",
+        "Hiya! I'm ",
+        "Hi! People call me ",
+        "Sup, I'm ",
+        "Hey hey, I’m ",
+        "Hi, it's ",
+        "Hey, I'm ",
+        "Hello! I'm ",
+        "Hi everyone, I'm "
+    ];
+    shuffle($greetings);
+    $chosen_greeting = $greetings[0] . $display_name . ".";
+
+    // Now prompt WITHOUT greeting in the output!
     $prompt = <<<EOT
-Write exactly ONE cam model profile bio (not more!) in first person, as if a real person is introducing herself casually on an adult cam site.
-
-- Vary the structure: Some bios can start with 'Hi', 'Hey', or a greeting and name, but others should open with a fun fact, direct statement, activity, playful confession, a situation, bold invitation, silly challenge, or even a unique line. Rarely use questions as openers, and avoid repeating the same format from example to example.
-- Do NOT start the bio with "Just a", "I'm just", "Just someone", "I'm a...", or any “Ever tried...”, “Ever wondered...”, "Ever..." question style. Avoid formulas, cliches, and any repetitive opening style. Show lots of personality and variety.
-- If it feels natural, you can include 1 or 2 emoji in the bio to add personality or mood—don't force emoji into every bio, just use them when it fits.
-- Avoid fantasy, poetry, or roleplay storytelling styles. Language should feel natural, human, easygoing, and fun—not scripted or safe.
-- Maximum 3 sentences. No hashtags, numbers, usernames, birthdays, or exact cities—just general place if needed (like "from Texas", "from Europe"). Mention interests, activities, what she likes to do on cam, hobbies, quirks, or favorites as fits.
-- End the bio with a new sentence as a call to action: "To see more, [visit my full profile here]($model_url)!" using Markdown link, upbeat and inviting.
-- Do NOT repeat openings like 'Hey there!', 'Hi there!', or any one style for every bio. Mix it up every time.
-- Output only a single, complete bio—do not include multiple bios, notes, variants, or explanations.
-
-Below are a few sample bios for inspiration ONLY (write just one, and not as a question!):
+Write exactly ONE cam model profile bio (not more!) in first person, as if a real person is introducing herself on an adult cam site for 18+ audiences.
+- Begin the bio **without** any greeting or introduction (no "Hi", "Hey", "Hello", "I'm [Name]", "Hey there, I'm [Name]", etc). Jump right into the fun, flirty, sexy, or playful sentence. (The greeting will be added automatically.)
+- Vary the structure: Some bios should open with a fun fact, playful confession, an activity, a bold or naughty invitation, or a unique line. Some can be openly sexual or teasing, some just playful. Mix up your style every time.
+- You are permitted and encouraged to be explicit or naughty if fitting: do NOT censor sexual language or context if it's true to her persona or cam shows. Sexy, erotic, teasing, NSFW, and kinky references are allowed. Mix playful, flirty, and explicit as the mood fits. Do not be crude/mean.
+- Do NOT start the bio with "Just a", "I'm just", "Just someone", "I'm a...", “Ever tried...”, “Ever wondered...”, or any other overused/stock opener. Avoid formulas and repeating your structures.
+- Mix up your language—use bold openers, confessions, direct invites, teasing, silly, and flirty styles. Never use the same format every time.
+- Use 1–2 emoji if it feels natural; skip if it doesn't.
+- Write in a natural, relaxed, human voice—avoid fantasy, poetry, or obvious roleplay.
+- Maximum 3 sentences. No hashtags, numbers, usernames, birthdays, or exact cities—only general places (“from Texas”, “from Europe”).
+- End the bio with a lively, fun, or bold call to action that invites the reader to your profile—do not use the same CTA each time! Use your own style and always include a Markdown link to "$model_url" in the CTA.
+- Output only a single, complete bio—never variants, notes, or explanations.
+Below are a few sample bios for inspiration ONLY (do not copy verbatim):
 - {$used_examples[0]}
 - {$used_examples[1]}
 - {$used_examples[2]}
 - {$used_examples[3]}
 - {$used_examples[4]}
-
+- {$used_examples[5]}
 Model info for inspiration:
 Gender: $gender
 Country: $country
@@ -100,13 +117,11 @@ Location: $location
 Languages: $languages
 Room topic: $room_subject
 Tags: $tags_str
-
 Output only your single final bio, nothing else.
 EOT;
 
-    $temperature = rand(11, 13) / 10; // 1.1–1.3
-    $top_p = rand(92, 100) / 100;     // 0.92–1.0
-
+    $temperature = rand(11, 13) / 10;
+    $top_p = rand(92, 100) / 100;
     if ($llm_provider === 'openai') {
         $api_url = $llm_api_url ?: 'https://api.openai.com/v1/chat/completions';
         $model_name = $llm_model ?: 'gpt-4o';
@@ -150,23 +165,37 @@ EOT;
         $msg = "[cURL error] {$model['username']}: $err (HTTP status: $http_code)";
         echo "$msg\n";
         log_debug($msg);
+        return null;
     } else {
         $msg = "[LLM HTTP $http_code] for {$model['username']}: $result";
         echo "$msg\n";
         log_debug($msg);
     }
     curl_close($ch);
+
     if (!$result) return null;
     $json = json_decode($result, true);
+
     if ($llm_provider === 'openai') {
         if (isset($json['choices'][0]['message']['content'])) {
-            return trim($json['choices'][0]['message']['content']);
+            $bio_body = trim($json['choices'][0]['message']['content']);
+        } else {
+            return null;
         }
     } else {
-        if (isset($json['response']))  return trim($json['response']);
-        if (isset($json['message']['content']))  return trim($json['message']['content']);
+        if (isset($json['response'])) {
+            $bio_body = trim($json['response']);
+        } elseif (isset($json['message']['content'])) {
+            $bio_body = trim($json['message']['content']);
+        } else {
+            return null;
+        }
     }
-    return null;
+
+    // Prepend greeting and ensure proper spacing and punctuation.
+    $bio_body = ltrim($bio_body, "\r\n\t .");
+    $final_bio = $chosen_greeting . " " . $bio_body;
+    return $final_bio;
 }
 $config = include('config.php');
 $cache_dir = __DIR__ . "/cache/";
