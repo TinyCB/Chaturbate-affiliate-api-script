@@ -4,8 +4,11 @@ Grid view, model profiles, and live filters. All data is local/cached. No databa
 
 **Demo:** https://tinycb.com/
 
-If you want to thank me and keep this project alive, please don't forget to sign up via my [affiliate link](https://chaturbate.com/in/?tour=9O7D&campaign=2DLMP&track=default).  
-In addition to signing up via my affiliate link, I would also appreciate it if you could buy me a coffee [here](https://coff.ee/tinycb).
+> If you want to thank me and keep this project alive:
+> - Please don't forget to sign up via my [affiliate link](https://chaturbate.com/in/?tour=9O7D&campaign=2DLMP&track=default)
+> - And [buy me a coffee](https://coff.ee/tinycb).
+>
+> _(Seriously, do both. It helps a lot!)_
 
 ---
 
