@@ -4,6 +4,7 @@ if (php_sapi_name() !== 'cli') {
     echo "Forbidden.";
     exit;
 }
+
 function log_debug($msg) {
     $logfile = __DIR__ . '/ollama-bio-debug.log';
     file_put_contents($logfile, date("[Y-m-d H:i:s] ") . $msg . "\n", FILE_APPEND);
@@ -37,8 +38,7 @@ function generate_model_bio($model, $llm_provider, $llm_api_url, $llm_model, $ll
         "Don’t wait—[click here to see all my sides!]($model_url)"
     ];
     shuffle($cta_phrases);
-
-    // Sample bios (leave as is, mix as you like)
+    // Sample bios for inspiration
     $example_bios = [
         "Naughty by nature, wild by choice. Ready to tease you until you can't take it? Tip for naughtier fun. 😈 {$cta_phrases[0]}",
         "My favorite position? In front of the cam, totally bare and ready to play. Got a wild side? Prove it to me. {$cta_phrases[1]}",
@@ -66,31 +66,7 @@ function generate_model_bio($model, $llm_provider, $llm_api_url, $llm_model, $ll
     shuffle($example_bios);
     $used_examples = array_slice($example_bios, 0, 6);
 
-    // Prepare greeting (randomly from your list, with display name!)
-    $greetings = [
-        "What's up? I'm ",
-        "Yo! ",
-        "Hi, I'm ",
-        "Hey! My name’s ",
-        "Hola! I’m ",
-        "Greetings, I’m ",
-        "Hey, call me ",
-        "Hello there, they call me ",
-        "Hellooo, my name is ",
-        "Hey folks, it’s ",
-        "Hiya! I'm ",
-        "Hi! People call me ",
-        "Sup, I'm ",
-        "Hey hey, I’m ",
-        "Hi, it's ",
-        "Hey, I'm ",
-        "Hello! I'm ",
-        "Hi everyone, I'm "
-    ];
-    shuffle($greetings);
-    $chosen_greeting = $greetings[0] . $display_name . ".";
-
-    // Now prompt WITHOUT greeting in the output!
+    // No PHP greeting logic - gone!
     $prompt = <<<EOT
 Write exactly ONE cam model profile bio (not more!) in first person, as if a real person is introducing herself on an adult cam site for 18+ audiences.
 - Begin the bio **without** any greeting or introduction (no "Hi", "Hey", "Hello", "I'm [Name]", "Hey there, I'm [Name]", etc). Jump right into the fun, flirty, sexy, or playful sentence. (The greeting will be added automatically.)
@@ -122,6 +98,7 @@ EOT;
 
     $temperature = rand(11, 13) / 10;
     $top_p = rand(92, 100) / 100;
+
     if ($llm_provider === 'openai') {
         $api_url = $llm_api_url ?: 'https://api.openai.com/v1/chat/completions';
         $model_name = $llm_model ?: 'gpt-4o';
@@ -150,7 +127,6 @@ EOT;
         ];
         $headers = ['Content-Type: application/json'];
     }
-
     $ch = curl_init($api_url);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
@@ -160,6 +136,7 @@ EOT;
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
     $result = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
     if ($result === false) {
         $err = curl_error($ch);
         $msg = "[cURL error] {$model['username']}: $err (HTTP status: $http_code)";
@@ -172,10 +149,8 @@ EOT;
         log_debug($msg);
     }
     curl_close($ch);
-
     if (!$result) return null;
     $json = json_decode($result, true);
-
     if ($llm_provider === 'openai') {
         if (isset($json['choices'][0]['message']['content'])) {
             $bio_body = trim($json['choices'][0]['message']['content']);
@@ -191,12 +166,11 @@ EOT;
             return null;
         }
     }
-
-    // Prepend greeting and ensure proper spacing and punctuation.
+    // Only trim leading whitespace/periods, do NOT prepend greeting.
     $bio_body = ltrim($bio_body, "\r\n\t .");
-    $final_bio = $chosen_greeting . " " . $bio_body;
-    return $final_bio;
+    return $bio_body;
 }
+
 $config = include('config.php');
 $cache_dir = __DIR__ . "/cache/";
 $profile_file = $cache_dir . "model_profiles.json";

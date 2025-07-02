@@ -367,9 +367,13 @@ body { background: #f7f8fa; }
       </div>
     <?php endif; ?>
     <div class="model-header-flex">
-      <div class="model-pp-avatar">
+    <div class="model-pp-avatar">
+      <?php if (!$model_online): ?>
+        <img src="/assets/offline.png" alt="Offline Model Avatar">
+      <?php else: ?>
         <img src="<?=htmlspecialchars($model['image_url'] ?? '')?>" alt="<?=htmlspecialchars($model['username'] ?? '')?>">
-      </div>
+      <?php endif; ?>
+    </div>
       <div class="model-pp-summary">
         <div class="model-pp-row">
           <span class="model-pp-username"><?=htmlspecialchars($model['username'] ?? '')?></span>
