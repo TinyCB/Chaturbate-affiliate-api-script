@@ -3,7 +3,6 @@ session_start();
 $CONFIG_FILE = "config.php";
 $config = include($CONFIG_FILE);
 $genders = ['f'=>'Female','m'=>'Male','t'=>'Trans','c'=>'Couple'];
-
 if (empty($config['slugs']) || !is_array($config['slugs'])) {
     $config['slugs'] = [
         'f' => 'girls',
@@ -45,6 +44,7 @@ if (isset($_GET['logout'])) {
     header("Location: /admin");
     exit;
 }
+
 if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['site_name'] = $_POST['site_name'];
     $config['affiliate_id'] = $_POST['affiliate_id'];
@@ -64,7 +64,11 @@ if($_SERVER['REQUEST_METHOD']==="POST" && isset($_POST['site_name'])) {
     $config['llm_api_url'] = trim($_POST['llm_api_url'] ?? '');
     $config['llm_model'] = trim($_POST['llm_model'] ?? '');
     $config['llm_api_key'] = trim($_POST['llm_api_key'] ?? '');
-    $config['llm_rewrite_all_bios'] = isset($_POST['llm_rewrite_all_bios']) && $_POST['llm_rewrite_all_bios'] === "1" ? "1" : "0";
+    // -------- functional LLM (re)write fields, no extra markup --------
+    $config['llm_rewrite_mode'] = $_POST['llm_rewrite_mode'] ?? 'missing';
+    $config['llm_stale_days'] = (isset($_POST['llm_stale_days']) && $_POST['llm_stale_days']!=='') ? max(1,(int)$_POST['llm_stale_days']) : 7;
+    $config['llm_manual_ids'] = trim($_POST['llm_manual_ids'] ?? '');
+    // --------------------------------------------------------------
     $config['meta_home_title'] = $_POST['meta_home_title'];
     $config['meta_home_desc'] = $_POST['meta_home_desc'];
     $config['meta_gender_titles'] = $_POST['meta_gender_titles'] ?? [];
@@ -146,6 +150,12 @@ button{background:var(--primary-color);color:#fff;border:none;width:100%;border-
 </style>
 <script>
 function toggleLLMFields() {
+    var mode = document.getElementById('llm_rewrite_mode').value;
+    document.getElementById('llm_stale_days_wrap').style.display = (mode === 'stale') ? '' : 'none';
+    document.getElementById('llm_manual_ids_wrap').style.display = (mode === 'ids') ? '' : 'none';
+    // hide both for all/missing
+}
+function toggleLLMProvider() {
     var sel = document.getElementById('llm_provider');
     var isOpenAI = sel.value === 'openai';
     document.getElementById('openai_api_key_section').style.display = isOpenAI ? '' : 'none';
@@ -192,7 +202,7 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <label>Whitelabel Domain (e.g. cam.mysite.com, no http://)</label>
     <input name="whitelabel_domain" value="<?=htmlspecialchars($config['whitelabel_domain'] ?? 'chaturbate.com')?>">
     <label>LLM API Provider</label>
-    <select name="llm_provider" id="llm_provider" onchange="toggleLLMFields()">
+    <select name="llm_provider" id="llm_provider" onchange="toggleLLMProvider()">
       <option value="ollama" <?=($config['llm_provider'] ?? '')==='ollama'?'selected':'';?>>Ollama/local</option>
       <option value="openai" <?=($config['llm_provider'] ?? '')==='openai'?'selected':'';?>>OpenAI/ChatGPT</option>
     </select>
@@ -206,7 +216,7 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <label>LLM Model Name
         <small style="display:block;font-weight:400;color:#858;">
             Examples: <b>mistral:7b</b>, <b>gemma3:4b</b>, <b>gpt-4o-mini</b>, <b>gpt-3.5-turbo</b>.
-            <span style="color:#d14545;"><br/>
+            <span style="color:#d14545;">
                 <b>⚠️ Do not use LLMs/models that output explanations or chain-of-thought. Unexpected output can break bios or page layout.</b>
             </span>
         </small>
@@ -218,14 +228,25 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
       </label>
       <input name="llm_api_key" id="llm_api_key" value="<?=htmlspecialchars($config['llm_api_key'] ?? '')?>" type="password" autocomplete="off">
     </div>
-    <label style="display:flex;align-items:center;margin-bottom:13px;">
-      <input type="checkbox" name="llm_rewrite_all_bios" value="1" <?= !empty($config['llm_rewrite_all_bios']) && $config['llm_rewrite_all_bios'] == "1" ? "checked" : "" ?>>
-      <span style="margin-left:7px;color:#a30;font-weight:500;">Rewrite <b>all</b> model bios on next batch run</span>
-    </label>
-    <div style="font-size:0.98em;color:#974d13;margin-bottom:18px;">
-      <b>Warning:</b> This will overwrite every model bio with a brand new version on your next batch run. The option will auto-disable after one run.
+
+    <!-- Only one rewrite mode, with dynamic options below -->
+    <label>LLM Rewrite Mode</label>
+    <select name="llm_rewrite_mode" id="llm_rewrite_mode" onchange="toggleLLMFields()">
+        <option value="all"<?=($config['llm_rewrite_mode']=='all'?' selected':'')?>>Rewrite all</option>
+        <option value="missing"<?=($config['llm_rewrite_mode']=='missing'?' selected':'')?>>Only missing bios</option>
+        <option value="stale"<?=($config['llm_rewrite_mode']=='stale'?' selected':'')?>>Only stale bios</option>
+        <option value="ids"<?=($config['llm_rewrite_mode']=='ids'?' selected':'')?>>Only specific IDs</option>
+    </select>
+    <div id="llm_stale_days_wrap" style="display:none;">
+        <label>Stale bio threshold (&gt;days old):</label>
+        <input name="llm_stale_days" type="number" min="1" max="120" value="<?=htmlspecialchars($config['llm_stale_days'] ?? 7)?>" style="width:60px;">
     </div>
-    <h3>URL Slugs</h3>
+    <div id="llm_manual_ids_wrap" style="display:none;">
+        <label>Manual bio IDs to rewrite (comma-separated):</label>
+        <input name="llm_manual_ids" value="<?=htmlspecialchars($config['llm_manual_ids'] ?? '')?>" placeholder="e.g. jessicaparkerrr, emmyxxx, ...">
+    </div>
+
+
     <label>Slug for Female</label>
     <input name="slugs[f]" value="<?=htmlspecialchars($config['slugs']['f'] ?? 'girls')?>">
     <label>Slug for Male</label>
@@ -236,12 +257,10 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <input name="slugs[c]" value="<?=htmlspecialchars($config['slugs']['c'] ?? 'couples')?>">
     <label>Slug for Model Profiles</label>
     <input name="slugs[model]" value="<?=htmlspecialchars($config['slugs']['model'] ?? 'model')?>">
-    <h3>SEO Meta Tags</h3>
     <label>Meta Title (Homepage)</label>
     <input name="meta_home_title" value="<?=htmlspecialchars($config['meta_home_title'] ?? '')?>">
     <label>Meta Description (Homepage)</label>
     <input name="meta_home_desc" value="<?=htmlspecialchars($config['meta_home_desc'] ?? '')?>">
-    <h3>Gender Page SEO</h3>
     <?php foreach($genders as $g=>$label): ?>
       <div style="background:#f7fbef;padding:7px 13px;margin-bottom:5px;border-radius:7px;">
         <b><?=$label?>:</b>
@@ -259,7 +278,6 @@ if(!empty($success)) echo "<div style='color:green;text-align:center;'>$success<
     <?php if (!empty($config['favicon_path'])): ?>
         <img src="<?=htmlspecialchars($config['favicon_path'])?>" style="max-width:32px; max-height:32px;"><br>
     <?php endif; ?>
-    <h3>Change Admin Password</h3>
     <label>Current Password</label>
     <input type="password" name="current_admin_password" autocomplete="current-password">
     <label>New Password</label>
@@ -276,4 +294,8 @@ if ($config['admin_password_hash'] && password_verify('changeme', $config['admin
     echo "<div style='color:#db2727;max-width:480px;margin:20px auto;background:#ffeeee;border-radius:7px;padding:13px;text-align:center;font-weight:bold;font-size:1.03em;'>For security, <b>please change the default admin password</b> now.</div>";
 }
 ?>
+<script>
+toggleLLMFields();
+toggleLLMProvider();
+</script>
 </body></html>

@@ -8,7 +8,7 @@ return array (
   'google_analytics_id' => '',
   'privacy_email' => 'info@tinycb.com',
   'primary_color' => '#808085',
-  'footer_text' => '© 2024 TinyCB.',
+  'footer_text' => '© 2025 TinyCB.',
   'logo_path' => 'assets/logo.png',
   'favicon_path' => 'assets/favicon.ico',
   'whitelabel_domain' => 'my.tinycb.com',
@@ -19,14 +19,14 @@ return array (
   'llm_api_url' => 'http://192.168.1.7:11434/api/generate',
   'llm_model'   => 'mistral:7b',
   'site_base_url' => 'https://tinycb.com',
-  'meta_gender_titles' => 
+  'meta_gender_titles' =>
   array (
     'f' => 'Watch Free Live Female Cams – TinyCB',
     'm' => 'Watch Free Live Male Cams – TinyCB',
     't' => 'Trans Cam Girls & Shemale Live Sex Chat – TinyCB',
     'c' => 'Couple Sex Cam Shows – TinyCB',
   ),
-  'meta_gender_descs' => 
+  'meta_gender_descs' =>
   array (
     'f' => 'Discover the best free live female sex cams and chat with hot girls now.',
     'm' => 'Live male cams and gay sex chat – real men on webcam now.',
@@ -35,7 +35,7 @@ return array (
   ),
   'cams_per_page' => 96,
   'admin_password_hash' => '$2y$10$u8hoo8GnYVESopAJTGT4Fu6Dyknu6EFF4OP53xgTah5e9F9C7/EdG',
-  'slugs' => 
+  'slugs' =>
   array (
     'f' => 'female',
     'm' => 'male',
@@ -43,4 +43,11 @@ return array (
     'c' => 'couples',
     'model' => 'model',
   ),
+  // --- LLM/AI-related (new) ---
+  'llm_provider' => 'ollama', // or 'openai'
+  'llm_api_key' => '',
+  'llm_rewrite_all_bios' => '0',
+  'llm_rewrite_mode' => 'missing', // 'all', 'missing', 'stale', 'ids'
+  'llm_stale_days' => 7,
+  'llm_manual_ids' => '', // CSV, e.g. 'jessicaparkerrr,emmyxxx'
 );
