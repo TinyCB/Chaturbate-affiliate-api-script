@@ -123,5 +123,5 @@ Go to your site root (e.g. `https://yourdomain.com/`) – you’ll see the live 
 
 ## 💬 Feedback & Contributions
 
-_Not mobile yet._  
+_Not fully opmized for mobile yet._  
 **Issues and PRs are very welcome!**
