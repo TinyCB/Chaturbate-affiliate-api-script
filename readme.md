@@ -54,14 +54,13 @@ php fetch-and-cache.php
 > The script also maintains `model_profiles.json` (an archive of all models ever seen), which is used to display offline profile pages.
 Set up a cron job to call this script every few minutes (adjust as desired for freshness).
 
-### 4. **Generate bios with AI**
+### 4. **Generate bios with AI (Optional)**
 To generate bios for all models, run:
 ```bash
 php generate-bio.php
 ```
 - This uses the LLM/backend/URL/model/API key you set in admin (see below).
 - Runs in batch, saves every 5 bios. Safely resumable!
-- **Don’t run at the same time as fetch-and-cache.php for huge archives.**
 - Enable "Rewrite all bios" in admin to force all bios to update.
 
 ### 5. **.htaccess**
