@@ -63,6 +63,8 @@ php generate-bio.php
 - Runs in batch, saves every 5 bios. Safely resumable!
 - Enable "Rewrite all bios" in admin to force all bios to update.
 
+This feature does not generate model bio details, as those are already provided by the API; it simply composes a textual introduction for the model’s bio.
+
 ### 5. **.htaccess**
 Repo includes a ready-to-go `.htaccess` for clean URLs out of the box.
 
