@@ -4,8 +4,9 @@ Grid view, model profiles, and live filters. All data is local/cached. No databa
 
 **Demo:** https://tinycb.com/
 
-If you want to thank me and keep this project alive, please don't forget to sign up via my [affiliate link](https://chaturbate.com/in/?tour=9O7D&campaign=2DLMP&track=default).  
-In addition to signing up via my affiliate link, I would also appreciate it if you could buy me a coffee [here](https://coff.ee/tinycb).
+> If you want to thank me and keep this project alive:
+> - Please don't forget to sign up via my [affiliate link](https://chaturbate.com/in/?tour=9O7D&campaign=2DLMP&track=default)
+> _(Seriously, It helps a lot!)_
 
 ---
 
@@ -51,15 +52,16 @@ php fetch-and-cache.php
 > The script also maintains `model_profiles.json` (an archive of all models ever seen), which is used to display offline profile pages.
 Set up a cron job to call this script every few minutes (adjust as desired for freshness).
 
-### 4. **Generate bios with AI**
+### 4. **Generate bios with AI (Optional)**
 To generate bios for all models, run:
 ```bash
 php generate-bio.php
 ```
 - This uses the LLM/backend/URL/model/API key you set in admin (see below).
 - Runs in batch, saves every 5 bios. Safely resumable!
-- **Don’t run at the same time as fetch-and-cache.php for huge archives.**
 - Enable "Rewrite all bios" in admin to force all bios to update.
+
+This feature does not generate model bio details, as those are already provided by the API; it simply composes a textual introduction for the model’s bio.
 
 ### 5. **.htaccess**
 Repo includes a ready-to-go `.htaccess` for clean URLs out of the box.
@@ -120,5 +122,5 @@ Go to your site root (e.g. `https://yourdomain.com/`) – you’ll see the live 
 
 ## 💬 Feedback & Contributions
 
-_Not mobile yet._  
+_Not fully opmized for mobile yet._  
 **Issues and PRs are very welcome!**
