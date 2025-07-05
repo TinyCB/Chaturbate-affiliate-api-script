@@ -6,9 +6,7 @@ Grid view, model profiles, and live filters. All data is local/cached. No databa
 
 > If you want to thank me and keep this project alive:
 > - Please don't forget to sign up via my [affiliate link](https://chaturbate.com/in/?tour=9O7D&campaign=2DLMP&track=default)
-> - And [buy me a coffee](https://coff.ee/tinycb).
->
-> _(Seriously, do both. It helps a lot!)_
+> _(Seriously, It helps a lot!)_
 
 ---
 
