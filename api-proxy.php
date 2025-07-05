@@ -1,5 +1,6 @@
 <?php
 $cache_dir = __DIR__ . "/cache/";
+
 $validRegions = [
    'northamerica',
    'europe_russia',
@@ -7,7 +8,8 @@ $validRegions = [
    'asia',
    'other'
 ];
-// Accept region as comma-separated (single param)
+
+// Accept region as comma-separated (single param) or multiple params
 $requestedRegions = [];
 if (isset($_GET['region'])) {
     if (is_array($_GET['region'])) {
@@ -22,6 +24,7 @@ if (isset($_GET['region'])) {
 }
 $requestedRegions = array_values(array_intersect($requestedRegions, $validRegions));
 if (empty($requestedRegions)) $requestedRegions = $validRegions;
+
 // Load & merge models from selected regions, dedup by username
 $models = [];
 error_log("Loading regions: " . implode(", ", $requestedRegions));
@@ -32,24 +35,29 @@ foreach ($requestedRegions as $reg) {
         error_log("Loaded $reg: $file (" . count($json['results']) . ")");
         if (isset($json['results'])) {
             foreach($json['results'] as $m) {
-                $models[$m['username']] = $m; // dedupe
+                $models[$m['username']] = $m; // dedupe by username
             }
         }
     } else {
         error_log("Cache missing for $reg: $file");
     }
 }
+
 $results = array_values($models);
-// Sort by viewers
+
+// Sort by viewers descending
 usort($results, function($a,$b){ return $b['num_users'] <=> $a['num_users']; });
-// All other filters:
+
+// --- Existing filters ---
+
 if (isset($_GET['gender'])) {
   $filterVal = is_array($_GET['gender']) ? $_GET['gender'] : [$_GET['gender']];
   $results = array_filter($results, function($m) use ($filterVal){
     return isset($m['gender']) && in_array($m['gender'], $filterVal);
   });
 }
-if(isset($_GET['tag'])) {
+
+if (isset($_GET['tag'])) {
   $filterVal = is_array($_GET['tag']) ? $_GET['tag'] : [$_GET['tag']];
   $results = array_filter($results, function($m) use ($filterVal){
     if (empty($m['tags'])) return false;
@@ -58,20 +66,23 @@ if(isset($_GET['tag'])) {
     return false;
   });
 }
+
 if (isset($_GET['hd'])) {
   $val = ($_GET['hd'] === 'true' || $_GET['hd'] === 1);
   $results = array_filter($results, function($m) use ($val) {
     return isset($m['is_hd']) && ($m['is_hd'] == $val);
   });
 }
-if(isset($_GET['minAge']) || isset($_GET['maxAge'])) {
+
+if (isset($_GET['minAge']) || isset($_GET['maxAge'])) {
   $min = isset($_GET['minAge']) ? intval($_GET['minAge']) : 18;
   $max = isset($_GET['maxAge']) ? intval($_GET['maxAge']) : 99;
   $results = array_filter($results, function($m) use ($min, $max) {
     return isset($m['age']) && $m['age'] >= $min && $m['age'] <= $max;
   });
 }
-// --- ROOM SIZE FILTERING (NEW) ---
+
+// ROOM SIZE
 if (isset($_GET['size'])) {
     $sizes = [
         'intimate' => [0, 40],
@@ -87,12 +98,37 @@ if (isset($_GET['size'])) {
         });
     }
 }
-// Paging & output
+
+// -- NEW FILTER: current_show
+if (isset($_GET['current_show'])) {
+    $val = $_GET['current_show'];
+    if (!is_array($val)) {
+        $val = explode(',', $val);
+    }
+    $val = array_map('strtolower', array_filter(array_map('trim', $val)));
+    if (count($val) > 0) {
+        $results = array_filter($results, function($m) use ($val) {
+            return isset($m['current_show']) && in_array(strtolower($m['current_show']), $val);
+        });
+    }
+}
+
+// -- NEW FILTER: is_new (boolean)
+if (isset($_GET['is_new'])) {
+    $isNewVal = $_GET['is_new'];
+    $boolVal = ($isNewVal === 'true' || $isNewVal === '1' || $isNewVal === 1);
+    $results = array_filter($results, function($m) use ($boolVal) {
+        return isset($m['is_new']) && ($m['is_new'] == $boolVal);
+    });
+}
+
 $results = array_values($results);
+
 $total = count($results);
 $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 100;
 $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
 $paged = array_slice($results, $offset, $limit);
+
 header('Content-Type: application/json');
 echo json_encode([
   'count' => $total,
