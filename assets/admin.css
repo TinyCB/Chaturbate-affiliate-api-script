@@ -1,0 +1,11 @@
+body {
+  background:#f8faff; font-family: sans-serif;
+}
+form {
+  background:#fff; margin:40px auto; max-width:430px; padding:22px 26px; border-radius:10px;
+  box-shadow:0 4px 25px #22344a10;
+}
+h2 { text-align:center; margin-bottom:22px; }
+label { display:block; margin:9px 0 3px 0;}
+input, button { width:100%; margin-bottom:12px; padding:8px;}
+button { background:#21a8df; color:#fff; border:none; border-radius:5px;}

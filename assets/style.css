@@ -1,0 +1,475 @@
+:root {
+  --primary-color: #df8620;
+  --accent: #f7fbff;
+}
+body {
+  margin: 0;
+  font-family: 'Roboto', Arial, sans-serif;
+  background: #fafafd;
+  color: #1d2228;
+  font-size: 13px;
+}
+/* HEADER & NAV */
+header {
+  display: flex;
+  align-items: center;
+  background: var(--primary-color);
+  color: #fff;
+  padding: 5px 9px 5px 12px;
+  min-height: 36px;
+}
+#logo {
+  height: 28px;
+  width: auto;
+  margin-right: 10px;
+  border-radius: 5px;
+}
+h1 {
+  margin: 0;
+  font-size: 1.22em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+nav {
+  background: #f7fbff;
+  border-bottom: 1px solid #d1e2ef;
+  padding: 4px 9px 4px 12px;
+}
+nav.main-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 9px 4px 12px;
+  background: #f7fbff;
+  border-bottom: 1px solid #d1e2ef;
+  min-height: 38px;
+}
+
+.main-navbar .nav-left,
+.main-navbar .nav-right {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.nav-simple-link,
+#reset-filters-link {
+  font-size: .98em;
+  color: var(--primary-color);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 7px;
+  transition: color .11s, background .13s;
+}
+.nav-simple-link:hover,
+#reset-filters-link:hover {
+  color: #fff;
+  background: var(--primary-color);
+  text-decoration: none;
+}
+.filter-btn {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 4px 9px;
+  font-size: .98em;
+  cursor: pointer;
+}
+/* --- SIDEBAR FILTER --- */
+#filter-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 245px;
+  max-width: 96vw;
+  height: 100vh;
+  background: #fff;
+  box-shadow: 2px 0 16px rgba(30,50,85,0.08);
+  z-index: 200;
+  overflow-y: auto;
+  transform: translateX(-102%);
+  transition: transform .3s;
+  padding: 12px 10px 10px 10px;
+  border-right: 1.2px solid #e7ecef;
+  font-size: 12.2px;
+  box-sizing: border-box;
+}
+#filter-sidebar.open {
+  transform: translateX(0);
+}
+#filter-sidebar .close-btn {
+  background: none;
+  border: none;
+  font-size: 1.28em;
+  color: #333;
+  float: right;
+  cursor: pointer;
+  margin-top: -4px;
+  margin-right: -2px;
+  padding: 0 4px;
+  line-height: 1.0;
+}
+/* Each filter block */
+.filter-section {
+  margin-bottom: 10px;
+}
+.filter-section:last-child {
+  margin-bottom: 2px;
+}
+.filter-label {
+  font-weight: 700;
+  font-size: 12.7px;
+  margin-bottom: 3px;
+  color: #1a2936;
+  letter-spacing: 0.01em;
+}
+/* -- Chips (all filter areas) -- */
+.filter-gender,
+.filter-regions,
+.filter-roomsize {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.filter-chip {
+  background: var(--accent);
+  color: #265690;
+  border-radius: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+  border: 1px solid #d3e4ef;
+  font-size: 12.7px;
+  user-select: none;
+  transition: background .13s;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.1;
+}
+.filter-chip.selected {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+/* Gender filter icon coloring (sidebar chips!) */
+.filter-chip[data-gender="f"], .filter-chip[data-gender="f"] .gender-cb { color: #b95cb0; }
+.filter-chip[data-gender="m"], .filter-chip[data-gender="m"] .gender-cb { color: #3673d9; }
+.filter-chip[data-gender="t"], .filter-chip[data-gender="t"] .gender-cb { color: #b089e1; }
+.filter-chip[data-gender="c"], .filter-chip[data-gender="c"] .gender-cb { color: #ad7c43; }
+/* -- Tags section -- */
+.filter-tags-group {
+  border: 1px solid #e0e6ee;
+  background: #f7f9fd;
+  border-radius: 7px;
+  padding: 6px 6px 3px 6px;
+  margin-bottom: 0;
+  margin-top: 2px;
+}
+#tag-search {
+  width: 100%;
+  margin-bottom: 6px;
+  border: 1px solid #ccddee;
+  border-radius: 6px;
+  font-size: 12.2px;
+  padding: 2px 6px;
+  background: #f8fbff;
+  height: 21px;
+  box-sizing: border-box;
+}
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 1px;
+  min-height: 28px;
+  max-height: 94px;
+  overflow-y: auto;
+}
+/* -- Age filter (always in a single row) -- */
+.filter-ages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin-top: 3px;
+}
+.filter-ages input[type="number"] {
+  flex: 0 0 48px;
+  width: 48px;
+  min-width: 42px;
+  max-width: 54px;
+  border: 1px solid #ccddee;
+  border-radius: 6px;
+  font-size: 13.5px;
+  padding: 4px 8px;
+  background: #f8fbff;
+  height: 27px;
+  box-sizing: border-box;
+  text-align: center;
+  vertical-align: middle;
+  margin-bottom: 0;
+  margin-top: 0;
+  margin-right: 0;
+  margin-left: 0;
+  outline: none;
+}
+.filter-ages span {
+  margin: 0 3px;
+  line-height: 1.2;
+}
+.filter-ages .filter-chip {
+  flex: 0 0 auto;
+  padding: 4px 14px;
+  font-size: 13px;
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+/* ------ MODEL GRID & CARD ------ */
+.model-grid {
+  display: grid;
+  gap: 12px;
+  margin: 8px 8px 0 8px;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+}
+@media (max-width: 800px) {
+  .model-grid { gap: 10px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+}
+@media (max-width: 550px) {
+  #filter-sidebar {
+    width: 93vw;
+    max-width: 95vw;
+    min-width: 0;
+    font-size: 1em;
+    padding: 8px 2vw 6px 2vw;
+  }
+  .model-grid { grid-template-columns: 1fr 1fr;}
+  .filter-chip { font-size: 13.8px; min-height: 28px;}
+}
+@media (max-width: 400px) {
+  .model-grid { grid-template-columns: 1fr; }
+}
+/* MODEL CARD STYLE */
+.model-card-cb {
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  max-height: 227px;
+  max-width:160px;
+  padding: 10px 10px 8px 10px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(35, 70, 175, 0.08);
+  font-size: 13px !important;
+  cursor: pointer;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.model-card-cb:hover {
+  box-shadow: 0 6px 18px rgba(35,70,175,0.15);
+  transform: translateY(-2px);
+}
+/* Image container */
+.model-img-wrap-cb {
+  width: 100%;
+  height: 110px;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+  background: transparent;
+  margin-bottom: 7px;
+}
+.model-img-cb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px 10px 0 0 !important;
+}
+/* Card info container now stretches all available height for correct sticky meta row! */
+.model-info-cb {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 0;
+  gap: 0px;
+}
+.row-top-cb {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  min-height: 17px;
+  height: 17px;
+  margin: 0;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+}
+.username-cb {
+  flex: 1 1 0;
+  min-width: 0;
+  color: #0066cc;
+  font-weight: 700;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Right meta group for Age, Gender, Flag */
+.row-meta-cb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.row-meta-cb > *:first-child {
+  margin-left: 0 !important;
+}
+
+/* ===== BOLD & COLORED GENDER ICON ===== */
+.gender-cb {
+  font-size: 1.23em;
+  margin-right: 2px;
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", "Arial", sans-serif;
+  font-weight: normal;
+  /* simulate bold with text-shadow */
+  text-shadow:
+    0 0 0.7px currentColor,
+    0 0 0.7px currentColor;
+  opacity: 0.98;
+  /* color set below by .f, .m, .t, .c class */
+}
+.gender-cb.f { color: #b95cb0; }
+.gender-cb.m { color: #3673d9; }
+.gender-cb.t { color: #b089e1; }
+.gender-cb.c { color: #ad7c43; }
+/* ===== END GENDER ICON ===== */
+
+.age-cb {
+  flex: 0 0 auto;
+  min-width: 18px;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+.flag-cb, .country-cb img {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+  margin-left: 4px;
+  display: inline-block;
+}
+/* Subject and tags (now only tags in subject are shown) */
+.subject-cb {
+  font-size: 12px;
+  color: #333;
+  line-height: 1.4;
+  margin: 2px 0 0 0;
+  margin-bottom: 3px !important;
+  padding: 0 !important;
+  word-break: break-word;
+  white-space: normal;
+  height: 50px;
+}
+.tag-cb {
+  color: #0066cc;
+  font-size: 12px;
+  font-weight: normal;
+  margin-left: 3px;
+  margin-right: 1px;
+  margin-bottom: 0;
+  display: inline-block;
+  white-space: normal;
+}
+/* Bottom meta row (viewers, time) - STICKS to absolute card bottom, no gap above! */
+.meta-row-cb {
+  font-size: 11px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 18px;
+  margin-top: auto;
+}
+.meta-group-cb {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.icon-cb {
+  font-size: 13px;
+  opacity: 0.7;
+  margin-right: 2px;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+}
+footer {
+  text-align: center;
+  padding: 9px;
+  background: #f7fbff;
+  color: #4770ad;
+  border-top: 1px solid #d1e2ef;
+  font-size: .97em;
+}
+main { min-height: 52vh; }
+.back-btn {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: .98em;
+  margin: 7px 0;
+  text-decoration: none;
+  box-shadow: 0 2px 7px #0001;
+  transition: background .11s;
+}
+.back-btn:hover {
+  background: #205a94;
+  color: #fff;
+  text-decoration: none;
+}
+.pagination-bar {
+  text-align: center;
+  margin: 11px 0 7px 0;
+}
+.pagination-bar b {
+  display: inline-block;
+  min-width: 21px;
+  padding: 2.5px 6px;
+  background: #bae8f9;
+  color: #2081b0;
+  font-weight: bold;
+  border-radius: 5px;
+  margin: 0 2px;
+}
+.pagination-bar button {
+  border: 1px solid #d1e8fa;
+  background: #f5fcff;
+  color: #368acb;
+  padding: 2.5px 7px;
+  margin: 0 1px;
+  border-radius: 5px;
+  font-size: .98em;
+  cursor: pointer;
+  transition: background .10s;
+  box-shadow: 0 1px 2px #aad6fa09;
+}
+.pagination-bar button[disabled], .pagination-bar button:disabled {
+  color: #aecadb;
+  background: #e2effa;
+  cursor: not-allowed;
+}
+.pagination-bar button:hover:not([disabled]) {
+  background: #ace1ff;
+  color: #1b5a89;
+}
