@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /admin.php
+Disallow: /privacy
+Disallow: /privacy.php
+Disallow: /fetch-and-cache.php
+Disallow: /generate-sitemap.php

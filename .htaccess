@@ -1,0 +1,32 @@
+# TinyCB V2 .htaccess
+
+# Block sensitive scripts and config from public web access
+<FilesMatch "^(fetch-and-cache\.php|generate-sitemap\.php|config\.php)$">
+    Require all denied
+</FilesMatch>
+
+# Avoid content negotiation oddities
+Options -Multiviews
+
+# --- Pretty URLs and Front Controller ---
+RewriteEngine On
+RewriteBase /
+
+# 1) Specific routes FIRST
+RewriteRule ^privacy/?$ privacy.php [L,QSA]
+RewriteRule ^admin/?$ admin.php [L,QSA]
+RewriteRule ^admin-ai-status/?$ admin-ai-status.php [L,QSA]
+RewriteRule ^model/([\w\-]+)$ model.php?username=$1 [L,QSA]
+
+# 2) Serve static assets directly (whitelist extensions - future proof )
+#    (prevents CSS/JS/images/fonts from hitting index.php)
+RewriteCond %{REQUEST_URI} \.(?:css|js|mjs|map|json|png|jpe?g|gif|svg|webp|ico|bmp|avif|mp4|webm|ogg|pdf|woff2?|ttf|eot)$ [NC]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 3) If an actual file exists (fallback), serve it
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 4) Catch-all: everything else to index.php (pagination/gender slugs/all else)
+RewriteRule ^ index.php [L,QSA]
