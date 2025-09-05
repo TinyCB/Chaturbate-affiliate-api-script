@@ -155,6 +155,13 @@ $site_url = (
     <?php endif; ?>
   </div>
   <div class="nav-right">
+    <?php if(empty($no_filters_button)): ?>
+      <button id="spotlight-guide-btn" class="spotlight-guide-header-btn" title="Learn about Model Spotlights">
+        <span class="spotlight-guide-icon">✨</span>
+        <span class="spotlight-guide-text">Spotlights</span>
+        <span class="spotlight-guide-badge">?</span>
+      </button>
+    <?php endif; ?>
     <?php if(!empty($c['broadcast_url'])): ?>
       <a href="<?=htmlspecialchars($c['broadcast_url'])?>" target="_blank" rel="noopener" class="nav-simple-link">Broadcast Yourself</a>
     <?php endif; ?>

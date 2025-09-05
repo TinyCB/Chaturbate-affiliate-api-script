@@ -192,6 +192,297 @@ function get_responsive_iframe_height() {
 }
 
 $iframe_height = get_responsive_iframe_height();
+
+// Function to analyze online patterns using seconds_online data for accurate duration tracking
+function getOnlineActivity($username, $cache_dir) {
+    $activity = [];
+    // Initialize 7 days x 24 hours grid (0 = never seen online)
+    for ($day = 0; $day < 7; $day++) {
+        for ($hour = 0; $hour < 24; $hour++) {
+            $activity[$day][$hour] = 0;
+        }
+    }
+    
+    $regions = ['northamerica', 'europe_russia', 'southamerica', 'asia', 'other'];
+    $username_lower = strtolower($username);
+    $sessions = [];
+    
+    foreach ($regions as $region) {
+        $pattern = $cache_dir . "cams_{$region}*.json";
+        $files = glob($pattern);
+        
+        // Also look for archived files (for better historical data)
+        $archived_pattern = $cache_dir . "archived/cams_{$region}*.json";
+        if (is_dir($cache_dir . "archived/")) {
+            $archived_files = glob($archived_pattern);
+            $files = array_merge($files, $archived_files);
+        }
+        
+        foreach ($files as $file) {
+            if (!file_exists($file)) continue;
+            
+            $json = json_decode(file_get_contents($file), true);
+            if (!$json || !isset($json['results'])) continue;
+            
+            // Try to extract timestamp from filename first, fallback to file modification time
+            $file_time = filemtime($file);
+            if (preg_match('/(\d{10,13})/', basename($file), $matches)) {
+                $timestamp = $matches[1];
+                // Convert to seconds if it's milliseconds
+                if (strlen($timestamp) > 10) {
+                    $timestamp = intval($timestamp / 1000);
+                }
+                $file_time = $timestamp;
+            }
+            
+            // Find the model and use seconds_online to calculate session
+            foreach ($json['results'] as $model) {
+                if (strtolower($model['username']) === $username_lower) {
+                    $seconds_online = $model['seconds_online'] ?? 0;
+                    
+                    if ($seconds_online > 0) {
+                        // Calculate when they went online
+                        $session_start = $file_time - $seconds_online;
+                        $session_end = $file_time; // Snapshot time
+                        
+                        $sessions[] = [
+                            'start' => $session_start,
+                            'end' => $session_end,
+                            'duration' => $seconds_online
+                        ];
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Remove duplicate sessions and merge overlapping ones
+    $sessions = array_unique($sessions, SORT_REGULAR);
+    
+    // Sort sessions by start time
+    usort($sessions, function($a, $b) {
+        return $a['start'] - $b['start'];
+    });
+    
+    // Fill activity grid based on calculated sessions
+    foreach ($sessions as $session) {
+        $start_time = $session['start'];
+        $end_time = $session['end'];
+        
+        // Mark each hour in the session as active
+        $current_time = $start_time;
+        
+        // Align to hour boundaries for better accuracy
+        $start_hour = floor($start_time / 3600) * 3600;
+        $end_hour = ceil($end_time / 3600) * 3600;
+        
+        for ($time = $start_hour; $time <= $end_hour; $time += 3600) {
+            // Only count hours that actually overlap with the session
+            if ($time + 3600 >= $start_time && $time <= $end_time) {
+                $day_of_week = date('w', $time); // 0 = Sunday
+                $hour_of_day = date('G', $time); // 0-23
+                
+                $activity[$day_of_week][$hour_of_day]++;
+            }
+        }
+    }
+    
+    // Convert raw counts to activity levels (0-3 scale)
+    $max_count = 1;
+    for ($day = 0; $day < 7; $day++) {
+        for ($hour = 0; $hour < 24; $hour++) {
+            if ($activity[$day][$hour] > $max_count) {
+                $max_count = $activity[$day][$hour];
+            }
+        }
+    }
+    
+    // Normalize to 0-3 scale
+    $normalized = [];
+    for ($day = 0; $day < 7; $day++) {
+        for ($hour = 0; $hour < 24; $hour++) {
+            if ($max_count > 0) {
+                $level = intval(($activity[$day][$hour] / $max_count) * 3);
+                $normalized[$day][$hour] = min(3, $level);
+            } else {
+                $normalized[$day][$hour] = 0;
+            }
+        }
+    }
+    
+    return $normalized;
+}
+
+// Enhanced analytics functions
+function getModelInsights($username, $cache_dir) {
+    $regions = ['northamerica', 'europe_russia', 'southamerica', 'asia', 'other'];
+    $username_lower = strtolower($username);
+    $insights = [
+        'peak_viewers' => 0,
+        'avg_viewers' => 0,
+        'total_snapshots' => 0,
+        'consistency_score' => 0,
+        'last_seen' => null,
+        'session_lengths' => [],
+        'popular_tags' => [],
+        'room_subjects' => []
+    ];
+    
+    $viewer_counts = [];
+    $all_tags = [];
+    $all_subjects = [];
+    
+    foreach ($regions as $region) {
+        $pattern = $cache_dir . "cams_{$region}*.json";
+        $files = glob($pattern);
+        
+        foreach ($files as $file) {
+            if (!file_exists($file)) continue;
+            $json = json_decode(file_get_contents($file), true);
+            if (!$json || !isset($json['results'])) continue;
+            
+            $file_time = filemtime($file);
+            
+            foreach ($json['results'] as $model) {
+                if (strtolower($model['username']) === $username_lower) {
+                    $insights['total_snapshots']++;
+                    $insights['last_seen'] = max($insights['last_seen'], $file_time);
+                    
+                    $num_users = $model['num_users'] ?? 0;
+                    $viewer_counts[] = $num_users;
+                    $insights['peak_viewers'] = max($insights['peak_viewers'], $num_users);
+                    
+                    $seconds_online = $model['seconds_online'] ?? 0;
+                    if ($seconds_online > 0) {
+                        $insights['session_lengths'][] = $seconds_online;
+                    }
+                    
+                    if (!empty($model['tags'])) {
+                        foreach ($model['tags'] as $tag) {
+                            $all_tags[] = strtolower(trim($tag));
+                        }
+                    }
+                    
+                    if (!empty($model['room_subject'])) {
+                        $all_subjects[] = $model['room_subject'];
+                    }
+                    
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (!empty($viewer_counts)) {
+        $insights['avg_viewers'] = intval(array_sum($viewer_counts) / count($viewer_counts));
+    }
+    
+    $insights['consistency_score'] = min(100, ($insights['total_snapshots'] / 10) * 100);
+    $insights['popular_tags'] = array_slice(array_count_values($all_tags), 0, 5, true);
+    $insights['room_subjects'] = array_slice(array_reverse($all_subjects), 0, 3);
+    
+    return $insights;
+}
+
+function getSimilarModels($username, $cache_dir, $current_model_data) {
+    if (!$current_model_data) return [];
+    
+    $regions = ['northamerica', 'europe_russia', 'southamerica', 'asia', 'other'];
+    $username_lower = strtolower($username);
+    $similar_models = [];
+    $current_tags = array_map('strtolower', $current_model_data['tags'] ?? []);
+    $current_age = $current_model_data['age'] ?? null;
+    $current_gender = $current_model_data['gender'] ?? '';
+    
+    foreach ($regions as $region) {
+        $file = $cache_dir . "cams_{$region}.json";
+        if (!file_exists($file)) continue;
+        
+        $json = json_decode(file_get_contents($file), true);
+        if (!$json || !isset($json['results'])) continue;
+        
+        foreach ($json['results'] as $model) {
+            if (strtolower($model['username']) === $username_lower) continue;
+            
+            $similarity_score = 0;
+            
+            // Gender match (high weight)
+            if ($model['gender'] === $current_gender) {
+                $similarity_score += 30;
+            }
+            
+            // Age similarity
+            if ($current_age && $model['age']) {
+                $age_diff = abs($current_age - $model['age']);
+                if ($age_diff <= 2) $similarity_score += 25;
+                elseif ($age_diff <= 5) $similarity_score += 15;
+                elseif ($age_diff <= 10) $similarity_score += 5;
+            }
+            
+            // Tag overlap
+            $model_tags = array_map('strtolower', $model['tags'] ?? []);
+            $tag_overlap = count(array_intersect($current_tags, $model_tags));
+            $similarity_score += $tag_overlap * 10;
+            
+            // Country match
+            if ($model['country'] === $current_model_data['country']) {
+                $similarity_score += 10;
+            }
+            
+            if ($similarity_score > 30) {
+                $similar_models[] = [
+                    'model' => $model,
+                    'similarity' => $similarity_score
+                ];
+            }
+        }
+    }
+    
+    usort($similar_models, function($a, $b) {
+        return $b['similarity'] - $a['similarity'];
+    });
+    
+    return array_slice($similar_models, 0, 6);
+}
+
+function getModelBadges($model_data, $insights) {
+    $badges = [];
+    
+    if ($model_data['is_new'] ?? false) {
+        $badges[] = ['type' => 'new', 'label' => 'New Model', 'color' => '#10b981'];
+    }
+    
+    if ($model_data['is_hd'] ?? false) {
+        $badges[] = ['type' => 'hd', 'label' => 'HD Quality', 'color' => '#3b82f6'];
+    }
+    
+    $seconds_online = $model_data['seconds_online'] ?? 0;
+    if ($seconds_online > 14400) { // 4+ hours
+        $badges[] = ['type' => 'marathon', 'label' => 'Marathon Streamer', 'color' => '#f59e0b'];
+    }
+    
+    if ($insights['peak_viewers'] > 1000) {
+        $badges[] = ['type' => 'popular', 'label' => 'Popular', 'color' => '#ef4444'];
+    }
+    
+    if ($insights['consistency_score'] > 80) {
+        $badges[] = ['type' => 'consistent', 'label' => 'Regular Performer', 'color' => '#8b5cf6'];
+    }
+    
+    return $badges;
+}
+
+// Get all enhanced data
+$online_activity = getOnlineActivity($username, $cache_dir);
+$model_insights = getModelInsights($username, $cache_dir);
+$similar_models = getSimilarModels($username, $cache_dir, $model_data);
+$model_badges = getModelBadges($model_data, $model_insights);
+
+// Get current time and day for highlighting
+$current_hour = intval(date('G')); // 0-23
+$current_day = intval(date('w')); // 0 = Sunday, 1 = Monday, etc.
+
 include('templates/header.php');
 
 function markdown_links_to_html($text) {
@@ -656,6 +947,23 @@ body {
         </div>
       </div>
     </div>
+    
+    <!-- Enhanced Model Badges -->
+    <?php if (!empty($model_badges)): ?>
+    <div class="model-badges-section">
+      <?php foreach ($model_badges as $badge): ?>
+        <span class="model-badge-enhanced" style="background: <?= $badge['color'] ?>;">
+          <?php if ($badge['type'] === 'new'): ?>🌟<?php endif; ?>
+          <?php if ($badge['type'] === 'hd'): ?>📺<?php endif; ?>
+          <?php if ($badge['type'] === 'marathon'): ?>⏰<?php endif; ?>
+          <?php if ($badge['type'] === 'popular'): ?>🔥<?php endif; ?>
+          <?php if ($badge['type'] === 'consistent'): ?>✨<?php endif; ?>
+          <?= $badge['label'] ?>
+        </span>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+    
     <?php if($model_online): ?>
     <?=ensure_iframe_fullscreen(chaturbate_whitelabel_replace($model['iframe_embed_revshare'], $config['whitelabel_domain']), $iframe_height)?>
     <div class="model-fallback-msg" id="cb-embed-fallback">
@@ -669,6 +977,8 @@ body {
     }, 2600);
     </script>
     <?php endif; ?>
+    
+    <!-- Model Info Section -->
 	   <div class="model-meta-wrap">
 		<?php if (!empty($model['ai_bio'])): ?>
 		  <div class="model-written-bio" style="
@@ -716,6 +1026,351 @@ body {
               <span class="model-tag-chip">#<?=htmlspecialchars($t)?></span>
             <?php endforeach; ?>
           </div>
+        <?php endif; ?>
+      </div>
+    </div>
+    
+    <!-- Analytics Dashboard Section -->
+    <div class="analytics-dashboard">
+      <div class="dashboard-header">
+        <h2 class="dashboard-title">
+          <span class="dashboard-icon">📊</span>
+          Performance Analytics
+        </h2>
+        <p class="dashboard-subtitle">Complete insights based on <?= htmlspecialchars($model['username']) ?>'s activity data</p>
+      </div>
+      
+      <!-- Key Metrics Cards -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-icon-wrapper">
+            <span class="metric-icon">👁️</span>
+          </div>
+          <div class="metric-content">
+            <div class="metric-number"><?= number_format($model_insights['peak_viewers']) ?></div>
+            <div class="metric-label">Peak Viewers</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon-wrapper">
+            <span class="metric-icon">📊</span>
+          </div>
+          <div class="metric-content">
+            <div class="metric-number"><?= number_format($model_insights['avg_viewers']) ?></div>
+            <div class="metric-label">Avg Viewers</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon-wrapper">
+            <span class="metric-icon">✨</span>
+          </div>
+          <div class="metric-content">
+            <div class="metric-number"><?= $model_insights['consistency_score'] ?>%</div>
+            <div class="metric-label">Consistency</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon-wrapper">
+            <span class="metric-icon">📈</span>
+          </div>
+          <div class="metric-content">
+            <div class="metric-number"><?= $model_insights['total_snapshots'] ?></div>
+            <div class="metric-label">Total Snapshots</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Two Column Analytics Content -->
+      <div class="analytics-content">
+        <div class="analytics-left">
+          <!-- Session Analytics -->
+          <?php if (!empty($model_insights['session_lengths'])): ?>
+          <div class="analytics-panel">
+            <h3 class="panel-title">
+              <span class="panel-icon">⏱️</span>
+              Session Patterns
+            </h3>
+            <div class="session-stats">
+              <div class="session-stat">
+                <span class="stat-label">Average Session</span>
+                <span class="stat-value">
+                  <?php 
+                  $avg_session = array_sum($model_insights['session_lengths']) / count($model_insights['session_lengths']);
+                  $hours = floor($avg_session / 3600);
+                  $minutes = floor(($avg_session % 3600) / 60);
+                  echo ($hours > 0 ? "$hours hr " : '') . "$minutes min";
+                  ?>
+                </span>
+              </div>
+              <div class="session-stat">
+                <span class="stat-label">Longest Session</span>
+                <span class="stat-value">
+                  <?php 
+                  $max_session = max($model_insights['session_lengths']);
+                  $hours = floor($max_session / 3600);
+                  $minutes = floor(($max_session % 3600) / 60);
+                  echo ($hours > 0 ? "$hours hr " : '') . "$minutes min";
+                  ?>
+                </span>
+              </div>
+            </div>
+          </div>
+          <?php endif; ?>
+          
+          <!-- Popular Tags -->
+          <?php if (!empty($model_insights['popular_tags'])): ?>
+          <div class="analytics-panel">
+            <h3 class="panel-title">
+              <span class="panel-icon">🏷️</span>
+              Popular Tags
+            </h3>
+            <div class="tags-cloud">
+              <?php foreach ($model_insights['popular_tags'] as $tag => $count): ?>
+                <span class="tag-item" data-count="<?= $count ?>">
+                  #<?= htmlspecialchars($tag) ?>
+                  <span class="tag-count"><?= $count ?></span>
+                </span>
+              <?php endforeach; ?>
+            </div>
+          </div>
+          <?php endif; ?>
+        </div>
+        
+        <div class="analytics-right">
+          <!-- Room Topics -->
+          <?php if (!empty($model_insights['room_subjects'])): ?>
+          <div class="analytics-panel">
+            <h3 class="panel-title">
+              <span class="panel-icon">💬</span>
+              Recent Room Topics
+            </h3>
+            <div class="topics-list">
+              <?php foreach (array_slice($model_insights['room_subjects'], 0, 3) as $index => $subject): ?>
+                <div class="topic-item">
+                  <div class="topic-number"><?= $index + 1 ?></div>
+                  <div class="topic-text"><?= htmlspecialchars(substr($subject, 0, 80)) ?><?= strlen($subject) > 80 ? '...' : '' ?></div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+          <?php endif; ?>
+          
+          <!-- Similar Models -->
+          <?php if (!empty($similar_models) && count($similar_models) > 0): ?>
+          <div class="analytics-panel">
+            <h3 class="panel-title">
+              <span class="panel-icon">👥</span>
+              Similar Models
+            </h3>
+            <div class="similar-models">
+              <?php foreach (array_slice($similar_models, 0, 4) as $similar): ?>
+                <a href="/<?= htmlspecialchars($similar['username']) ?>" class="similar-model">
+                  <img src="<?= htmlspecialchars($similar['image_url']) ?>" alt="<?= htmlspecialchars($similar['username']) ?>" class="similar-avatar">
+                  <div class="similar-details">
+                    <div class="similar-name"><?= htmlspecialchars($similar['username']) ?></div>
+                    <div class="similar-info"><?= $similar['age'] ?>yr • <?= ucfirst($similar['gender']) ?></div>
+                  </div>
+                </a>
+              <?php endforeach; ?>
+            </div>
+          </div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+    </div>
+    
+    <!-- Analytics and Heat Map Section -->
+    <div class="model-full-width-section">
+      <!-- Online Time Tracker Heat Map -->
+      <div class="online-time-tracker">
+        <div class="heatmap-header">
+          <div class="heatmap-title">
+            <span class="heatmap-icon">📊</span>
+            <h3>Weekly Activity Pattern</h3>
+            <p class="heatmap-subtitle">Typical online hours based on recent activity</p>
+          </div>
+        </div>
+      
+      <div class="heatmap-container">
+        <!-- Full-width responsive SVG container -->
+        <div class="heatmap-chart">
+          <!-- Hour labels across the top -->
+          <div class="heatmap-hours-row">
+            <div class="heatmap-weekday-spacer"></div>
+            <?php for ($h = 0; $h < 24; $h++): ?>
+              <div class="heatmap-hour-cell">
+                <?php if ($h % 2 == 0): ?>
+                  <span class="heatmap-hour-label"><?= sprintf('%02d', $h) ?></span>
+                <?php endif; ?>
+              </div>
+            <?php endfor; ?>
+          </div>
+          
+          <!-- Heat map grid with day labels -->
+          <?php 
+          $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          $day_full = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          $colors = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e'];
+          $activity_labels = ['Never seen online', 'Rarely online', 'Sometimes online', 'Often online'];
+          
+          for ($day = 0; $day < 7; $day++): ?>
+            <div class="heatmap-day-row">
+              <div class="heatmap-weekday-label">
+                <span><?= $days[$day] ?></span>
+              </div>
+              
+              <?php for ($hour = 0; $hour < 24; $hour++): 
+                $activity_level = $online_activity[$day][$hour];
+                $color = $colors[$activity_level];
+                $is_current = ($hour == $current_hour && $day == $current_day);
+                $tooltip = $day_full[$day] . ' ' . sprintf('%02d:00', $hour) . ' - ' . $activity_labels[$activity_level];
+                if ($is_current) $tooltip .= ' (Current time)';
+                $current_class = $is_current ? ' current-time' : '';
+              ?>
+                <div class="heatmap-cell<?= $current_class ?>" 
+                     style="background-color: <?= $color ?>;<?= $is_current ? ' border: 2px solid #fd8c73; animation: cell-pulse 2s infinite;' : '' ?>" 
+                     data-tooltip="<?= htmlspecialchars($tooltip) ?>"
+                     data-activity="<?= $activity_level ?>"
+                     data-hour="<?= $hour ?>"
+                     data-day="<?= $day ?>">
+                </div>
+              <?php endfor; ?>
+            </div>
+          <?php endfor; ?>
+        </div>
+        
+        <!-- Tooltip -->
+        <div id="heatmap-tooltip" class="heatmap-tooltip" style="display: none;"></div>
+        
+        <script>
+        // Simple, reliable tooltip positioning
+        document.addEventListener('DOMContentLoaded', function() {
+          const tooltip = document.getElementById('heatmap-tooltip');
+          const cells = document.querySelectorAll('.heatmap-cell');
+          
+          function positionTooltip(e) {
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Set content first to measure tooltip
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.display = 'block';
+            
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const tooltipWidth = tooltipRect.width;
+            const tooltipHeight = tooltipRect.height;
+            
+            // Calculate position relative to mouse
+            let left = e.clientX + 15;
+            let top = e.clientY - 35;
+            
+            // Check right boundary
+            if (left + tooltipWidth > viewportWidth - 20) {
+              left = e.clientX - tooltipWidth - 15;
+            }
+            
+            // Check left boundary  
+            if (left < 20) {
+              left = 20;
+            }
+            
+            // Check top boundary
+            if (top < 20) {
+              top = e.clientY + 20;
+            }
+            
+            // Check bottom boundary
+            if (top + tooltipHeight > viewportHeight - 20) {
+              top = e.clientY - tooltipHeight - 15;
+            }
+            
+            // Apply position
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            tooltip.style.visibility = 'visible';
+          }
+          
+          cells.forEach(cell => {
+            cell.addEventListener('mouseenter', function(e) {
+              tooltip.textContent = this.getAttribute('data-tooltip');
+              tooltip.style.opacity = '0';
+              positionTooltip(e);
+              tooltip.style.opacity = '1';
+            });
+            
+            cell.addEventListener('mousemove', function(e) {
+              positionTooltip(e);
+            });
+            
+            cell.addEventListener('mouseleave', function() {
+              tooltip.style.display = 'none';
+              tooltip.style.opacity = '0';
+            });
+          });
+        });
+        </script>
+        
+        <!-- Modern Legend -->
+        <div class="heatmap-legend">
+          <div class="legend-title">Activity Level</div>
+          <div class="legend-items">
+            <div class="legend-item">
+              <div class="legend-color" style="background: #ebedf0;"></div>
+              <span>Never online</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #9be9a8;"></div>
+              <span>Rarely online</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #40c463;"></div>
+              <span>Sometimes online</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #30a14e;"></div>
+              <span>Often online</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Similar Models Section - Integrated with Heat Map -->
+        <?php if (!empty($similar_models)): ?>
+        <div class="similar-models-section">
+          <h3>🎯 Models Like This</h3>
+          <p class="similar-models-subtitle">Based on shared tags, age, and location</p>
+          <div class="similar-models-grid">
+            <?php foreach (array_slice($similar_models, 0, 6) as $similar): 
+              $sim_model = $similar['model'];
+              $sim_score = $similar['similarity'];
+            ?>
+              <div class="similar-model-card">
+                <div class="similar-model-image">
+                  <img src="<?= htmlspecialchars($sim_model['image_url'] ?? '/assets/offline.png') ?>" 
+                       alt="<?= htmlspecialchars($sim_model['username']) ?>"
+                       onerror="this.src='/assets/offline.png'">
+                  <div class="similarity-badge"><?= $sim_score ?>% match</div>
+                </div>
+                <div class="similar-model-info">
+                  <a href="/model/<?= htmlspecialchars($sim_model['username']) ?>" class="similar-model-name">
+                    <?= htmlspecialchars($sim_model['username']) ?>
+                  </a>
+                  <div class="similar-model-stats">
+                    <span class="similar-age"><?= intval($sim_model['age'] ?? 0) ?>y</span>
+                    <span class="similar-viewers">👁 <?= number_format($sim_model['num_users'] ?? 0) ?></span>
+                    <?php if ($sim_model['is_hd'] ?? false): ?><span class="similar-hd">HD</span><?php endif; ?>
+                  </div>
+                  <div class="similar-model-tags">
+                    <?php foreach (array_slice($sim_model['tags'] ?? [], 0, 3) as $tag): ?>
+                      <span class="similar-tag">#<?= htmlspecialchars($tag) ?></span>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
         <?php endif; ?>
       </div>
     </div>
