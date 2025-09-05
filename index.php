@@ -236,11 +236,22 @@ a.tag-cb.subject-tag:focus {
     </div>
   </div>
   <div class="filter-section">
-    <div class="filter-label">Age</div>
-    <div class="filter-ages">
-      <input type="number" min="18" max="99" id="min-age" value="18">
-      <span>to</span>
-      <input type="number" min="18" max="99" id="max-age" value="99">
+    <div class="filter-label">Age Range</div>
+    <div class="filter-ages-enhanced">
+      <div class="age-display" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #555;">
+        <span>Min: <strong id="min-age-display">18</strong></span>
+        <span>Max: <strong id="max-age-display">99</strong></span>
+      </div>
+      <div class="dual-range-slider" style="position: relative; height: 6px; background: #ddd; border-radius: 3px; margin: 12px 0;">
+        <input type="range" min="18" max="99" value="18" id="min-age-slider" style="position: absolute; width: 100%; height: 6px; background: none; pointer-events: none; -webkit-appearance: none;">
+        <input type="range" min="18" max="99" value="99" id="max-age-slider" style="position: absolute; width: 100%; height: 6px; background: none; pointer-events: none; -webkit-appearance: none;">
+        <div class="slider-track" style="position: absolute; height: 6px; background: var(--primary-color); border-radius: 3px;"></div>
+      </div>
+      <div class="age-inputs-fallback" style="display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px;">
+        <input type="number" min="18" max="99" id="min-age" value="18" style="width: 50px; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
+        <span style="color: #666;">to</span>
+        <input type="number" min="18" max="99" id="max-age" value="99" style="width: 50px; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
+      </div>
     </div>
     <div id="age-validation-error" style="display: none; color: #d32f2f; font-size: 11px; padding: 6px 8px; background: #ffebee; border-radius: 4px; border: 1px solid #ffcdd2; margin-top: 4px; width: 100%; box-sizing: border-box;">
       ⚠️ Min age can't be higher than max age
@@ -304,6 +315,47 @@ a.tag-cb.subject-tag:focus {
       &times;
     </button>
   </div>
+  
+  <!-- Enhanced Discovery Section -->
+  <div class="discovery-controls" style="display: flex; justify-content: space-between; align-items: center; margin: 16px 8px; padding: 12px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <div class="sort-controls">
+      <label style="font-weight: 600; margin-right: 8px; color: #333;">Sort by:</label>
+      <select id="sort-by" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-size: 14px;">
+        <option value="default">Default</option>
+        <option value="viewers">Most Viewers</option>
+        <option value="newest">Just Went Live</option>
+        <option value="marathon">Marathon Streamers</option>
+        <option value="engagement">Viewer/Follower Ratio</option>
+        <option value="hidden-gems">Hidden Gems</option>
+        <option value="hd-first">HD Streams First</option>
+        <option value="new-models">New Models</option>
+      </select>
+    </div>
+    <div class="view-controls">
+      <button id="show-stats" style="padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📊 Show Stats</button>
+    </div>
+  </div>
+
+  <!-- Discovery Highlights -->
+  <div id="discovery-highlights" style="margin: 16px 8px; display: none;">
+    <div class="discovery-sections" style="display: grid; gap: 16px; margin-bottom: 20px;">
+      <div class="discovery-section" id="just-live-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 12px 0; color: #00d4ff; font-size: 16px;">⚡ Just Went Live (Last 30 mins)</h3>
+        <div class="discovery-grid" id="just-live-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;"></div>
+      </div>
+      
+      <div class="discovery-section" id="hidden-gems-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 12px 0; color: #9b59b6; font-size: 16px;">💎 Hidden Gems (High followers, low current viewers)</h3>
+        <div class="discovery-grid" id="hidden-gems-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;"></div>
+      </div>
+      
+      <div class="discovery-section" id="marathon-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 12px 0; color: #e74c3c; font-size: 16px;">🎯 Marathon Streamers (3+ hours)</h3>
+        <div class="discovery-grid" id="marathon-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="model-grid" id="model-grid"></div>
   <div class="pagination-bar" id="pagination-bar"></div>
 </div>
@@ -1326,12 +1378,494 @@ function doAutoRefresh() {
       });
     });
 }
+// Enhanced Discovery Features
+function sortModels(models, sortBy) {
+  const sorted = [...models];
+  
+  switch(sortBy) {
+    case 'viewers':
+      return sorted.sort((a, b) => (b.num_users || 0) - (a.num_users || 0));
+      
+    case 'newest':
+      return sorted.filter(m => (m.seconds_online || 0) <= 1800).sort((a, b) => (a.seconds_online || 0) - (b.seconds_online || 0));
+      
+    case 'marathon':
+      return sorted.filter(m => (m.seconds_online || 0) >= 10800).sort((a, b) => (b.seconds_online || 0) - (a.seconds_online || 0));
+      
+    case 'engagement':
+      return sorted.sort((a, b) => {
+        const ratioA = (a.num_users || 0) / Math.max(1, a.num_followers || 1);
+        const ratioB = (b.num_users || 0) / Math.max(1, b.num_followers || 1);
+        return ratioB - ratioA;
+      });
+      
+    case 'hidden-gems':
+      return sorted.filter(m => {
+        const followers = m.num_followers || 0;
+        const viewers = m.num_users || 0;
+        return followers > 10000 && viewers < (followers * 0.01);
+      }).sort((a, b) => (b.num_followers || 0) - (a.num_followers || 0));
+      
+    case 'hd-first':
+      return sorted.sort((a, b) => {
+        if (a.is_hd && !b.is_hd) return -1;
+        if (!a.is_hd && b.is_hd) return 1;
+        return (b.num_users || 0) - (a.num_users || 0);
+      });
+      
+    case 'new-models':
+      return sorted.filter(m => m.is_new).sort((a, b) => (b.num_users || 0) - (a.num_users || 0));
+      
+    case 'favorites':
+      const favorites = window.getFavorites ? window.getFavorites() : [];
+      return sorted.filter(m => favorites.includes(m.username.toLowerCase())).sort((a, b) => (b.num_users || 0) - (a.num_users || 0));
+      
+    default:
+      return sorted;
+  }
+}
+
+function renderDiscoverySection(models, sectionId, limit = 6) {
+  const container = document.getElementById(sectionId);
+  if (!container) return;
+  
+  if (models.length === 0) {
+    container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No models found for this category.</p>';
+    return;
+  }
+  
+  container.innerHTML = models.slice(0, limit).map(model => {
+    const spotlights = detectModelSpotlights(model, models, {
+      avgViewers: models.reduce((sum, m) => sum + parseInt(m.num_users || 0), 0) / models.length,
+      maxViewers: Math.max(...models.map(m => parseInt(m.num_users || 0)))
+    });
+    const spotlightElements = renderSophisticatedSpotlight(spotlights);
+    
+    const stats = [];
+    stats.push(`${model.num_users || 0} viewers`);
+    if (model.seconds_online) {
+      const hours = (model.seconds_online / 3600).toFixed(1);
+      stats.push(`${hours}h online`);
+    }
+    if (model.num_followers) {
+      const followers = model.num_followers > 1000 ? 
+        (model.num_followers / 1000).toFixed(1) + 'k' : 
+        model.num_followers;
+      stats.push(`${followers} followers`);
+    }
+    
+    return `
+      <div class="discovery-card" style="background: #fff; border-radius: 8px; padding: 12px; border: 1px solid #eee; transition: transform 0.2s ease; cursor: pointer;" 
+           onclick="window.open('/model/${encodeURIComponent(model.username)}', '_blank');">
+        <div style="position: relative; margin-bottom: 8px;">
+          <img src="${model.image_url || ''}" alt="${model.username}" 
+               style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px;">
+          ${spotlightElements}
+          ${model.is_hd ? '<div style="position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">HD</div>' : ''}
+        </div>
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #333;">${model.username}</div>
+        <div style="font-size: 12px; color: #666; margin-bottom: 6px;">${stats.join(' • ')}</div>
+        <div style="font-size: 11px; color: #888; height: 32px; overflow: hidden; line-height: 1.3;">
+          ${(model.room_subject || '').substring(0, 80)}${(model.room_subject || '').length > 80 ? '...' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showDiscoveryHighlights() {
+  const highlights = document.getElementById('discovery-highlights');
+  const showBtn = document.getElementById('show-stats');
+  
+  if (highlights.style.display === 'none') {
+    highlights.style.display = 'block';
+    showBtn.textContent = '📊 Hide Stats';
+    
+    // Populate discovery sections
+    if (allModels.length > 0) {
+      const justLive = sortModels(allModels, 'newest');
+      const hiddenGems = sortModels(allModels, 'hidden-gems');
+      const marathon = sortModels(allModels, 'marathon');
+      
+      renderDiscoverySection(justLive, 'just-live-grid', 8);
+      renderDiscoverySection(hiddenGems, 'hidden-gems-grid', 8);
+      renderDiscoverySection(marathon, 'marathon-grid', 8);
+      
+      // Hide empty sections
+      document.getElementById('just-live-section').style.display = justLive.length > 0 ? 'block' : 'none';
+      document.getElementById('hidden-gems-section').style.display = hiddenGems.length > 0 ? 'block' : 'none';
+      document.getElementById('marathon-section').style.display = marathon.length > 0 ? 'block' : 'none';
+    }
+  } else {
+    highlights.style.display = 'none';
+    showBtn.textContent = '📊 Show Stats';
+  }
+}
+
+function setupAgeSliders() {
+  const minSlider = document.getElementById('min-age-slider');
+  const maxSlider = document.getElementById('max-age-slider');
+  const minInput = document.getElementById('min-age');
+  const maxInput = document.getElementById('max-age');
+  const minDisplay = document.getElementById('min-age-display');
+  const maxDisplay = document.getElementById('max-age-display');
+  const sliderTrack = document.querySelector('.slider-track');
+  
+  if (!minSlider || !maxSlider) return;
+  
+  function updateSliderTrack() {
+    const min = parseInt(minSlider.min);
+    const max = parseInt(minSlider.max);
+    const minVal = parseInt(minSlider.value);
+    const maxVal = parseInt(maxSlider.value);
+    
+    const minPercent = ((minVal - min) / (max - min)) * 100;
+    const maxPercent = ((maxVal - min) / (max - min)) * 100;
+    
+    sliderTrack.style.left = minPercent + '%';
+    sliderTrack.style.width = (maxPercent - minPercent) + '%';
+  }
+  
+  function updateDisplays(minVal, maxVal) {
+    minDisplay.textContent = minVal;
+    maxDisplay.textContent = maxVal;
+    minInput.value = minVal;
+    maxInput.value = maxVal;
+  }
+  
+  function handleSliderChange() {
+    let minVal = parseInt(minSlider.value);
+    let maxVal = parseInt(maxSlider.value);
+    
+    // Ensure min doesn't exceed max
+    if (minVal > maxVal) {
+      if (this === minSlider) {
+        maxVal = minVal;
+        maxSlider.value = maxVal;
+      } else {
+        minVal = maxVal;
+        minSlider.value = minVal;
+      }
+    }
+    
+    updateDisplays(minVal, maxVal);
+    updateSliderTrack();
+    
+    FILTERS.minAge = minVal;
+    FILTERS.maxAge = maxVal;
+    onFilterChange();
+  }
+  
+  minSlider.addEventListener('input', handleSliderChange);
+  maxSlider.addEventListener('input', handleSliderChange);
+  
+  // Sync number inputs with sliders
+  if (minInput) {
+    minInput.addEventListener('change', function() {
+      const val = Math.max(18, Math.min(99, parseInt(this.value) || 18));
+      minSlider.value = val;
+      handleSliderChange.call(minSlider);
+    });
+  }
+  
+  if (maxInput) {
+    maxInput.addEventListener('change', function() {
+      const val = Math.max(18, Math.min(99, parseInt(this.value) || 99));
+      maxSlider.value = val;
+      handleSliderChange.call(maxSlider);
+    });
+  }
+  
+  // Initialize
+  updateSliderTrack();
+  updateDisplays(parseInt(minSlider.value), parseInt(maxSlider.value));
+}
+
+// Favorites System
+function setupFavoritesSystem() {
+  const FAVORITES_KEY = 'camsite_favorites';
+  
+  function getFavorites() {
+    try {
+      return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  
+  function saveFavorites(favorites) {
+    try {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    } catch (e) {
+      console.warn('Could not save favorites to localStorage');
+    }
+  }
+  
+  function isFavorite(username) {
+    return getFavorites().includes(username.toLowerCase());
+  }
+  
+  function toggleFavorite(username) {
+    const favorites = getFavorites();
+    const lowerUsername = username.toLowerCase();
+    const index = favorites.indexOf(lowerUsername);
+    
+    if (index > -1) {
+      favorites.splice(index, 1);
+    } else {
+      favorites.push(lowerUsername);
+    }
+    
+    saveFavorites(favorites);
+    updateFavoriteButtons();
+    return favorites.includes(lowerUsername);
+  }
+  
+  function updateFavoriteButtons() {
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+      const username = btn.dataset.username;
+      const isFav = isFavorite(username);
+      btn.classList.toggle('active', isFav);
+      btn.innerHTML = isFav ? '❤️ Favorited' : '🤍 Add Favorite';
+      btn.title = isFav ? 'Remove from favorites' : 'Add to favorites';
+    });
+  }
+  
+  // Add favorite buttons to model cards
+  function addFavoriteButtons() {
+    document.querySelectorAll('.model-card-cb').forEach(card => {
+      const username = card.querySelector('[data-username]')?.dataset.username;
+      if (!username || card.querySelector('.favorite-btn')) return;
+      
+      const favoriteBtn = document.createElement('button');
+      favoriteBtn.className = 'favorite-btn';
+      favoriteBtn.dataset.username = username;
+      favoriteBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFavorite(username);
+      };
+      
+      const cardTitle = card.querySelector('.model-username-cb, .card-title');
+      if (cardTitle && cardTitle.parentNode) {
+        cardTitle.parentNode.insertBefore(favoriteBtn, cardTitle.nextSibling);
+      }
+    });
+    updateFavoriteButtons();
+  }
+  
+  // Expose globally
+  window.toggleFavorite = toggleFavorite;
+  window.getFavorites = getFavorites;
+  window.addFavoriteButtons = addFavoriteButtons;
+  
+  // Add favorites filter to sort dropdown
+  const sortSelect = document.getElementById('sort-by');
+  if (sortSelect && !document.querySelector('option[value="favorites"]')) {
+    const option = document.createElement('option');
+    option.value = 'favorites';
+    option.textContent = 'My Favorites';
+    sortSelect.appendChild(option);
+  }
+}
+
+// Comparison Tool
+function setupComparisonTool() {
+  const COMPARE_KEY = 'camsite_comparison';
+  let comparisonList = [];
+  
+  function addToComparison(modelData) {
+    if (comparisonList.length >= 3) {
+      alert('Maximum 3 models can be compared at once');
+      return false;
+    }
+    
+    const exists = comparisonList.find(m => m.username === modelData.username);
+    if (exists) {
+      return false;
+    }
+    
+    comparisonList.push(modelData);
+    updateComparisonUI();
+    return true;
+  }
+  
+  function removeFromComparison(username) {
+    comparisonList = comparisonList.filter(m => m.username !== username);
+    updateComparisonUI();
+  }
+  
+  function updateComparisonUI() {
+    let compareBtn = document.getElementById('comparison-btn');
+    if (!compareBtn && comparisonList.length > 0) {
+      compareBtn = document.createElement('button');
+      compareBtn.id = 'comparison-btn';
+      compareBtn.className = 'comparison-floating-btn';
+      compareBtn.innerHTML = `<span class="compare-icon">⚖️</span><span class="compare-count">${comparisonList.length}</span>`;
+      compareBtn.onclick = showComparisonModal;
+      document.body.appendChild(compareBtn);
+    }
+    
+    if (compareBtn) {
+      if (comparisonList.length === 0) {
+        compareBtn.remove();
+      } else {
+        compareBtn.querySelector('.compare-count').textContent = comparisonList.length;
+        compareBtn.style.display = 'block';
+      }
+    }
+    
+    // Update compare buttons on cards
+    document.querySelectorAll('.compare-btn').forEach(btn => {
+      const username = btn.dataset.username;
+      const inComparison = comparisonList.find(m => m.username === username);
+      btn.classList.toggle('active', !!inComparison);
+      btn.textContent = inComparison ? '✓ In Comparison' : '⚖️ Compare';
+    });
+  }
+  
+  function showComparisonModal() {
+    if (comparisonList.length < 2) {
+      alert('Add at least 2 models to compare');
+      return;
+    }
+    
+    const modal = createComparisonModal();
+    document.body.appendChild(modal);
+  }
+  
+  function createComparisonModal() {
+    const modal = document.createElement('div');
+    modal.className = 'comparison-modal';
+    modal.innerHTML = `
+      <div class="comparison-modal-content">
+        <div class="comparison-header">
+          <h2>Model Comparison</h2>
+          <button class="close-comparison" onclick="this.closest('.comparison-modal').remove()">×</button>
+        </div>
+        <div class="comparison-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                ${comparisonList.map(m => `<th><img src="${m.image_url}" alt="${m.username}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;"><br>${m.username}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Viewers</strong></td>
+                ${comparisonList.map(m => `<td>${m.num_users || 0}</td>`).join('')}
+              </tr>
+              <tr>
+                <td><strong>Followers</strong></td>
+                ${comparisonList.map(m => `<td>${(m.num_followers || 0).toLocaleString()}</td>`).join('')}
+              </tr>
+              <tr>
+                <td><strong>Age</strong></td>
+                ${comparisonList.map(m => `<td>${m.age || 'N/A'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td><strong>HD Stream</strong></td>
+                ${comparisonList.map(m => `<td>${m.is_hd ? '✅ Yes' : '❌ No'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td><strong>Languages</strong></td>
+                ${comparisonList.map(m => `<td>${(m.spoken_languages || 'N/A').split(',').slice(0,2).join(', ')}</td>`).join('')}
+              </tr>
+              <tr>
+                <td><strong>Online Time</strong></td>
+                ${comparisonList.map(m => {
+                  const hours = Math.floor((m.seconds_online || 0) / 3600);
+                  const mins = Math.floor(((m.seconds_online || 0) % 3600) / 60);
+                  return `<td>${hours}h ${mins}m</td>`;
+                }).join('')}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="comparison-actions">
+          <button onclick="comparisonList = []; updateComparisonUI(); this.closest('.comparison-modal').remove();">Clear All</button>
+        </div>
+      </div>
+    `;
+    return modal;
+  }
+  
+  // Add compare buttons to model cards
+  function addCompareButtons() {
+    document.querySelectorAll('.model-card-cb').forEach(card => {
+      const usernameEl = card.querySelector('[data-username]');
+      const username = usernameEl?.dataset.username;
+      if (!username || card.querySelector('.compare-btn')) return;
+      
+      // Extract model data from card
+      const modelData = {
+        username: username,
+        image_url: card.querySelector('img')?.src || '',
+        num_users: parseInt(card.querySelector('.viewer-count')?.textContent?.replace(/\D/g, '')) || 0,
+        num_followers: 0, // Would need to be passed from model data
+        age: null,
+        is_hd: card.querySelector('.hd-badge') !== null,
+        spoken_languages: '',
+        seconds_online: 0
+      };
+      
+      const compareBtn = document.createElement('button');
+      compareBtn.className = 'compare-btn';
+      compareBtn.dataset.username = username;
+      compareBtn.textContent = '⚖️ Compare';
+      compareBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addToComparison(modelData);
+      };
+      
+      const favoriteBtn = card.querySelector('.favorite-btn');
+      if (favoriteBtn) {
+        favoriteBtn.parentNode.insertBefore(compareBtn, favoriteBtn.nextSibling);
+      }
+    });
+  }
+  
+  // Expose globally
+  window.addToComparison = addToComparison;
+  window.removeFromComparison = removeFromComparison;
+  window.comparisonList = comparisonList;
+  window.addCompareButtons = addCompareButtons;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   setupAutoRefreshCheckboxBar();
   attachFilterListeners();
   fetchModels();
   updateSelected();
   updateResetFiltersLink();
+  
+  // Setup discovery features
+  const sortBy = document.getElementById('sort-by');
+  const showStatsBtn = document.getElementById('show-stats');
+  
+  if (sortBy) {
+    sortBy.addEventListener('change', function() {
+      if (allModels.length > 0) {
+        const sorted = sortModels(allModels, this.value);
+        renderModels(sorted);
+      }
+    });
+  }
+  
+  if (showStatsBtn) {
+    showStatsBtn.addEventListener('click', showDiscoveryHighlights);
+  }
+  
+  // Setup enhanced age sliders
+  setupAgeSliders();
+  
+  // Setup favorites system
+  setupFavoritesSystem();
+  
+  // Setup comparison tool
+  setupComparisonTool();
 });
 </script>
 
