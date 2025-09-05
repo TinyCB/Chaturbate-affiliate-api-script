@@ -326,12 +326,18 @@ function getModelInsights($username, $cache_dir) {
         'last_seen' => null,
         'session_lengths' => [],
         'popular_tags' => [],
-        'room_subjects' => []
+        'room_subjects' => [],
+        'peak_hours' => [], // Track viewer counts by hour
+        'viewer_trends' => [], // Track viewer trends over time
+        'activity_score' => 0, // Overall activity rating
+        'engagement_rate' => 0 // Viewers per follower ratio
     ];
     
     $viewer_counts = [];
     $all_tags = [];
     $all_subjects = [];
+    $hourly_data = []; // [hour => [viewer_counts...]]
+    $trend_data = []; // [timestamp => viewer_count]
     
     foreach ($regions as $region) {
         $pattern = $cache_dir . "cams_{$region}*.json";
@@ -352,6 +358,18 @@ function getModelInsights($username, $cache_dir) {
                     $num_users = $model['num_users'] ?? 0;
                     $viewer_counts[] = $num_users;
                     $insights['peak_viewers'] = max($insights['peak_viewers'], $num_users);
+                    
+                    // Collect hourly data
+                    $hour = date('H', $file_time);
+                    if (!isset($hourly_data[$hour])) {
+                        $hourly_data[$hour] = [];
+                    }
+                    $hourly_data[$hour][] = $num_users;
+                    
+                    // Collect trend data (last 7 days)
+                    if ($file_time > (time() - 7 * 24 * 3600)) {
+                        $trend_data[$file_time] = $num_users;
+                    }
                     
                     $seconds_online = $model['seconds_online'] ?? 0;
                     if ($seconds_online > 0) {
@@ -377,6 +395,31 @@ function getModelInsights($username, $cache_dir) {
     if (!empty($viewer_counts)) {
         $insights['avg_viewers'] = intval(array_sum($viewer_counts) / count($viewer_counts));
     }
+    
+    // Calculate peak hours
+    $peak_hours_processed = [];
+    foreach ($hourly_data as $hour => $counts) {
+        if (!empty($counts)) {
+            $avg_for_hour = array_sum($counts) / count($counts);
+            $peak_hours_processed[$hour] = $avg_for_hour;
+        }
+    }
+    arsort($peak_hours_processed);
+    $insights['peak_hours'] = $peak_hours_processed;
+    
+    // Process viewer trends (last 7 days)
+    ksort($trend_data);
+    $insights['viewer_trends'] = $trend_data;
+    
+    // Calculate activity score (0-100)
+    $activity_factors = [];
+    $activity_factors[] = min(100, $insights['total_snapshots'] * 2); // Snapshot frequency
+    $activity_factors[] = min(100, ($insights['avg_viewers'] / 10) * 100); // Viewer engagement
+    if (!empty($insights['session_lengths'])) {
+        $avg_session = array_sum($insights['session_lengths']) / count($insights['session_lengths']);
+        $activity_factors[] = min(100, ($avg_session / 3600) * 25); // Session length score
+    }
+    $insights['activity_score'] = !empty($activity_factors) ? intval(array_sum($activity_factors) / count($activity_factors)) : 0;
     
     $insights['consistency_score'] = min(100, ($insights['total_snapshots'] / 10) * 100);
     $insights['popular_tags'] = array_slice(array_count_values($all_tags), 0, 5, true);
@@ -1078,6 +1121,15 @@ body {
             <div class="metric-label">Total Snapshots</div>
           </div>
         </div>
+        <div class="metric-card">
+          <div class="metric-icon-wrapper">
+            <span class="metric-icon">🎯</span>
+          </div>
+          <div class="metric-content">
+            <div class="metric-number"><?= $model_insights['activity_score'] ?>%</div>
+            <div class="metric-label">Activity Score</div>
+          </div>
+        </div>
       </div>
       
       <!-- Two Column Analytics Content -->
@@ -1117,6 +1169,34 @@ body {
           </div>
           <?php endif; ?>
           
+          <!-- Peak Hours Chart -->
+          <?php if (!empty($model_insights['peak_hours'])): ?>
+          <div class="analytics-panel">
+            <h3 class="panel-title">
+              <span class="panel-icon">🕒</span>
+              Peak Hours Analysis
+            </h3>
+            <div class="peak-hours-chart">
+              <div class="chart-explanation">Best times to catch <?= htmlspecialchars($model['username']) ?> with high viewer engagement</div>
+              <div class="hours-grid">
+                <?php 
+                $top_hours = array_slice($model_insights['peak_hours'], 0, 6, true);
+                foreach ($top_hours as $hour => $avg_viewers): 
+                  $hour_24 = str_pad($hour, 2, '0', STR_PAD_LEFT);
+                  $hour_12 = date('g A', strtotime($hour_24 . ':00'));
+                  $intensity = min(100, ($avg_viewers / max($model_insights['peak_hours'])) * 100);
+                ?>
+                  <div class="hour-block" data-intensity="<?= $intensity ?>">
+                    <div class="hour-time"><?= $hour_12 ?></div>
+                    <div class="hour-bar" style="height: <?= $intensity ?>%; background: linear-gradient(to top, var(--primary-color), #ffb347);"></div>
+                    <div class="hour-viewers"><?= intval($avg_viewers) ?> avg</div>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </div>
+          <?php endif; ?>
+          
           <!-- Popular Tags -->
           <?php if (!empty($model_insights['popular_tags'])): ?>
           <div class="analytics-panel">
@@ -1137,20 +1217,83 @@ body {
         </div>
         
         <div class="analytics-right">
-          <!-- Room Topics -->
+          <!-- Enhanced Room Topics History -->
           <?php if (!empty($model_insights['room_subjects'])): ?>
           <div class="analytics-panel">
             <h3 class="panel-title">
               <span class="panel-icon">💬</span>
-              Recent Room Topics
+              Room Topic History
             </h3>
-            <div class="topics-list">
-              <?php foreach (array_slice($model_insights['room_subjects'], 0, 3) as $index => $subject): ?>
-                <div class="topic-item">
-                  <div class="topic-number"><?= $index + 1 ?></div>
-                  <div class="topic-text"><?= htmlspecialchars(substr($subject, 0, 80)) ?><?= strlen($subject) > 80 ? '...' : '' ?></div>
+            <div class="topics-timeline">
+              <div class="timeline-explanation">Recent room topics and goal progressions</div>
+              <?php foreach (array_slice($model_insights['room_subjects'], 0, 5) as $index => $subject): 
+                $topic_length = strlen($subject);
+                $has_goal = preg_match('/goal|target|\[.*\]/i', $subject);
+                $is_completed = preg_match('/completed?|reached?|done/i', $subject);
+              ?>
+                <div class="topic-timeline-item <?= $is_completed ? 'completed' : ($has_goal ? 'has-goal' : 'normal') ?>">
+                  <div class="timeline-marker">
+                    <span class="timeline-number"><?= $index + 1 ?></span>
+                    <?php if ($is_completed): ?>
+                      <span class="timeline-status completed">✅</span>
+                    <?php elseif ($has_goal): ?>
+                      <span class="timeline-status goal">🎯</span>
+                    <?php endif; ?>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="topic-text"><?= htmlspecialchars(substr($subject, 0, 100)) ?><?= strlen($subject) > 100 ? '...' : '' ?></div>
+                    <div class="topic-meta">
+                      <span class="topic-length"><?= $topic_length ?> chars</span>
+                      <?php if ($has_goal): ?>
+                        <span class="topic-type goal">Goal-oriented</span>
+                      <?php endif; ?>
+                      <?php if ($is_completed): ?>
+                        <span class="topic-type completed">Completed</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
                 </div>
               <?php endforeach; ?>
+            </div>
+          </div>
+          <?php endif; ?>
+          
+          <!-- Language Analysis -->
+          <?php if (!empty($model_data['spoken_languages'])): ?>
+          <div class="analytics-panel">
+            <h3 class="panel-title">
+              <span class="panel-icon">🗣️</span>
+              Language Breakdown
+            </h3>
+            <div class="language-analysis">
+              <?php 
+              $languages = explode(',', $model_data['spoken_languages']);
+              $language_count = count($languages);
+              foreach ($languages as $index => $lang): 
+                $lang = trim($lang);
+                $is_primary = $index === 0;
+              ?>
+                <div class="language-item <?= $is_primary ? 'primary' : 'secondary' ?>">
+                  <div class="language-name"><?= htmlspecialchars($lang) ?></div>
+                  <div class="language-meta">
+                    <?php if ($is_primary): ?>
+                      <span class="language-badge primary">Primary</span>
+                    <?php else: ?>
+                      <span class="language-badge secondary">Secondary</span>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+              <div class="language-summary">
+                <div class="multilingual-status">
+                  <?php if ($language_count > 1): ?>
+                    <span class="multilingual-badge">🌍 Multilingual</span>
+                    <span class="language-count"><?= $language_count ?> languages</span>
+                  <?php else: ?>
+                    <span class="monolingual-badge">Single Language</span>
+                  <?php endif; ?>
+                </div>
+              </div>
             </div>
           </div>
           <?php endif; ?>
