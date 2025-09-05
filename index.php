@@ -390,13 +390,13 @@ function toggleSidebar() {
   
   if (sidebar.classList.contains('open')) {
     sidebar.classList.remove('open');
-    if (backdrop && isMobile) backdrop.classList.remove('active');
+    if (backdrop && !isMobile) backdrop.classList.remove('active');
     document.body.style.overflow = '';
   } else {
     sidebar.classList.add('open');
-    if (backdrop && isMobile) backdrop.classList.add('active');
-    // Prevent body scroll on mobile when sidebar is open
-    if (isMobile) {
+    if (backdrop && !isMobile) backdrop.classList.add('active');
+    // Don't manipulate body scroll on mobile - it can cause issues
+    if (!isMobile) {
       document.body.style.overflow = 'hidden';
     }
   }
@@ -437,16 +437,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (sidebar && backdrop) {
             if (!isMobile) {
-                // On desktop, hide backdrop
-                backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            } else {
-                // On mobile, ensure sidebar is closed
+                // On desktop, show backdrop when sidebar is open
                 if (sidebar.classList.contains('open')) {
                     backdrop.classList.add('active');
                 } else {
                     backdrop.classList.remove('active');
                 }
+                document.body.style.overflow = '';
+            } else {
+                // On mobile, never show backdrop and don't manipulate body scroll
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
             }
         }
     });
