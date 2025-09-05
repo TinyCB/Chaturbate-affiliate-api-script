@@ -1165,6 +1165,15 @@ function doAutoRefresh() {
     .then(d => {
       if (!Array.isArray(d.results)) return;
       const newModels = d.results;
+      
+      // Calculate global stats for spotlight detection (same as renderModels)
+      const globalStats = {
+        avgViewers: newModels.reduce((sum, m) => sum + parseInt(m.num_users || 0), 0) / newModels.length,
+        maxViewers: Math.max(...newModels.map(m => parseInt(m.num_users || 0))),
+        avgOnlineTime: newModels.reduce((sum, m) => sum + parseInt(m.seconds_online || 0), 0) / newModels.length,
+        maxOnlineTime: Math.max(...newModels.map(m => parseInt(m.seconds_online || 0)))
+      };
+      
       let curModels = {};
       document.querySelectorAll('.model-card-cb').forEach(card => {
         const user = card.querySelector('.username-cb');
@@ -1180,6 +1189,10 @@ function doAutoRefresh() {
       if (!grid) return;
       let frag = document.createDocumentFragment();
       for (const m of newModels) {
+        // Detect spotlights for this model (same as renderModels)
+        const modelSpotlights = detectModelSpotlights(m, newModels, globalStats);
+        const spotlightElements = renderSophisticatedSpotlight(modelSpotlights);
+        
         let chipHTML = '';
         const showTypeNormalized = (m.current_show || '').toLowerCase();
         if (showTypeNormalized && showTypeNormalized !== 'public') {
@@ -1219,12 +1232,14 @@ function doAutoRefresh() {
         }
         let imgUrl = (m.image_url_360x270 || m.image_url) + ((m.image_url_360x270 || m.image_url).indexOf('?') === -1 ? '?' : '&') + 'cb=' + Date.now();
         let cardHTML = `
-          <div class="model-card-cb">
+          <div class="model-card-cb ${spotlightElements.cardClass}">
             <div class="model-img-wrap-cb" style="position:relative;">
               <a href="${href}">
                 <img src="${imgUrl}" class="model-img-cb" alt="${m.username}">
               </a>
               ${chipHTML}
+              ${spotlightElements.cornerHTML}
+              ${spotlightElements.overlayHTML}
             </div>
             <div class="model-info-cb">
               <div class="row-top-cb">
