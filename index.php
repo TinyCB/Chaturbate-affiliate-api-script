@@ -960,19 +960,18 @@ function renderTags() {
   document.querySelectorAll('.filter-chip[data-tag]').forEach(el=>{
     function addClickAndTouchListeners(element, handler) {
       element.addEventListener('click', handler);
-      element.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        handler(e);
-      });
     }
     
     addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
       let tag = el.dataset.tag;
-      if(FILTERS.tag.includes(tag)) FILTERS.tag = FILTERS.tag.filter(x=>x!==tag);
-      else {
+      if(FILTERS.tag.includes(tag)) {
+        FILTERS.tag = FILTERS.tag.filter(x=>x!==tag);
+        el.classList.remove('selected');
+      } else {
         if(FILTERS.tag.length>=5) FILTERS.tag.shift();
         FILTERS.tag.push(tag);
+        el.classList.add('selected');
       }
       onFilterChange();
     });
@@ -983,27 +982,34 @@ function renderTags() {
 function attachFilterListeners() {
   function addClickAndTouchListeners(element, handler) {
     element.addEventListener('click', handler);
-    element.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      handler(e);
-    });
   }
   
   document.querySelectorAll('.filter-chip[data-region]').forEach(el=>{
     addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
       let region = el.dataset.region;
-      if(FILTERS.region.includes(region))
+      if(FILTERS.region.includes(region)) {
         FILTERS.region = FILTERS.region.filter(r => r !== region);
-      else
+        el.classList.remove('selected');
+      } else {
         FILTERS.region.push(region);
+        el.classList.add('selected');
+      }
       onFilterChange();
     });
   });
   document.querySelectorAll('.filter-chip[data-size]').forEach(el=>{
     addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
-      FILTERS.size = (FILTERS.size===el.dataset.size)?null:el.dataset.size;
+      // Update visual state immediately
+      document.querySelectorAll('.filter-chip[data-size]').forEach(sizeEl => sizeEl.classList.remove('selected'));
+      
+      if(FILTERS.size === el.dataset.size) {
+        FILTERS.size = null;
+      } else {
+        FILTERS.size = el.dataset.size;
+        el.classList.add('selected');
+      }
       onFilterChange();
     });
   });
@@ -1011,10 +1017,16 @@ function attachFilterListeners() {
     addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
       let g = el.dataset.gender;
-      if(FILTERS.gender.includes(g))
+      
+      // Update visual state immediately
+      document.querySelectorAll('.filter-chip[data-gender]').forEach(genderEl => genderEl.classList.remove('selected'));
+      
+      if(FILTERS.gender.includes(g)) {
         FILTERS.gender = FILTERS.gender.filter(x=>x!==g);
-      else
+      } else {
         FILTERS.gender = [g]; // Only one gender (for clean path)
+        el.classList.add('selected');
+      }
       onFilterChange();
     });
   });
@@ -1024,10 +1036,13 @@ function attachFilterListeners() {
     addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
       let spotlight = el.dataset.spotlight;
-      if(FILTERS.spotlight.includes(spotlight))
+      if(FILTERS.spotlight.includes(spotlight)) {
         FILTERS.spotlight = FILTERS.spotlight.filter(s => s !== spotlight);
-      else
+        el.classList.remove('selected');
+      } else {
         FILTERS.spotlight.push(spotlight);
+        el.classList.add('selected');
+      }
       onFilterChange();
     });
   });
