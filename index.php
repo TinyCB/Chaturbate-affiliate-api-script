@@ -257,6 +257,20 @@ a.tag-cb.subject-tag:focus {
   </div>
 </div>
   <div class="filter-section">
+    <div class="filter-label">Spotlights</div>
+    <div class="filter-spotlights">
+      <span class="filter-chip" data-spotlight="super-star">🌟 Superstar</span>
+      <span class="filter-chip" data-spotlight="trending">🔥 Trending</span>
+      <span class="filter-chip" data-spotlight="top-performer">⭐ Top Performer</span>
+      <span class="filter-chip" data-spotlight="just-live">⚡ Just Live</span>
+      <span class="filter-chip" data-spotlight="marathon">🎯 Marathon</span>
+      <span class="filter-chip" data-spotlight="rising-star">🚀 Rising Star</span>
+      <span class="filter-chip" data-spotlight="hd-quality">✨ HD Stream</span>
+      <span class="filter-chip" data-spotlight="interactive">🎪 Interactive</span>
+      <span class="filter-chip" data-spotlight="multilingual">🗣️ Multilingual</span>
+    </div>
+  </div>
+  <div class="filter-section">
     <div>
       <label style="font-weight: 600; cursor:pointer;">
         <input type="checkbox" id="filter-new-models" style="vertical-align: middle;"> New Models Only
@@ -353,6 +367,7 @@ urlFilters.maxAge = sessionFilters.maxAge === undefined ? 99 : sessionFilters.ma
 urlFilters.size   = sessionFilters.size || null;
 urlFilters.current_show = sessionFilters.current_show || [];
 urlFilters.is_new = sessionFilters.is_new || false;
+urlFilters.spotlight = sessionFilters.spotlight || [];
 const FILTERS = {
   gender: urlFilters.gender,
   region: urlFilters.region,
@@ -362,6 +377,7 @@ const FILTERS = {
   size: urlFilters.size,
   current_show: urlFilters.current_show,
   is_new: urlFilters.is_new,
+  spotlight: urlFilters.spotlight,
   page: urlFilters.page,
 };
 let currentPage = FILTERS.page || 1;
@@ -559,23 +575,280 @@ function fetchModels() {
   .then(r=>r.json())
   .then(d=>{
     totalCount = d.count ? parseInt(d.count,10) : ((d.results||[]).length);
-    allModels = d.results.filter(m=>
+    
+    // Calculate global stats for spotlight detection
+    const globalStats = {
+      avgViewers: d.results.reduce((sum, m) => sum + parseInt(m.num_users || 0), 0) / d.results.length,
+      maxViewers: Math.max(...d.results.map(m => parseInt(m.num_users || 0))),
+      avgOnlineTime: d.results.reduce((sum, m) => sum + parseInt(m.seconds_online || 0), 0) / d.results.length,
+      maxOnlineTime: Math.max(...d.results.map(m => parseInt(m.seconds_online || 0)))
+    };
+    
+    // First, apply basic server-side compatible filters only
+    let filteredModels = d.results.filter(m=>
       m.age >= (FILTERS.minAge||18)
       && m.age <= (FILTERS.maxAge||99)
       && (!FILTERS.size || (m.num_users>=ROOMSIZE[FILTERS.size][0] && m.num_users<=ROOMSIZE[FILTERS.size][1]))
     );
-    renderModels(allModels);
-    renderPagination();
+    
+    // Apply client-side spotlight filtering if needed
+    let hasSpotlightFilter = FILTERS.spotlight && FILTERS.spotlight.length > 0;
+    if (hasSpotlightFilter) {
+      console.log('Applying spotlight filter for:', FILTERS.spotlight);
+      console.log('Global stats (consistent):', globalStats);
+      console.log('Sample model data:', d.results[0]); // Show structure of first model
+      filteredModels = filteredModels.filter(m => {
+        // IMPORTANT: Use d.results (all models) for consistent global stats
+        const allModelSpotlights = detectAllModelSpotlights(m, d.results, globalStats);
+        const hasMatchingSpotlight = allModelSpotlights.some(spotlight => 
+          FILTERS.spotlight.includes(spotlight.type)
+        );
+        if (allModelSpotlights.length > 0) {
+          console.log(`Model ${m.username}: spotlights=${JSON.stringify(allModelSpotlights.map(s => s.type))}, matches=${hasMatchingSpotlight}`);
+        }
+        return hasMatchingSpotlight;
+      });
+      console.log(`Filtered ${d.results.length} models down to ${filteredModels.length} with spotlight filters`);
+    }
+    
+    // Sort models by spotlight priority, then by viewers
+    filteredModels = sortModelsBySpotlight(filteredModels);
+    
+    // Handle pagination for client-side filtering
+    if (hasSpotlightFilter) {
+      // Client-side pagination when spotlight filters are active
+      const totalFiltered = filteredModels.length;
+      const startIndex = ((FILTERS.page || 1) - 1) * camsPerPage;
+      const endIndex = startIndex + camsPerPage;
+      allModels = filteredModels.slice(startIndex, endIndex);
+      
+      // Update totalCount for pagination
+      const originalTotalCount = totalCount;
+      totalCount = totalFiltered;
+      renderModels(allModels);
+      renderPagination();
+      // Restore original totalCount for next API call
+      totalCount = originalTotalCount;
+    } else {
+      // Server-side pagination for normal filtering
+      allModels = filteredModels;
+      renderModels(allModels);
+      renderPagination();
+    }
     loadTags();
     updateSelected();
     saveGridFilters();
     updateResetFiltersLink();
   });
 }
+
+// =============================================
+// MODEL SPOTLIGHT SYSTEM
+// =============================================
+
+function detectAllModelSpotlights(model, allModels, globalStats) {
+  const spotlights = [];
+  const now = Date.now() / 1000;
+  const currentHour = new Date().getHours();
+  const isWeekend = [0, 6].includes(new Date().getDay());
+  
+  // Get model stats
+  const viewerCount = parseInt(model.num_users || 0);
+  const secondsOnline = parseInt(model.seconds_online || 0);
+  const age = parseInt(model.age || 18);
+  const followerCount = parseInt(model.num_followers || 0);
+  const isNew = !!model.is_new;
+  const isHD = !!model.is_hd;
+  const hoursOnline = secondsOnline / 3600;
+  const tags = model.tags || [];
+  const languages = (model.spoken_languages || '').split(',').filter(l => l.trim());
+  
+  // Debug logging for first few models
+  if (Math.random() < 0.1) { // Log ~10% of models to avoid spam
+    console.log(`\n=== SPOTLIGHT DEBUG: ${model.username} ===`);
+    console.log(`Viewers: ${viewerCount}, Online: ${hoursOnline.toFixed(1)}h, HD: ${isHD}, New: ${isNew}`);
+    console.log(`Languages: [${languages.join(', ')}], Subject length: ${model.room_subject?.length || 0}`);
+    console.log(`Global stats - Avg: ${globalStats.avgViewers.toFixed(1)}, Max: ${globalStats.maxViewers}`);
+  }
+  
+  // Calculate global stats if not provided
+  if (!globalStats) {
+    const allViewers = allModels.map(m => parseInt(m.num_users || 0));
+    const allOnlineTimes = allModels.map(m => parseInt(m.seconds_online || 0));
+    globalStats = {
+      avgViewers: allViewers.reduce((a, b) => a + b, 0) / allViewers.length,
+      maxViewers: Math.max(...allViewers),
+      avgOnlineTime: allOnlineTimes.reduce((a, b) => a + b, 0) / allOnlineTimes.length,
+      maxOnlineTime: Math.max(...allOnlineTimes)
+    };
+  }
+  
+  // SUPERSTAR DETECTION (most exclusive)
+  const superSpotlightScore = (isHD ? 2 : 0) + 
+                            (viewerCount >= globalStats.avgViewers * 1.5 ? 3 : 0) + 
+                            (hoursOnline >= 2 ? 2 : 0) + 
+                            (isNew ? 2 : 0) + 
+                            (languages.length >= 2 ? 1 : 0);
+  
+  if (superSpotlightScore >= 7) {
+    spotlights.push({ type: 'super-star', label: 'SUPERSTAR', icon: '🌟', priority: 11 });
+  }
+  
+  // Check ALL applicable spotlights (not mutually exclusive for filtering)
+  const debugThis = Math.random() < 0.1;
+  
+  const trendingThreshold = Math.max(20, globalStats.maxViewers * 0.7);
+  if (viewerCount >= trendingThreshold) {
+    spotlights.push({ type: 'trending', label: 'TRENDING', icon: '🔥', priority: 10 });
+    if (debugThis) console.log(`✓ TRENDING: ${viewerCount} >= ${trendingThreshold.toFixed(1)}`);
+  } else if (debugThis) console.log(`✗ trending: ${viewerCount} < ${trendingThreshold.toFixed(1)}`);
+  
+  const performerThreshold = Math.max(10, globalStats.avgViewers * 2);
+  if (viewerCount >= performerThreshold) {
+    spotlights.push({ type: 'top-performer', label: 'TOP PERFORMER', icon: '⭐', priority: 9 });
+    if (debugThis) console.log(`✓ TOP PERFORMER: ${viewerCount} >= ${performerThreshold.toFixed(1)}`);
+  } else if (debugThis) console.log(`✗ top-performer: ${viewerCount} < ${performerThreshold.toFixed(1)}`);
+  
+  const justLiveThreshold = Math.max(1, globalStats.avgViewers * 0.2);
+  if (secondsOnline <= 3600 && viewerCount >= justLiveThreshold) {
+    spotlights.push({ type: 'just-live', label: 'JUST LIVE', icon: '⚡', priority: 8 });
+    if (debugThis) console.log(`✓ JUST LIVE: ${secondsOnline}s <= 3600 && ${viewerCount} >= ${justLiveThreshold.toFixed(1)}`);
+  } else if (debugThis) console.log(`✗ just-live: ${secondsOnline}s > 3600 || ${viewerCount} < ${justLiveThreshold.toFixed(1)}`);
+  
+  if (hoursOnline >= 3) {
+    spotlights.push({ type: 'marathon', label: 'MARATHON', icon: '🎯', priority: 7 });
+    if (debugThis) console.log(`✓ MARATHON: ${hoursOnline.toFixed(1)}h >= 3`);
+  } else if (debugThis) console.log(`✗ marathon: ${hoursOnline.toFixed(1)}h < 3`);
+  
+  const risingStarThreshold = Math.max(5, globalStats.avgViewers * 0.5);
+  if (isNew && viewerCount >= risingStarThreshold) {
+    spotlights.push({ type: 'rising-star', label: 'RISING STAR', icon: '🚀', priority: 6 });
+    if (debugThis) console.log(`✓ RISING STAR: isNew=${isNew} && ${viewerCount} >= ${risingStarThreshold.toFixed(1)}`);
+  } else if (debugThis) console.log(`✗ rising-star: isNew=${isNew} || ${viewerCount} < ${risingStarThreshold.toFixed(1)}`);
+  
+  const hdThreshold = Math.max(1, globalStats.avgViewers * 0.3);
+  if (isHD && viewerCount >= hdThreshold) {
+    spotlights.push({ type: 'hd-quality', label: 'HD STREAM', icon: '✨', priority: 5 });
+    if (debugThis) console.log(`✓ HD QUALITY: isHD=${isHD} && ${viewerCount} >= ${hdThreshold.toFixed(1)}`);
+  } else if (debugThis) console.log(`✗ hd-quality: isHD=${isHD} || ${viewerCount} < ${hdThreshold.toFixed(1)}`);
+  
+  if (model.room_subject && model.room_subject.length > 20) {
+    spotlights.push({ type: 'interactive', label: 'INTERACTIVE', icon: '🎪', priority: 4 });
+    if (debugThis) console.log(`✓ INTERACTIVE: subject length ${model.room_subject.length} > 20`);
+  } else if (debugThis) console.log(`✗ interactive: subject length ${model.room_subject?.length || 0} <= 20`);
+  
+  if (languages.length >= 2) {
+    spotlights.push({ type: 'multilingual', label: 'MULTILINGUAL', icon: '🗣️', priority: 3 });
+    if (debugThis) console.log(`✓ MULTILINGUAL: ${languages.length} languages >= 2`);
+  } else if (debugThis) console.log(`✗ multilingual: ${languages.length} languages < 2`);
+  
+  if (debugThis && spotlights.length > 0) {
+    console.log(`Final spotlights: ${spotlights.map(s => s.type).join(', ')}`);
+  }
+  
+  // Return ALL applicable spotlights for filtering
+  return spotlights.sort((a, b) => b.priority - a.priority);
+}
+
+function detectModelSpotlights(model, allModels, globalStats) {
+  // Get all applicable spotlights but return only the top one for display
+  const allSpotlights = detectAllModelSpotlights(model, allModels, globalStats);
+  return allSpotlights.slice(0, 1);
+}
+
+function renderSophisticatedSpotlight(spotlights) {
+  if (!spotlights || spotlights.length === 0) return { cornerHTML: '', overlayHTML: '', cardClass: '' };
+  
+  // Get the highest priority spotlight for the corner indicator
+  const topSpotlight = spotlights[0];
+  
+  // Determine priority class
+  let priorityClass = 'priority-low';
+  if (topSpotlight.priority >= 9) priorityClass = 'priority-high';
+  else if (topSpotlight.priority >= 6) priorityClass = 'priority-medium';
+  
+  // Create subtle corner indicator with spotlight-specific styling
+  const cornerHTML = `
+    <div class="spotlight-corner ${priorityClass} corner-${topSpotlight.type}">
+      <span>${topSpotlight.icon}</span>
+      <div class="spotlight-tooltip">${topSpotlight.label}</div>
+    </div>`;
+  
+  // Create hover overlay with spotlight info (max 1 spotlight for elegance)
+  const overlayHTML = `
+    <div class="spotlight-overlay">
+      <div class="spotlight-info">
+        <span class="spotlight-icon-small">${topSpotlight.icon}</span>
+        <span class="spotlight-text-small">${topSpotlight.label}</span>
+      </div>
+    </div>`;
+  
+  return {
+    cornerHTML,
+    overlayHTML,
+    cardClass: `spotlighted spotlight-${topSpotlight.type}`
+  };
+}
+
+function sortModelsBySpotlight(models) {
+  // First, calculate global stats for all models
+  const globalStats = {
+    avgViewers: models.reduce((sum, m) => sum + parseInt(m.num_users || 0), 0) / models.length,
+    maxViewers: Math.max(...models.map(m => parseInt(m.num_users || 0))),
+    avgOnlineTime: models.reduce((sum, m) => sum + parseInt(m.seconds_online || 0), 0) / models.length,
+    maxOnlineTime: Math.max(...models.map(m => parseInt(m.seconds_online || 0)))
+  };
+  
+  // Add spotlight data to each model
+  const modelsWithSpotlights = models.map(model => {
+    const spotlights = detectModelSpotlights(model, models, globalStats);
+    const topSpotlight = spotlights.length > 0 ? spotlights[0] : null;
+    
+    return {
+      ...model,
+      _spotlightPriority: topSpotlight ? topSpotlight.priority : 0,
+      _spotlightType: topSpotlight ? topSpotlight.type : null,
+      _viewers: parseInt(model.num_users || 0),
+      _onlineTime: parseInt(model.seconds_online || 0)
+    };
+  });
+  
+  // Sort by: 
+  // 1. Spotlight priority (highest first)
+  // 2. Viewer count (highest first) 
+  // 3. Online time (longest first)
+  return modelsWithSpotlights.sort((a, b) => {
+    // Primary sort: Spotlight priority
+    if (a._spotlightPriority !== b._spotlightPriority) {
+      return b._spotlightPriority - a._spotlightPriority;
+    }
+    
+    // Secondary sort: Viewer count
+    if (a._viewers !== b._viewers) {
+      return b._viewers - a._viewers;
+    }
+    
+    // Tertiary sort: Online time
+    return b._onlineTime - a._onlineTime;
+  });
+}
+
 function renderModels(models) {
   let el = document.getElementById('model-grid');
   if(models.length===0) { el.innerHTML = "<b>No results.</b>"; return; }
+  // Calculate global stats for spotlight detection
+  const globalStats = {
+    avgViewers: models.reduce((sum, m) => sum + parseInt(m.num_users || 0), 0) / models.length,
+    maxViewers: Math.max(...models.map(m => parseInt(m.num_users || 0))),
+    avgOnlineTime: models.reduce((sum, m) => sum + parseInt(m.seconds_online || 0), 0) / models.length,
+    maxOnlineTime: Math.max(...models.map(m => parseInt(m.seconds_online || 0)))
+  };
+  
   el.innerHTML = models.map(m=>{
+    // Detect spotlights for this model
+    const modelSpotlights = detectModelSpotlights(m, models, globalStats);
+    const spotlightElements = renderSophisticatedSpotlight(modelSpotlights);
+    
     let rawSubject = m.room_subject ? m.room_subject : '';
     let subjectWithTags = rawSubject.replace(
       /#(\w+)/g,
@@ -619,12 +892,14 @@ function renderModels(models) {
     let timeString = (m.seconds_online >= 3600) ? ((m.seconds_online/3600).toFixed(1) + ' hrs') : (Math.floor((m.seconds_online%3600)/60) + ' mins');
     let viewers = (m.num_users ? `${m.num_users} viewers` : '');
     return `
-      <div class="model-card-cb">
+      <div class="model-card-cb ${spotlightElements.cardClass}">
         <div class="model-img-wrap-cb" style="position:relative;">
           <a href="${href}">
             <img src="${m.image_url_360x270||m.image_url}" class="model-img-cb" alt="${m.username}">
           </a>
           ${chipHTML}
+          ${spotlightElements.cornerHTML}
+          ${spotlightElements.overlayHTML}
         </div>
         <div class="model-info-cb">
           <div class="row-top-cb">
@@ -731,6 +1006,20 @@ function updateSelected() {
   document.querySelectorAll('.filter-chip[data-current_show]').forEach(el=>{
     if(FILTERS.current_show.includes(el.dataset.current_show)) el.classList.add('selected');
     else el.classList.remove('selected');
+  });
+  
+  // Spotlight filters
+  document.querySelectorAll('.filter-chip[data-spotlight]').forEach(el=>{
+    if(FILTERS.spotlight.includes(el.dataset.spotlight)) el.classList.add('selected');
+    else el.classList.remove('selected');
+    el.onclick = ()=>{
+      let spotlight = el.dataset.spotlight;
+      if(FILTERS.spotlight.includes(spotlight))
+        FILTERS.spotlight = FILTERS.spotlight.filter(s => s !== spotlight);
+      else
+        FILTERS.spotlight.push(spotlight);
+      onFilterChange();
+    }
   });
   updateResetFiltersLink();
 }
@@ -974,4 +1263,153 @@ fetchModels();
 updateSelected();
 updateResetFiltersLink();
 </script>
+
+<!-- Spotlight Help Modal -->
+<div id="spotlight-modal" class="spotlight-modal" style="display: none;">
+  <div class="spotlight-modal-content">
+    <div class="spotlight-modal-header">
+      <h2>Spotlight System Guide</h2>
+      <button id="close-spotlight-modal" class="modal-close-btn">&times;</button>
+    </div>
+    <div class="spotlight-modal-body">
+      <p class="modal-intro">Spotlights highlight exceptional models based on real-time performance data. Only the most impressive models earn these recognition badges!</p>
+      
+      <div class="spotlight-categories">
+        <div class="spotlight-category">
+          <div class="category-header priority-high">
+            <h3>🌟 Top Tier Spotlights</h3>
+            <span class="priority-badge high">Highest Priority</span>
+          </div>
+          <div class="spotlight-items">
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">🌟</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">SUPERSTAR</div>
+                <div class="spotlight-description">Models with multiple exceptional qualities: HD streams, high viewership, long sessions, and more</div>
+              </div>
+            </div>
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">🔥</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">TRENDING</div>
+                <div class="spotlight-description">Currently attracting 80%+ of the maximum viewers on the platform</div>
+              </div>
+            </div>
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">⭐</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">TOP PERFORMER</div>
+                <div class="spotlight-description">Drawing 2.5x more viewers than average - exceptional appeal</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="spotlight-category">
+          <div class="category-header priority-medium">
+            <h3>⚡ Activity Spotlights</h3>
+            <span class="priority-badge medium">High Priority</span>
+          </div>
+          <div class="spotlight-items">
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">⚡</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">JUST LIVE</div>
+                <div class="spotlight-description">Recently came online (within 30 minutes) with strong initial viewership</div>
+              </div>
+            </div>
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">🎯</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">MARATHON</div>
+                <div class="spotlight-description">Streaming for 4+ hours straight - impressive dedication!</div>
+              </div>
+            </div>
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">🚀</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">RISING STAR</div>
+                <div class="spotlight-description">New models who are already performing exceptionally well</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="spotlight-category">
+          <div class="category-header priority-low">
+            <h3>✨ Special Recognition</h3>
+            <span class="priority-badge low">Notable Features</span>
+          </div>
+          <div class="spotlight-items">
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">✨</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">HD STREAM</div>
+                <div class="spotlight-description">High-definition video quality with solid viewership</div>
+              </div>
+            </div>
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">🎪</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">INTERACTIVE</div>
+                <div class="spotlight-description">Engaging room topics and active interaction with viewers</div>
+              </div>
+            </div>
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">🗣️</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">MULTILINGUAL</div>
+                <div class="spotlight-description">Speaks 3+ languages - internationally accessible</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <p><strong>Pro Tip:</strong> Hover over any spotlight badge to see exactly what it means!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Spotlight modal functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const helpBtn = document.getElementById('spotlight-guide-btn');
+  const modal = document.getElementById('spotlight-modal');
+  const closeBtn = document.getElementById('close-spotlight-modal');
+  
+  if (helpBtn) {
+    helpBtn.addEventListener('click', function() {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    });
+  }
+  
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function() {
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    });
+  }
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+  });
+  
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+  });
+});
+</script>
+
 <?php include('templates/footer.php'); ?>
