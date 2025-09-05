@@ -148,11 +148,6 @@ nav.main-navbar {
   border-right: 1px solid #e7ecef;
   font-size: 13px;
   box-sizing: border-box;
-  pointer-events: auto;
-}
-
-#filter-sidebar * {
-  pointer-events: auto;
 }
 #filter-sidebar.open {
   transform: translateX(0);
@@ -253,9 +248,6 @@ nav.main-navbar {
   align-items: center;
   gap: 2px;
   line-height: 1.1;
-  touch-action: manipulation;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
 }
 .filter-chip.selected {
   background: var(--primary-color);
