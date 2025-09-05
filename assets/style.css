@@ -148,6 +148,11 @@ nav.main-navbar {
   border-right: 1px solid #e7ecef;
   font-size: 13px;
   box-sizing: border-box;
+  pointer-events: auto;
+}
+
+#filter-sidebar * {
+  pointer-events: auto;
 }
 #filter-sidebar.open {
   transform: translateX(0);
@@ -170,19 +175,21 @@ nav.main-navbar {
 
 .sidebar-backdrop.active {
   opacity: 1;
-  pointer-events: auto;
+  pointer-events: none;
   display: block;
-  left: 280px;
 }
 
-/* Only show backdrop on mobile screens */
-@media (max-width: 768px) {
+/* Only show backdrop on desktop screens */
+@media (min-width: 769px) {
   .sidebar-backdrop {
     display: block;
   }
-  
-  .sidebar-backdrop.active {
-    left: 90vw;
+}
+
+/* Hide backdrop on mobile - it interferes with touches */
+@media (max-width: 768px) {
+  .sidebar-backdrop {
+    display: none !important;
   }
 }
 #filter-sidebar .close-btn {
