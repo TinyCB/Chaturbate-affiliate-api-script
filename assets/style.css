@@ -11,13 +11,16 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Main layout */
 #main-flex-wrap {
   display: block;
   width: 100%;
-  min-height: 60vh;
+  flex: 1;
 }
 
 .main-content {
@@ -285,45 +288,60 @@ nav.main-navbar {
   gap: 6px;
   flex-wrap: nowrap;
   margin-top: 3px;
+  width: 100%;
+  position: relative;
 }
 .filter-ages input[type="number"] {
-  flex: 0 0 48px;
-  width: 48px;
-  min-width: 42px;
-  max-width: 54px;
+  flex: 0 0 60px;
+  width: 60px;
+  min-width: 60px;
+  max-width: 70px;
   border: 1px solid #ccddee;
   border-radius: 6px;
-  font-size: 13.5px;
-  padding: 4px 8px;
+  font-size: 14px;
+  padding: 6px 8px;
   background: #f8fbff;
-  height: 27px;
+  height: 32px;
   box-sizing: border-box;
   text-align: center;
   vertical-align: middle;
-  margin-bottom: 0;
-  margin-top: 0;
-  margin-right: 0;
-  margin-left: 0;
+  margin: 0;
   outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  -moz-appearance: textfield; /* Hide arrows in Firefox */
+}
+
+/* Hide arrows in WebKit browsers (Chrome, Safari, Edge) */
+.filter-ages input[type="number"]::-webkit-outer-spin-button,
+.filter-ages input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Focus state for better UX */
+.filter-ages input[type="number"]:focus {
+  border-color: var(--primary-color, #df8620);
+  box-shadow: 0 0 0 2px rgba(223, 134, 32, 0.2);
+  outline: none;
+}
+
+/* Hover state */
+.filter-ages input[type="number"]:hover {
+  border-color: #aabbcc;
 }
 .filter-ages span {
   margin: 0 3px;
   line-height: 1.2;
-}
-.filter-ages .filter-chip {
-  flex: 0 0 auto;
-  padding: 4px 14px;
-  font-size: 13px;
-  margin-bottom: 0;
-  white-space: nowrap;
 }
 /* ------ MODEL GRID & CARD ------ */
 .model-grid {
   display: grid;
   gap: 16px;
   margin: 12px 12px 0 12px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, 200px);
+  max-width: 100%;
   padding-bottom: 20px;
+  justify-content: start;
 }
 
 /* Tablet */
@@ -331,14 +349,14 @@ nav.main-navbar {
   .model-grid { 
     gap: 14px; 
     margin: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
+    grid-template-columns: repeat(auto-fill, 180px); 
   }
 }
 
 /* Mobile Large */
 @media (max-width: 600px) {
   .model-grid { 
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, 160px);
     gap: 12px;
     margin: 8px;
   }
@@ -379,6 +397,9 @@ nav.main-navbar {
   flex-direction: column;
   min-height: 200px;
   max-height: 240px;
+  width: 100%;
+  min-width: 180px;
+  max-width: 220px;
   padding: 12px;
   background: #fff;
   border: 1px solid #e0e0e0;
@@ -388,6 +409,7 @@ nav.main-navbar {
   cursor: pointer;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
 }
 
 .model-card-cb:hover {
@@ -555,16 +577,63 @@ nav.main-navbar {
 }
 footer {
   text-align: center;
-  padding: 16px 12px;
-  background: #f7fbff;
+  padding: 20px 16px;
+  background: linear-gradient(135deg, #f7fbff 0%, #eef4fb 100%);
   color: #4770ad;
   border-top: 1px solid #d1e2ef;
-  font-size: .95em;
-  margin-top: 40px;
+  font-size: 0.9em;
+  margin-top: auto;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+  position: relative;
+  z-index: 10;
+}
+
+footer p {
+  margin: 0;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+footer a {
+  color: var(--primary-color, #df8620);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+footer a:hover,
+footer a:focus {
+  color: #c5721a;
+  text-decoration: underline;
+}
+
+/* Better footer spacing */
+@media (max-width: 768px) {
+  footer {
+    padding: 16px 12px;
+    font-size: 0.85em;
+  }
+  
+  footer p {
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 480px) {
+  footer {
+    padding: 14px 8px;
+  }
+  
+  footer p {
+    font-size: 0.9em;
+  }
 }
 
 main { 
-  min-height: 60vh;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   padding-bottom: 20px;
 }
 

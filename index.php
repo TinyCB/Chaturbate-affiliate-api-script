@@ -241,7 +241,9 @@ a.tag-cb.subject-tag:focus {
       <input type="number" min="18" max="99" id="min-age" value="18">
       <span>to</span>
       <input type="number" min="18" max="99" id="max-age" value="99">
-      <button onclick="applyAge()" class="filter-chip" type="button">Apply</button>
+    </div>
+    <div id="age-validation-error" style="display: none; color: #d32f2f; font-size: 11px; padding: 6px 8px; background: #ffebee; border-radius: 4px; border: 1px solid #ffcdd2; margin-top: 4px; width: 100%; box-sizing: border-box;">
+      ⚠️ Min age can't be higher than max age
     </div>
   </div>
   <div class="filter-section">
@@ -391,13 +393,14 @@ document.addEventListener('DOMContentLoaded', function() {
     backdrop.onclick = toggleSidebar;
     document.body.appendChild(backdrop);
     
-    // Always start with sidebar closed, and only open it by default on desktop
+    // Set sidebar state based on screen size
     var sidebar = document.getElementById('filter-sidebar');
     if (sidebar) {
-        sidebar.classList.remove('open');
-        // Only open sidebar by default on desktop (wider screens)
         if (window.innerWidth > 768) {
-            // Keep it closed by default even on desktop for better UX
+            // Desktop: open sidebar by default
+            sidebar.classList.add('open');
+        } else {
+            // Mobile: closed by default
             sidebar.classList.remove('open');
         }
     }
@@ -440,8 +443,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.filter-chip[data-current_show]').forEach(el=>{
         if(FILTERS.current_show.includes(el.dataset.current_show)) el.classList.add('selected');
     });
-    document.getElementById('min-age').value = FILTERS.minAge;
-    document.getElementById('max-age').value = FILTERS.maxAge;
+    // Only set input values if they're not already set by user
+    const minAgeInput = document.getElementById('min-age');
+    const maxAgeInput = document.getElementById('max-age');
+    console.log('DOMContentLoaded - current values:', minAgeInput.value, maxAgeInput.value);
+    console.log('FILTERS values:', FILTERS.minAge, FILTERS.maxAge);
+    
+    if (minAgeInput.value == '18' && FILTERS.minAge && FILTERS.minAge != 18) {
+        console.log('Setting minAge input to:', FILTERS.minAge);
+        minAgeInput.value = FILTERS.minAge;
+    }
+    if (maxAgeInput.value == '99' && FILTERS.maxAge && FILTERS.maxAge != 99) {
+        console.log('Setting maxAge input to:', FILTERS.maxAge);
+        maxAgeInput.value = FILTERS.maxAge;
+    }
     var newModelsCheckbox = document.getElementById('filter-new-models');
     if (newModelsCheckbox) newModelsCheckbox.checked = FILTERS.is_new;
     var resetEl = document.getElementById('reset-filters-link');
@@ -515,7 +530,15 @@ window.gotoPage = function(p) {
 function onFilterChange() {
     FILTERS.page = 1;
     saveGridFilters();
-    window.location.href = getCurrentPath();
+    
+    // Update URL without page reload (for browser history/bookmarking)
+    const newPath = getCurrentPath();
+    if (window.history && window.history.pushState) {
+        window.history.pushState({}, '', newPath);
+    }
+    
+    // Fetch new results without page reload to keep sidebar open
+    fetchModels();
 }
 const ROOMSIZE = { intimate: [0,40], mid: [41,120], high: [121,9999] };
 let allTags = [];
@@ -712,12 +735,51 @@ function updateSelected() {
   updateResetFiltersLink();
 }
 function applyAge() {
-  FILTERS.minAge = parseInt(document.getElementById('min-age').value)||18;
-  FILTERS.maxAge = parseInt(document.getElementById('max-age').value)||99;
+  let minInput = document.getElementById('min-age').value.trim();
+  let maxInput = document.getElementById('max-age').value.trim();
+  let errorDiv = document.getElementById('age-validation-error');
+  
+  console.log('applyAge called - minInput:', minInput, 'maxInput:', maxInput);
+  
+  // Parse values with defaults
+  let minAge = minInput === '' ? 18 : parseInt(minInput) || 18;
+  let maxAge = maxInput === '' ? 99 : parseInt(maxInput) || 99;
+  
+  // Validation: Check if min age is higher than max age
+  if (minInput !== '' && maxInput !== '' && minAge > maxAge) {
+    // Show error and don't apply the filter
+    errorDiv.style.display = 'block';
+    console.log('Validation error: minAge (' + minAge + ') > maxAge (' + maxAge + ')');
+    return; // Don't update filters
+  } else {
+    // Hide error if validation passes
+    errorDiv.style.display = 'none';
+  }
+  
+  // Apply basic validation to filtering values
+  if (minAge < 18) minAge = 18;
+  
+  console.log('Final filtering values - minAge:', minAge, 'maxAge:', maxAge);
+  FILTERS.minAge = minAge;
+  FILTERS.maxAge = maxAge;
   onFilterChange();
 }
-document.getElementById('min-age').onchange = applyAge;
-document.getElementById('max-age').onchange = applyAge;
+
+// Use oninput for real-time filtering as user types
+document.addEventListener('DOMContentLoaded', function() {
+    const minAgeEl = document.getElementById('min-age');
+    const maxAgeEl = document.getElementById('max-age');
+    console.log('Setting up age input handlers');
+    
+    if (minAgeEl) {
+        minAgeEl.oninput = applyAge;
+        console.log('Min age handler attached');
+    }
+    if (maxAgeEl) {
+        maxAgeEl.oninput = applyAge;
+        console.log('Max age handler attached');
+    }
+});
 document.getElementById('tag-search').oninput = function() {
   let val = this.value.toLowerCase();
   document.querySelectorAll('.filter-chip[data-tag]').forEach(e=>{
