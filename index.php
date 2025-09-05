@@ -959,7 +959,15 @@ function renderTags() {
   w.innerHTML = html;
   document.querySelectorAll('.filter-chip[data-tag]').forEach(el=>{
     function addClickAndTouchListeners(element, handler) {
-      element.addEventListener('click', handler);
+      element.addEventListener('click', function(e) {
+        console.log('Tag clicked:', element.dataset, 'isMobile:', window.innerWidth <= 768);
+        handler(e);
+      });
+      element.addEventListener('touchend', function(e) {
+        console.log('Tag touched:', element.dataset, 'isMobile:', window.innerWidth <= 768);
+        e.preventDefault();
+        handler(e);
+      });
     }
     
     addClickAndTouchListeners(el, function(e) {
@@ -980,8 +988,22 @@ function renderTags() {
   });
 }
 function attachFilterListeners() {
+  console.log('Attaching filter listeners...');
+  console.log('Region filters:', document.querySelectorAll('.filter-chip[data-region]').length);
+  console.log('Gender filters:', document.querySelectorAll('.filter-chip[data-gender]').length);
+  console.log('Size filters:', document.querySelectorAll('.filter-chip[data-size]').length);
+  console.log('Spotlight filters:', document.querySelectorAll('.filter-chip[data-spotlight]').length);
+  
   function addClickAndTouchListeners(element, handler) {
-    element.addEventListener('click', handler);
+    element.addEventListener('click', function(e) {
+      console.log('Filter clicked:', element.dataset, 'isMobile:', window.innerWidth <= 768);
+      handler(e);
+    });
+    element.addEventListener('touchend', function(e) {
+      console.log('Filter touched:', element.dataset, 'isMobile:', window.innerWidth <= 768);
+      e.preventDefault();
+      handler(e);
+    });
   }
   
   document.querySelectorAll('.filter-chip[data-region]').forEach(el=>{
@@ -1324,6 +1346,8 @@ function doAutoRefresh() {
     });
 }
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, initializing filters...');
+  console.log('Filter chips found:', document.querySelectorAll('.filter-chip').length);
   setupAutoRefreshCheckboxBar();
   attachFilterListeners();
   fetchModels();

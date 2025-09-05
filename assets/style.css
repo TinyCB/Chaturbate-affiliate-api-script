@@ -170,14 +170,19 @@ nav.main-navbar {
 
 .sidebar-backdrop.active {
   opacity: 1;
-  pointer-events: all;
+  pointer-events: auto;
   display: block;
+  left: 280px;
 }
 
 /* Only show backdrop on mobile screens */
 @media (max-width: 768px) {
   .sidebar-backdrop {
     display: block;
+  }
+  
+  .sidebar-backdrop.active {
+    left: 90vw;
   }
 }
 #filter-sidebar .close-btn {
