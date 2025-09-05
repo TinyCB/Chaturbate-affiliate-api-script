@@ -2270,7 +2270,7 @@ html {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  background: transparent;
   padding: 20px 8px 8px 8px;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -2287,7 +2287,15 @@ html {
   gap: 6px;
   color: white;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
+  text-shadow: 
+    0 0 8px rgba(0,0,0,1),
+    0 0 4px rgba(0,0,0,1),
+    0 2px 4px rgba(0,0,0,0.8),
+    1px 1px 2px rgba(0,0,0,1),
+    -1px -1px 2px rgba(0,0,0,1),
+    1px -1px 2px rgba(0,0,0,1),
+    -1px 1px 2px rgba(0,0,0,1);
 }
 
 .spotlight-icon-small {
@@ -2423,11 +2431,20 @@ html {
   opacity: 0;
   pointer-events: none;
   transition: all 0.3s ease;
-  z-index: 1000;
+  z-index: 9999;
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.1);
   max-width: 120px;
   text-align: center;
+}
+
+.model-card-cb:has(.spotlight-corner:hover) {
+  z-index: 10000;
+  position: relative;
+}
+
+.spotlight-corner:hover {
+  z-index: 10001;
 }
 
 .spotlight-corner:hover .spotlight-tooltip {
