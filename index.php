@@ -958,7 +958,15 @@ function renderTags() {
   let html = allTags.slice(0,46).map(t=>`<span class="filter-chip" data-tag="${t}">${t}</span>`).join('');
   w.innerHTML = html;
   document.querySelectorAll('.filter-chip[data-tag]').forEach(el=>{
-    el.addEventListener('click', function(e) {
+    function addClickAndTouchListeners(element, handler) {
+      element.addEventListener('click', handler);
+      element.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        handler(e);
+      });
+    }
+    
+    addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
       let tag = el.dataset.tag;
       if(FILTERS.tag.includes(tag)) FILTERS.tag = FILTERS.tag.filter(x=>x!==tag);
@@ -972,11 +980,17 @@ function renderTags() {
     else el.classList.remove('selected');
   });
 }
-function updateSelected() {
+function attachFilterListeners() {
+  function addClickAndTouchListeners(element, handler) {
+    element.addEventListener('click', handler);
+    element.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      handler(e);
+    });
+  }
+  
   document.querySelectorAll('.filter-chip[data-region]').forEach(el=>{
-    if(FILTERS.region.includes(el.dataset.region)) el.classList.add('selected');
-    else el.classList.remove('selected');
-    el.addEventListener('click', function(e) {
+    addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
       let region = el.dataset.region;
       if(FILTERS.region.includes(region))
@@ -987,18 +1001,14 @@ function updateSelected() {
     });
   });
   document.querySelectorAll('.filter-chip[data-size]').forEach(el=>{
-    if(FILTERS.size===el.dataset.size) el.classList.add('selected');
-    else el.classList.remove('selected');
-    el.addEventListener('click', function(e) {
+    addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
       FILTERS.size = (FILTERS.size===el.dataset.size)?null:el.dataset.size;
       onFilterChange();
     });
   });
   document.querySelectorAll('.filter-chip[data-gender]').forEach(el=>{
-    if(FILTERS.gender.includes(el.dataset.gender)) el.classList.add('selected');
-    else el.classList.remove('selected');
-    el.addEventListener('click', function(e) {
+    addClickAndTouchListeners(el, function(e) {
       e.preventDefault();
       let g = el.dataset.gender;
       if(FILTERS.gender.includes(g))
@@ -1007,6 +1017,34 @@ function updateSelected() {
         FILTERS.gender = [g]; // Only one gender (for clean path)
       onFilterChange();
     });
+  });
+  
+  // Spotlight filters
+  document.querySelectorAll('.filter-chip[data-spotlight]').forEach(el=>{
+    addClickAndTouchListeners(el, function(e) {
+      e.preventDefault();
+      let spotlight = el.dataset.spotlight;
+      if(FILTERS.spotlight.includes(spotlight))
+        FILTERS.spotlight = FILTERS.spotlight.filter(s => s !== spotlight);
+      else
+        FILTERS.spotlight.push(spotlight);
+      onFilterChange();
+    });
+  });
+}
+
+function updateSelected() {
+  document.querySelectorAll('.filter-chip[data-region]').forEach(el=>{
+    if(FILTERS.region.includes(el.dataset.region)) el.classList.add('selected');
+    else el.classList.remove('selected');
+  });
+  document.querySelectorAll('.filter-chip[data-size]').forEach(el=>{
+    if(FILTERS.size===el.dataset.size) el.classList.add('selected');
+    else el.classList.remove('selected');
+  });
+  document.querySelectorAll('.filter-chip[data-gender]').forEach(el=>{
+    if(FILTERS.gender.includes(el.dataset.gender)) el.classList.add('selected');
+    else el.classList.remove('selected');
   });
   document.querySelectorAll('.filter-chip[data-current_show]').forEach(el=>{
     if(FILTERS.current_show.includes(el.dataset.current_show)) el.classList.add('selected');
@@ -1017,15 +1055,6 @@ function updateSelected() {
   document.querySelectorAll('.filter-chip[data-spotlight]').forEach(el=>{
     if(FILTERS.spotlight.includes(el.dataset.spotlight)) el.classList.add('selected');
     else el.classList.remove('selected');
-    el.addEventListener('click', function(e) {
-      e.preventDefault();
-      let spotlight = el.dataset.spotlight;
-      if(FILTERS.spotlight.includes(spotlight))
-        FILTERS.spotlight = FILTERS.spotlight.filter(s => s !== spotlight);
-      else
-        FILTERS.spotlight.push(spotlight);
-      onFilterChange();
-    });
   });
   updateResetFiltersLink();
 }
@@ -1279,10 +1308,13 @@ function doAutoRefresh() {
       });
     });
 }
-document.addEventListener('DOMContentLoaded', setupAutoRefreshCheckboxBar);
-fetchModels();
-updateSelected();
-updateResetFiltersLink();
+document.addEventListener('DOMContentLoaded', function() {
+  setupAutoRefreshCheckboxBar();
+  attachFilterListeners();
+  fetchModels();
+  updateSelected();
+  updateResetFiltersLink();
+});
 </script>
 
 <!-- Spotlight Help Modal -->

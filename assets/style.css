@@ -241,6 +241,9 @@ nav.main-navbar {
   align-items: center;
   gap: 2px;
   line-height: 1.1;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .filter-chip.selected {
   background: var(--primary-color);
