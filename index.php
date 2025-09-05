@@ -199,7 +199,7 @@ a.tag-cb.subject-tag:focus {
 .current-show-chip.status-new { background-color: #4caf50; }
 </style>
 <div id="main-flex-wrap">
-<aside id="filter-sidebar" class="open">
+<aside id="filter-sidebar" class="">
   <button class="close-btn" onclick="toggleSidebar()" title="Hide Filters">&#10006; Hide Sidebar</button>
   <div class="filter-section">
     <div class="filter-label">Gender</div>
@@ -365,19 +365,69 @@ const FILTERS = {
 let currentPage = FILTERS.page || 1;
 function toggleSidebar() {
   var sidebar = document.getElementById('filter-sidebar');
+  var backdrop = document.getElementById('sidebar-backdrop');
+  var isMobile = window.innerWidth <= 768;
+  
   if (!sidebar) return;
-  if (sidebar.classList.contains('open')) sidebar.classList.remove('open');
-  else sidebar.classList.add('open');
+  
+  if (sidebar.classList.contains('open')) {
+    sidebar.classList.remove('open');
+    if (backdrop && isMobile) backdrop.classList.remove('active');
+    document.body.style.overflow = '';
+  } else {
+    sidebar.classList.add('open');
+    if (backdrop && isMobile) backdrop.classList.add('active');
+    // Prevent body scroll on mobile when sidebar is open
+    if (isMobile) {
+      document.body.style.overflow = 'hidden';
+    }
+  }
 }
 document.addEventListener('DOMContentLoaded', function() {
-    if (window.innerWidth <= 700) {
-        var sidebar = document.getElementById('filter-sidebar');
-        if (sidebar) sidebar.classList.remove('open');
+    // Create and add backdrop element
+    var backdrop = document.createElement('div');
+    backdrop.id = 'sidebar-backdrop';
+    backdrop.className = 'sidebar-backdrop';
+    backdrop.onclick = toggleSidebar;
+    document.body.appendChild(backdrop);
+    
+    // Always start with sidebar closed, and only open it by default on desktop
+    var sidebar = document.getElementById('filter-sidebar');
+    if (sidebar) {
+        sidebar.classList.remove('open');
+        // Only open sidebar by default on desktop (wider screens)
+        if (window.innerWidth > 768) {
+            // Keep it closed by default even on desktop for better UX
+            sidebar.classList.remove('open');
+        }
     }
+    
     var filterBtn = document.getElementById('filter-toggle');
     if (filterBtn) filterBtn.onclick = toggleSidebar;
     var closeBtn = document.querySelector('#filter-sidebar .close-btn');
     if (closeBtn) closeBtn.onclick = toggleSidebar;
+    
+    // Handle window resize to ensure proper behavior
+    window.addEventListener('resize', function() {
+        var sidebar = document.getElementById('filter-sidebar');
+        var backdrop = document.getElementById('sidebar-backdrop');
+        var isMobile = window.innerWidth <= 768;
+        
+        if (sidebar && backdrop) {
+            if (!isMobile) {
+                // On desktop, hide backdrop
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            } else {
+                // On mobile, ensure sidebar is closed
+                if (sidebar.classList.contains('open')) {
+                    backdrop.classList.add('active');
+                } else {
+                    backdrop.classList.remove('active');
+                }
+            }
+        }
+    });
     document.querySelectorAll('.filter-chip[data-gender]').forEach(el=>{
         if(FILTERS.gender.includes(el.dataset.gender)) el.classList.add('selected');
     });
