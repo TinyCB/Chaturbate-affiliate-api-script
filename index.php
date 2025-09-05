@@ -406,7 +406,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var backdrop = document.createElement('div');
     backdrop.id = 'sidebar-backdrop';
     backdrop.className = 'sidebar-backdrop';
-    backdrop.onclick = toggleSidebar;
+    // Only enable backdrop click on desktop where it's not blocking content
+    if (window.innerWidth > 768) {
+      backdrop.onclick = toggleSidebar;
+    }
     document.body.appendChild(backdrop);
     
     // Set sidebar state based on screen size
