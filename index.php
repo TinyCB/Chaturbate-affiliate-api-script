@@ -243,8 +243,8 @@ a.tag-cb.subject-tag:focus {
         <span>Max: <strong id="max-age-display" style="color: var(--primary-color);">99</strong></span>
       </div>
       <div class="dual-range-slider" style="position: relative; height: 20px; background: #e2e8f0; border-radius: 10px; margin: 12px 0;">
-        <input type="range" min="18" max="99" value="18" id="min-age-slider" style="position: absolute; width: 100%; height: 20px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; z-index: 2;">
-        <input type="range" min="18" max="99" value="99" id="max-age-slider" style="position: absolute; width: 100%; height: 20px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; z-index: 1;">
+        <input type="range" min="18" max="99" value="18" id="min-age-slider" style="position: absolute; width: 100%; height: 20px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; z-index: 1;">
+        <input type="range" min="18" max="99" value="99" id="max-age-slider" style="position: absolute; width: 100%; height: 20px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; z-index: 2;">
         <div class="slider-track" style="position: absolute; height: 6px; top: 7px; background: var(--primary-color); border-radius: 3px; z-index: 0;"></div>
       </div>
       <div class="age-inputs-fallback" style="display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px;">
@@ -2948,6 +2948,21 @@ function setupAgeSliders() {
     sliderTrack.style.width = (maxPercent - minPercent) + '%';
   }
   
+  function updateSliderPriority() {
+    const minVal = parseInt(minSlider.value);
+    const maxVal = parseInt(maxSlider.value);
+    
+    // If values are close or equal, prioritize max slider
+    // If values are far apart, prioritize min slider 
+    if (Math.abs(maxVal - minVal) <= 5) {
+      maxSlider.style.zIndex = '3';
+      minSlider.style.zIndex = '2';
+    } else {
+      minSlider.style.zIndex = '3';
+      maxSlider.style.zIndex = '2';
+    }
+  }
+  
   function updateDisplays(minVal, maxVal) {
     minDisplay.textContent = minVal;
     maxDisplay.textContent = maxVal;
@@ -2972,14 +2987,28 @@ function setupAgeSliders() {
     
     updateDisplays(minVal, maxVal);
     updateSliderTrack();
+    updateSliderPriority();
     
     FILTERS.minAge = minVal;
     FILTERS.maxAge = maxVal;
     onFilterChange();
   }
   
+  // Add mouse event handlers to bring slider to front
+  function bringSliderToFront(slider) {
+    if (slider === minSlider) {
+      minSlider.style.zIndex = '3';
+      maxSlider.style.zIndex = '2';
+    } else {
+      maxSlider.style.zIndex = '3';
+      minSlider.style.zIndex = '2';
+    }
+  }
+  
   minSlider.addEventListener('input', handleSliderChange);
   maxSlider.addEventListener('input', handleSliderChange);
+  minSlider.addEventListener('mousedown', () => bringSliderToFront(minSlider));
+  maxSlider.addEventListener('mousedown', () => bringSliderToFront(maxSlider));
   
   // Sync number inputs with sliders
   if (minInput) {
@@ -3001,6 +3030,7 @@ function setupAgeSliders() {
   // Initialize
   updateSliderTrack();
   updateDisplays(parseInt(minSlider.value), parseInt(maxSlider.value));
+  updateSliderPriority();
 }
 
 // Favorites System
