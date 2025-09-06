@@ -2107,33 +2107,13 @@ main {
                   <div class="day-label"><?= $day_names[$day] ?></div>
                   <div class="heatmap-hour-row">
                     <?php for ($hour = 0; $hour < 24; $hour++): 
-                      // Get actual sessions for this specific day+hour combination
-                      $activity_level = 0;
+                      // Use the improved activity matrix for accurate session tracking
                       $sessions_this_slot = 0;
                       
-                      // Access the full analytics data to get viewer history
-                      if (isset($enhanced_analytics['historical']) && 
-                          is_array($enhanced_analytics['historical']) && 
-                          isset($enhanced_analytics['historical']['viewer_history'])) {
-                        
-                        // Look through the last 7 days of viewer history
-                        $viewer_history = $enhanced_analytics['historical']['viewer_history'];
-                        $week_ago = time() - (7 * 24 * 3600);
-                        
-                        foreach ($viewer_history as $session) {
-                          if ($session['timestamp'] > $week_ago) {
-                            $session_day = isset($session['day_of_week']) ? 
-                                          $session['day_of_week'] : 
-                                          date('w', $session['timestamp']);
-                            $session_hour = isset($session['hour_of_day']) ? 
-                                           $session['hour_of_day'] : 
-                                           date('G', $session['timestamp']);
-                            
-                            if ($session_day == $day && $session_hour == $hour) {
-                              $sessions_this_slot++;
-                            }
-                          }
-                        }
+                      if (isset($pattern['activity_matrix']) && 
+                          isset($pattern['activity_matrix'][$day]) && 
+                          isset($pattern['activity_matrix'][$day][$hour])) {
+                        $sessions_this_slot = $pattern['activity_matrix'][$day][$hour];
                       }
                       
                       // Set activity level based on actual sessions in this time slot
@@ -2152,7 +2132,7 @@ main {
                     ?>
                       <div class="heatmap-cell" 
                            style="background-color: <?= $color ?>;" 
-                           title="<?= $day_names_full[$day] ?> <?= sprintf('%02d:00', $hour) ?> - <?= $activity_labels[$activity_level] ?>"
+                           title="<?= $day_names_full[$day] ?> <?= sprintf('%02d:00', $hour) ?> - <?= $activity_labels[$activity_level] ?><?= $sessions_this_slot > 0 ? ' (' . $sessions_this_slot . ' sessions)' : '' ?>"
                            data-day="<?= $day ?>" 
                            data-hour="<?= $hour ?>"
                            data-activity="<?= $activity_level ?>"></div>
