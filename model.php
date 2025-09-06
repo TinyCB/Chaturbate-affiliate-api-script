@@ -1857,61 +1857,84 @@ main {
         </div>
         <?php endif; ?>
 
-        <!-- Goals & Milestones -->
-        <?php if (!empty($enhanced_analytics['historical']['goals']) || !empty($enhanced_analytics['historical']['performance_milestones'])): ?>
+        <!-- Actual Goal Tracking -->
+        <?php if (!empty($enhanced_analytics['historical']['actual_goals'])): ?>
         <div class="compact-analytics-card">
           <div class="card-header">
-            <div class="card-icon"><i class="fas fa-trophy"></i></div>
-            <h3 class="card-title">Goals & Achievements</h3>
+            <div class="card-icon"><i class="fas fa-bullseye"></i></div>
+            <h3 class="card-title">Goal Tracking</h3>
           </div>
           
-          <?php $goals = $enhanced_analytics['historical']['goals']; ?>
-          <?php if (!empty($goals)): ?>
-          <div style="margin-bottom: 20px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 15px;">
-              <div style="text-align: center;">
-                <div style="font-size: 1.8rem; font-weight: 700; color: #10b981;"><?= $goals['streak_days'] ?></div>
-                <div style="font-size: 0.8rem; color: #64748b;">Current Streak</div>
-              </div>
-              <div style="text-align: center;">
-                <div style="font-size: 1.8rem; font-weight: 700; color: #f59e0b;"><?= $goals['best_streak'] ?></div>
-                <div style="font-size: 0.8rem; color: #64748b;">Best Streak</div>
-              </div>
-              <div style="text-align: center;">
-                <div style="font-size: 1.8rem; font-weight: 700; color: #3b82f6;"><?= $goals['monthly_goal_progress'] ?></div>
-                <div style="font-size: 0.8rem; color: #64748b;">Goals This Month</div>
-              </div>
+          <?php $actual_goals = $enhanced_analytics['historical']['actual_goals']; ?>
+          
+          <!-- Current Goal -->
+          <?php if (!empty($actual_goals['current_goal'])): ?>
+          <?php $current = $actual_goals['current_goal']; ?>
+          <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+              <h4 style="margin: 0; color: #0ea5e9; font-size: 0.9rem;">CURRENT GOAL</h4>
+              <span style="background: #0ea5e9; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; text-transform: uppercase;">
+                <?= htmlspecialchars($current['goal_type']) ?>
+              </span>
             </div>
-            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #64748b;">
-              Daily Goal: <?= number_format($goals['daily_viewer_goal']) ?> viewers
+            <div style="font-weight: 600; color: #1e293b; margin-bottom: 8px;">
+              <?= htmlspecialchars($current['goal_text']) ?>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #64748b;">
+              <span><?= number_format($current['tokens_remaining']) ?> tokens remaining</span>
+              <?php if (isset($current['progress'])): ?>
+                <span><?= round($current['progress']) ?>% complete</span>
+              <?php endif; ?>
             </div>
           </div>
           <?php endif; ?>
           
-          <?php $milestones = $enhanced_analytics['historical']['performance_milestones']; ?>
-          <?php if (!empty($milestones) && array_filter($milestones)): ?>
+          <!-- Goal Stats -->
+          <?php if (!empty($actual_goals['goal_stats']) && $actual_goals['goal_stats']['total_goals_completed'] > 0): ?>
+          <?php $stats = $actual_goals['goal_stats']; ?>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="text-align: center;">
+              <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;"><?= $stats['total_goals_completed'] ?></div>
+              <div style="font-size: 0.75rem; color: #64748b;">Goals Completed</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;"><?= number_format($stats['total_tokens_reached']) ?></div>
+              <div style="font-size: 0.75rem; color: #64748b;">Total Tokens</div>
+            </div>
+            <?php if ($stats['avg_goal_completion_time'] > 0): ?>
+            <div style="text-align: center;">
+              <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;"><?= round($stats['avg_goal_completion_time'] / 60) ?>m</div>
+              <div style="font-size: 0.75rem; color: #64748b;">Avg Time</div>
+            </div>
+            <?php endif; ?>
+            <?php if ($stats['most_popular_goal_type']): ?>
+            <div style="text-align: center;">
+              <div style="font-size: 1.2rem; font-weight: 700; color: #8b5cf6; text-transform: capitalize;"><?= htmlspecialchars($stats['most_popular_goal_type']) ?></div>
+              <div style="font-size: 0.75rem; color: #64748b;">Popular Type</div>
+            </div>
+            <?php endif; ?>
+          </div>
+          <?php endif; ?>
+          
+          <!-- Recent Completed Goals -->
+          <?php if (!empty($actual_goals['completed_goals'])): ?>
           <div>
-            <h4 style="margin-bottom: 10px; color: #64748b; font-size: 0.875rem; font-weight: 600;">MILESTONES ACHIEVED</h4>
-            <?php if ($milestones['first_100_viewers']): ?>
-              <div style="font-size: 0.85rem; color: #10b981; margin-bottom: 5px;">
-                🎯 First 100 viewers: <?= date('M j, Y', strtotime($milestones['first_100_viewers'])) ?>
+            <h4 style="margin-bottom: 12px; color: #64748b; font-size: 0.875rem; font-weight: 600;">RECENT COMPLETED GOALS</h4>
+            <?php foreach (array_slice($actual_goals['completed_goals'], -3) as $goal): ?>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 500; color: #1e293b; font-size: 0.85rem; margin-bottom: 2px;">
+                  <?= htmlspecialchars($goal['goal_text']) ?>
+                </div>
+                <div style="font-size: 0.75rem; color: #64748b;">
+                  <?= number_format($goal['tokens_collected']) ?> tokens • <?= round($goal['completion_time_seconds'] / 60) ?> min • <?= date('M j', $goal['completed_at']) ?>
+                </div>
               </div>
-            <?php endif; ?>
-            <?php if ($milestones['first_500_viewers']): ?>
-              <div style="font-size: 0.85rem; color: #f59e0b; margin-bottom: 5px;">
-                🔥 First 500 viewers: <?= date('M j, Y', strtotime($milestones['first_500_viewers'])) ?>
-              </div>
-            <?php endif; ?>
-            <?php if ($milestones['first_1000_viewers']): ?>
-              <div style="font-size: 0.85rem; color: #ef4444; margin-bottom: 5px;">
-                🚀 First 1000 viewers: <?= date('M j, Y', strtotime($milestones['first_1000_viewers'])) ?>
-              </div>
-            <?php endif; ?>
-            <?php if ($milestones['most_productive_day']): ?>
-              <div style="font-size: 0.85rem; color: #8b5cf6; margin-bottom: 5px;">
-                💯 Best day: <?= number_format($milestones['most_productive_day']['viewers']) ?> viewers (<?= date('M j', strtotime($milestones['most_productive_day']['date'])) ?>)
-              </div>
-            <?php endif; ?>
+              <span style="background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 8px; font-size: 0.7rem; text-transform: capitalize;">
+                <?= htmlspecialchars($goal['goal_type']) ?>
+              </span>
+            </div>
+            <?php endforeach; ?>
           </div>
           <?php endif; ?>
         </div>

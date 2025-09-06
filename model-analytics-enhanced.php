@@ -151,7 +151,7 @@ function getPerformanceInsights($analytics) {
     }
     
     // Activity insights
-    if ($trends['activity_trend'] === 'very_active') {
+    if (isset($trends['activity_trend']) && $trends['activity_trend'] === 'very_active') {
         $insights[] = [
             'type' => 'positive',
             'title' => 'Consistent Performer',

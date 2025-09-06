@@ -70,6 +70,9 @@ class SimpleAnalyticsExtender {
                 
                 $analytics = &$profile['analytics'];
                 
+                // Parse goal information from room subject
+                $goal_info = $this->parseGoalFromSubject($current['room_subject'] ?? '');
+                
                 // Add current snapshot to history
                 $snapshot = [
                     'timestamp' => $now,
@@ -77,7 +80,8 @@ class SimpleAnalyticsExtender {
                     'online_time' => $current['seconds_online'],
                     'show_type' => $current['current_show'],
                     'day_of_week' => date('w', $now), // 0=Sunday, 6=Saturday
-                    'hour_of_day' => date('G', $now)  // 0-23
+                    'hour_of_day' => date('G', $now),  // 0-23
+                    'goal_info' => $goal_info
                 ];
                 $analytics['viewer_history'][] = $snapshot;
                 
@@ -109,6 +113,9 @@ class SimpleAnalyticsExtender {
                 // Calculate weekly activity pattern (last 7 days)
                 $analytics['weekly_pattern'] = $this->calculateWeeklyPattern($analytics['viewer_history'], $now);
                 
+                // Update actual goal tracking (from room subjects)
+                $this->updateActualGoalTracking($analytics, $goal_info, $now);
+                
                 // Update goal tracking
                 $this->updateGoalTracking($analytics, $current['num_users'], $now);
                 
@@ -133,16 +140,32 @@ class SimpleAnalyticsExtender {
             return [];
         }
         
+        // Increase memory limit temporarily for large files
+        $original_limit = ini_get('memory_limit');
+        ini_set('memory_limit', '256M');
+        
         $json = file_get_contents($this->profiles_file);
-        return json_decode($json, true) ?: [];
+        $profiles = json_decode($json, true) ?: [];
+        
+        // Restore original memory limit
+        ini_set('memory_limit', $original_limit);
+        
+        return $profiles;
     }
     
     /**
      * Save model profiles
      */
     private function saveProfiles($profiles) {
+        // Increase memory limit temporarily for large files
+        $original_limit = ini_get('memory_limit');
+        ini_set('memory_limit', '256M');
+        
         $json = json_encode($profiles, JSON_PRETTY_PRINT);
         file_put_contents($this->profiles_file, $json);
+        
+        // Restore original memory limit
+        ini_set('memory_limit', $original_limit);
     }
     
     /**
@@ -231,6 +254,7 @@ class SimpleAnalyticsExtender {
             'viewer_history' => $analytics['viewer_history'] ?? [],
             'goals' => $analytics['goals'] ?? null,
             'performance_milestones' => $analytics['performance_milestones'] ?? null,
+            'actual_goals' => $analytics['actual_goals'] ?? null,
             'last_updated' => $analytics['last_updated']
         ];
     }
@@ -414,6 +438,159 @@ class SimpleAnalyticsExtender {
                 'viewers' => $current_viewers,
                 'timestamp' => $now
             ];
+        }
+    }
+    
+    /**
+     * Parse goal information from room subject
+     */
+    private function parseGoalFromSubject($subject) {
+        if (empty($subject)) {
+            return null;
+        }
+        
+        $goal_info = [
+            'raw_subject' => $subject,
+            'has_goal' => false,
+            'goal_text' => null,
+            'tokens_remaining' => null,
+            'goal_type' => null
+        ];
+        
+        // Common goal patterns
+        $patterns = [
+            // "Goal: something [123 tokens left]"
+            '/Goal:\s*([^\[\n]+)\s*\[(\d+)\s*tokens?\s*(left|remaining)/i' => ['text' => 1, 'tokens' => 2],
+            // "Goal: something [123 tokens remaining]"
+            '/Goal:\s*([^\[\n]+)\s*\[(\d+)\s*tokens?\s*remaining/i' => ['text' => 1, 'tokens' => 2],
+            // "something [123 tokens remaining]"
+            '/([^\[\n]+)\s*\[(\d+)\s*tokens?\s*(left|remaining)/i' => ['text' => 1, 'tokens' => 2],
+            // "Current Goal: something at 999 tokens"
+            '/Current Goal:\s*([^\n]+)\s*at\s*(\d+)\s*tokens/i' => ['text' => 1, 'tokens' => 2],
+            // "something @ 999 tokens" or "something @999 tokens"
+            '/([^@\n]+)\s*@\s*(\d+)\s*tokens/i' => ['text' => 1, 'tokens' => 2],
+            // "Multi Goal: something [123 tokens left]"
+            '/Multi Goal:\s*([^\[\n]+)\s*\[(\d+)\s*tokens?\s*(left|remaining)/i' => ['text' => 1, 'tokens' => 2]
+        ];
+        
+        foreach ($patterns as $pattern => $groups) {
+            if (preg_match($pattern, $subject, $matches)) {
+                $goal_info['has_goal'] = true;
+                $goal_info['goal_text'] = trim($matches[$groups['text']]);
+                $goal_info['tokens_remaining'] = intval($matches[$groups['tokens']]);
+                
+                // Determine goal type based on keywords
+                $goal_text_lower = strtolower($goal_info['goal_text']);
+                if (strpos($goal_text_lower, 'cum') !== false) {
+                    $goal_info['goal_type'] = 'cumshow';
+                } elseif (strpos($goal_text_lower, 'naked') !== false || strpos($goal_text_lower, 'nude') !== false) {
+                    $goal_info['goal_type'] = 'naked';
+                } elseif (strpos($goal_text_lower, 'squirt') !== false) {
+                    $goal_info['goal_type'] = 'squirt';
+                } elseif (strpos($goal_text_lower, 'bra') !== false || strpos($goal_text_lower, 'tits') !== false) {
+                    $goal_info['goal_type'] = 'topless';
+                } else {
+                    $goal_info['goal_type'] = 'other';
+                }
+                break;
+            }
+        }
+        
+        return $goal_info;
+    }
+    
+    /**
+     * Track actual goals from room subjects
+     */
+    private function updateActualGoalTracking(&$analytics, $goal_info, $now) {
+        // Initialize goal tracking if not exists
+        if (!isset($analytics['actual_goals'])) {
+            $analytics['actual_goals'] = [
+                'current_goal' => null,
+                'goal_history' => [],
+                'completed_goals' => [],
+                'goal_stats' => [
+                    'total_goals_completed' => 0,
+                    'total_tokens_reached' => 0,
+                    'avg_goal_completion_time' => 0,
+                    'most_popular_goal_type' => null
+                ]
+            ];
+        }
+        
+        $actual_goals = &$analytics['actual_goals'];
+        $current_goal = $actual_goals['current_goal'];
+        
+        if ($goal_info && $goal_info['has_goal']) {
+            // Check if this is a new goal or goal completion
+            if ($current_goal) {
+                // Same goal text but fewer tokens = progress
+                if ($current_goal['goal_text'] === $goal_info['goal_text']) {
+                    if ($goal_info['tokens_remaining'] < $current_goal['tokens_remaining']) {
+                        // Goal progress - update current goal
+                        $actual_goals['current_goal'] = array_merge($goal_info, [
+                            'started_at' => $current_goal['started_at'],
+                            'last_seen_at' => $now,
+                            'initial_tokens' => $current_goal['initial_tokens'] ?? $current_goal['tokens_remaining'],
+                            'progress' => ($current_goal['initial_tokens'] - $goal_info['tokens_remaining']) / $current_goal['initial_tokens'] * 100
+                        ]);
+                    }
+                    
+                    // Goal completed (0 tokens or very close)
+                    if ($goal_info['tokens_remaining'] <= 5 && $current_goal['tokens_remaining'] > 5) {
+                        $completion_time = $now - $current_goal['started_at'];
+                        $completed_goal = array_merge($current_goal, [
+                            'completed_at' => $now,
+                            'completion_time_seconds' => $completion_time,
+                            'tokens_collected' => $current_goal['initial_tokens'] - $goal_info['tokens_remaining']
+                        ]);
+                        
+                        $actual_goals['completed_goals'][] = $completed_goal;
+                        $actual_goals['goal_stats']['total_goals_completed']++;
+                        $actual_goals['goal_stats']['total_tokens_reached'] += $completed_goal['tokens_collected'];
+                        
+                        // Clear current goal
+                        $actual_goals['current_goal'] = null;
+                    }
+                } else {
+                    // Different goal = new goal started
+                    $actual_goals['current_goal'] = array_merge($goal_info, [
+                        'started_at' => $now,
+                        'last_seen_at' => $now,
+                        'initial_tokens' => $goal_info['tokens_remaining']
+                    ]);
+                }
+            } else {
+                // No current goal, this is a new goal
+                $actual_goals['current_goal'] = array_merge($goal_info, [
+                    'started_at' => $now,
+                    'last_seen_at' => $now,
+                    'initial_tokens' => $goal_info['tokens_remaining']
+                ]);
+            }
+        } else {
+            // No goal in subject - goal might be completed or removed
+            if ($current_goal) {
+                // Mark as completed/abandoned after some time
+                if ($now - $current_goal['last_seen_at'] > 1800) { // 30 minutes
+                    $actual_goals['current_goal'] = null;
+                }
+            }
+        }
+        
+        // Keep only last 50 completed goals
+        if (count($actual_goals['completed_goals']) > 50) {
+            $actual_goals['completed_goals'] = array_slice($actual_goals['completed_goals'], -50);
+        }
+        
+        // Update stats
+        if (count($actual_goals['completed_goals']) > 0) {
+            $completion_times = array_column($actual_goals['completed_goals'], 'completion_time_seconds');
+            $actual_goals['goal_stats']['avg_goal_completion_time'] = array_sum($completion_times) / count($completion_times);
+            
+            $goal_types = array_column($actual_goals['completed_goals'], 'goal_type');
+            $type_counts = array_count_values($goal_types);
+            $actual_goals['goal_stats']['most_popular_goal_type'] = array_search(max($type_counts), $type_counts);
         }
     }
 }
