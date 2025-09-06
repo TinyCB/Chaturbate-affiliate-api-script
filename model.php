@@ -1794,11 +1794,8 @@ main {
           <?php endif; ?>
 
           <?php if (!empty($model['ai_bio'])): ?>
-          <div style="margin-bottom: 15px;">
-            <h4 style="margin-bottom: 8px; color: #64748b; font-size: 0.875rem; font-weight: 600;">AI BIO</h4>
-            <div class="model-written-bio">
-              <?= htmlspecialchars($model['ai_bio']) ?>
-            </div>
+          <div class="model-written-bio" style="margin-bottom: 15px;">
+            <?= htmlspecialchars($model['ai_bio']) ?>
           </div>
           <?php endif; ?>
         </div>
