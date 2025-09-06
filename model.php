@@ -516,17 +516,26 @@ function getModelBadges($model_data, $insights) {
     return $badges;
 }
 
-// Get all enhanced data
+// Get all enhanced data including historical analytics
+require_once 'model-analytics-enhanced.php';
 $online_activity = getOnlineActivity($username, $cache_dir);
 $model_insights = getModelInsights($username, $cache_dir);
-$similar_models = getSimilarModels($username, $cache_dir, $model_data);
-$model_badges = getModelBadges($model_data, $model_insights);
+$enhanced_analytics = getEnhancedModelAnalytics($username, 30); // Last 30 days
+$similar_models = getSimilarModels($username, $cache_dir, $model);
+$model_badges = getModelBadges($model, $model_insights);
+
+// Generate chart data and insights
+$viewer_chart_data = generateViewerTrendChart($enhanced_analytics['historical'], 30);
+$performance_insights = getPerformanceInsights($enhanced_analytics);
+$time_patterns = getTimeBasedPatterns($enhanced_analytics);
 
 // Get current time and day for highlighting
 $current_hour = intval(date('G')); // 0-23
 $current_day = intval(date('w')); // 0 = Sunday, 1 = Monday, etc.
 
 include('templates/header.php');
+// Add Chart.js for analytics charts
+echo '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
 
 function markdown_links_to_html($text) {
     return preg_replace_callback(
@@ -686,11 +695,16 @@ body {
   outline: none;
   border: none !important;
   background: #151d29;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
   overflow: hidden;
   scrollbar-width: none !important;
   display: block;
   margin: 8px 0;
+  transition: box-shadow 0.3s ease;
+}
+
+.cb-cam-iframe:hover {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
 }
 
 .cb-cam-iframe::-webkit-scrollbar {display:none;}
@@ -931,592 +945,1110 @@ body {
     text-align: left;
   }
 }
+
+/* Enhanced Analytics Styles */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 4px solid var(--primary-color);
+}
+
+.metric-trend {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.insights-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.insights-title {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.insight-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 14px;
+  border-left: 3px solid #ddd;
+}
+
+.insight-card.insight-positive {
+  border-left-color: #10b981;
+}
+
+.insight-card.insight-opportunity {
+  border-left-color: #f59e0b;
+}
+
+.insight-card.insight-negative {
+  border-left-color: #ef4444;
+}
+
+.insight-card.insight-info {
+  border-left-color: #3b82f6;
+}
+
+.insight-icon {
+  font-size: 1.2em;
+  flex-shrink: 0;
+}
+
+.insight-content .insight-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9em;
+  margin-bottom: 2px;
+}
+
+.insight-content .insight-message {
+  color: #666;
+  font-size: 0.85em;
+  line-height: 1.3;
+}
+
+.chart-container {
+  position: relative;
+  height: 200px;
+  margin: 16px 0;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.legend-color {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.analytics-dashboard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.dashboard-title {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1.5em;
+  font-weight: 700;
+}
+
+.dashboard-icon {
+  margin-right: 8px;
+  font-size: 1.2em;
+}
+
+.dashboard-subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 0.95em;
+}
+
+.analytics-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.analytics-panel {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.panel-title {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 1.1em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-icon {
+  font-size: 1.1em;
+}
+
+@media (max-width: 768px) {
+  .analytics-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .metrics-row {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-container {
+    height: 180px;
+  }
+}
+
+/* Enhanced Legend Styles */
+.legend-header {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.legend-subtitle {
+  color: #666;
+  font-size: 0.9em;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Activity Pattern Summary */
+.activity-pattern-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.pattern-stat {
+  text-align: center;
+}
+
+.pattern-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 4px;
+}
+
+.pattern-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pattern-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .activity-pattern-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .pattern-value {
+    font-size: 1.5rem;
+  }
+}
+
+/* Global overflow protection and constraints */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+main {
+  overflow-x: hidden;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+/* Full-Width Modern Layout */
+.model-page-container {
+  width: 100%;
+  margin: 0;
+  padding: 0 clamp(15px, 2vw, 40px) 40px clamp(15px, 2vw, 40px);
+  background: #f8fafc;
+  min-height: calc(100vh - 80px);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.model-hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px 0;
+  margin: 0 calc(-1 * 15px) 30px calc(-1 * 15px);
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.model-hero-content {
+  width: 100%;
+  margin: 0;
+  padding: 0 clamp(15px, 2vw, 40px);
+  display: grid;
+  grid-template-columns: minmax(0, auto) 1fr minmax(0, auto);
+  gap: clamp(20px, 3vw, 40px);
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.model-hero-avatar {
+  width: 120px;
+  height: 120px;
+  max-width: 120px;
+  border-radius: 20px;
+  border: 4px solid rgba(255,255,255,0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+
+.model-hero-info {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.model-hero-info h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.model-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+  min-width: 0;
+}
+
+.hero-badge {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.model-hero-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+/* Similar Models Click Fix */
+.similar-model-row {
+  transition: background-color 0.2s ease;
+}
+
+.similar-model-row:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-radius: 8px;
+}
+
+.similar-model-row a {
+  cursor: pointer;
+}
+
+.similar-model-row a:hover .similar-username {
+  color: #3b82f6 !important;
+}
+
+.hero-stat-large {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hero-stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Main Content Grid */
+.model-content-grid {
+  width: 100%;
+  margin: 0;
+  padding: 0 clamp(15px, 2vw, 40px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+  gap: clamp(20px, 3vw, 40px);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Auto-fit layout for ultra-wide screens */
+@media (min-width: 1800px) {
+  .model-content-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 450px);
+    gap: clamp(30px, 4vw, 60px);
+  }
+}
+
+.model-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.model-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Model Info Row - responsive for details and similar models */
+.model-info-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: clamp(15px, 2.5vw, 25px);
+  margin-bottom: clamp(20px, 3vw, 30px);
+}
+
+/* Responsive Analytics Cards */
+.analytics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: clamp(15px, 2.5vw, 25px);
+  margin-bottom: clamp(20px, 3vw, 30px);
+}
+
+.compact-analytics-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.compact-analytics-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Compact Metrics Grid */
+.metrics-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.metric-mini {
+  text-align: center;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.metric-mini-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 5px;
+}
+
+.metric-mini-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Stream Section */
+.stream-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.stream-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ef4444;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Enhanced Heatmap with Proper Axes */
+.heatmap-compact {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.heatmap-container-with-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Hour labels (x-axis) */
+.heatmap-hour-labels {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.hour-label-spacer {
+  width: 35px;
+  flex-shrink: 0;
+}
+
+.hour-label {
+  flex: 2;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Main heatmap with day labels */
+.heatmap-with-days {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heatmap-day-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-label {
+  width: 35px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.heatmap-hour-row {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.4);
+  border: 1px solid #374151;
+  z-index: 10;
+  position: relative;
+}
+
+/* Enhanced Legend */
+.heatmap-legend-enhanced {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.legend-left {
+  flex: 1;
+}
+
+.legend-right {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.legend-square {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Wide screen optimization - make iframe even wider */
+@media (min-width: 1400px) {
+  .model-content-grid {
+    grid-template-columns: 7fr 1fr;
+  }
+  
+  .cb-cam-iframe {
+    min-height: 500px !important;
+  }
+}
+
+/* Large desktop screens - maximize iframe space */
+@media (min-width: 1600px) {
+  .model-content-grid {
+    grid-template-columns: 8fr 1fr;
+  }
+  
+  .cb-cam-iframe {
+    min-height: 600px !important;
+  }
+}
+
+/* Ultra-wide screens - extreme iframe dominance */
+@media (min-width: 1920px) {
+  .model-content-grid {
+    grid-template-columns: 9fr 1fr;
+    gap: 40px;
+  }
+  
+  .cb-cam-iframe {
+    min-height: 700px !important;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .model-content-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+  
+  .model-hero-content {
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    text-align: left;
+  }
+  
+  .model-hero-stats {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  .model-hero-section {
+    padding: 30px 0;
+  }
+  
+  .model-hero-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: clamp(15px, 3vw, 25px);
+  }
+  
+  .model-hero-info h1 {
+    font-size: clamp(1.8rem, 5vw, 2.2rem);
+  }
+  
+  .model-content-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metrics-mini-grid {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  }
+}
 </style>
-<div class="model-profile-main">
-  <div class="model-profile-panel">
-    <?php if (!empty($soft_error)): ?>
-      <div style='background:#fffbe2;color:#7b6800;padding:18px;font-size:1.13em;margin:26px 0 18px 0;border-radius:7px;text-align:center;'>
-        This model has been inactive for a while.<br>
-        This profile is temporarily unavailable, but may return soon.
-      </div>
-    <?php endif; ?>
-    <div class="model-header-flex">
-    <div class="model-pp-avatar">
-      <?php if (!$model_online): ?>
-        <img src="/assets/offline.png" alt="Offline Model Avatar">
-      <?php else: ?>
-        <img src="<?=htmlspecialchars($model['image_url'] ?? '')?>" alt="<?=htmlspecialchars($model['username'] ?? '')?>">
-      <?php endif; ?>
+
+<!-- Full-Width Model Page -->
+<div class="model-page-container">
+  <?php if (!empty($soft_error)): ?>
+    <div style='background:#fffbe2;color:#7b6800;padding:18px;font-size:1.13em;margin:26px 0 18px 0;border-radius:7px;text-align:center;'>
+      This model has been inactive for a while.<br>
+      This profile is temporarily unavailable, but may return soon.
     </div>
-      <div class="model-pp-summary">
-        <div class="model-pp-row">
-          <span class="model-pp-username"><?=htmlspecialchars($model['username'] ?? '')?></span>
-          <span class="model-age-badge"><?= intval($model['age'] ?? 0) ?> yrs</span>
-          <?php if(!empty($model['country'])): ?>
-            <img class="model-country-flag"
-                src="https://flagcdn.com/<?= strtolower(strlen($model['country'])===2 ? $model['country'] : substr($model['country'],0,2)) ?>.svg"
-                onerror="this.style.display='none'"
-                alt="<?=htmlspecialchars($model['country'])?>">
+  <?php endif; ?>
+
+  <!-- Hero Section -->
+  <div class="model-hero-section">
+    <div class="model-hero-content">
+      <img src="<?= $model_online ? htmlspecialchars($model['image_url'] ?? '') : '/assets/offline.png' ?>" 
+           alt="<?=htmlspecialchars($model['username'] ?? '')?>" 
+           class="model-hero-avatar"
+           onerror="this.src='/assets/offline.png'">
+      
+      <div class="model-hero-info">
+        <h1><?=htmlspecialchars($model['username'] ?? '')?></h1>
+        <div class="model-hero-badges">
+          <div class="hero-badge"><?= intval($model['age'] ?? 0) ?> years</div>
+          <div class="hero-badge"><?=ucfirst($gender_label)?></div>
+          <?php if(!empty($model['location'])): ?>
+            <div class="hero-badge">📍 <?=htmlspecialchars($model['location'])?></div>
           <?php endif; ?>
-          <span class="model-gender-badge"><?=ucfirst($gender_label)?></span>
           <?php if(!empty($model['is_hd'])): ?>
-            <span class="model-badge hd">HD</span>
+            <div class="hero-badge">🎬 HD</div>
           <?php endif; ?>
           <?php if(!empty($model['is_new'])): ?>
-            <span class="model-badge new">NEW</span>
+            <div class="hero-badge">⭐ NEW</div>
           <?php endif; ?>
           <?php if(!$model_online): ?>
-            <span class="model-badge" style="background:#e5e5e5; color:#6d6d6d;">OFFLINE</span>
+            <div class="hero-badge" style="background: rgba(239,68,68,0.2);">⚫ OFFLINE</div>
           <?php endif; ?>
         </div>
-        <div class="model-pp-stats">
-          <?php if($model_online && isset($model['num_users'])): ?>
-            <span class="stat-pill"><span class="icon">&#128065;</span> <?=intval($model['num_users'])?> Viewers</span>
-          <?php endif; ?>
-          <?php if(isset($model['num_followers'])): ?>
-            <span class="stat-pill"><span class="icon">&#128100;</span><?=intval($model['num_followers'])?> Followers</span>
-          <?php endif; ?>
-          <?php if($model_online && isset($model['seconds_online'])): ?>
-            <span class="stat-pill"><span class="icon">&#9201;</span>
-            <?php $h = floor($model['seconds_online']/3600); $m = floor(($model['seconds_online']%3600)/60);
-              echo ($h>0?"$h hr ":'')."$m min";
-            ?> Online</span>
-          <?php endif; ?>
-          <span class="stat-pill"><b>Show:</b>
-            <?php $show_map=['public'=>'Public','private'=>'Private','group'=>'Group','away'=>'Away','offline'=>'Offline'];
-              echo $show_map[$model['current_show'] ?? "offline"] ?? ucfirst($model['current_show'] ?? "offline");
-            ?>
-          </span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Enhanced Model Badges -->
-    <?php if (!empty($model_badges)): ?>
-    <div class="model-badges-section">
-      <?php foreach ($model_badges as $badge): ?>
-        <span class="model-badge-enhanced" style="background: <?= $badge['color'] ?>;">
-          <?php if ($badge['type'] === 'new'): ?>🌟<?php endif; ?>
-          <?php if ($badge['type'] === 'hd'): ?>📺<?php endif; ?>
-          <?php if ($badge['type'] === 'marathon'): ?>⏰<?php endif; ?>
-          <?php if ($badge['type'] === 'popular'): ?>🔥<?php endif; ?>
-          <?php if ($badge['type'] === 'consistent'): ?>✨<?php endif; ?>
-          <?= $badge['label'] ?>
-        </span>
-      <?php endforeach; ?>
-    </div>
-    <?php endif; ?>
-    
-    <?php if($model_online): ?>
-    <?=ensure_iframe_fullscreen(chaturbate_whitelabel_replace($model['iframe_embed_revshare'], $config['whitelabel_domain']), $iframe_height)?>
-    <div class="model-fallback-msg" id="cb-embed-fallback">
-      The cam video may be blocked by your browser, privacy, or adblocker settings. Try disabling shields or using a different browser if the cam does not display.
-    </div>
-    <script>
-    setTimeout(function() {
-      var f=document.querySelector('.cb-cam-iframe');
-      if(f && ((!f.contentWindow&&f.offsetHeight<150)||f.offsetHeight===0))
-          document.getElementById('cb-embed-fallback').style.display = 'block';
-    }, 2600);
-    </script>
-    <?php endif; ?>
-    
-    <!-- Model Info Section -->
-	   <div class="model-meta-wrap">
-		<?php if (!empty($model['ai_bio'])): ?>
-		  <div class="model-written-bio" style="
-			font-style:italic;
-			color:#594f6b;
-			background:#f6f7fc;
-			padding:8px 0 7px 0;              /* no side padding */
-			margin:0 0 12px 0;
-			border-radius:8px;
-			width:100%;
-			text-align:left;
-			box-sizing:border-box;
-		  ">
-			<?=markdown_links_to_html($model['ai_bio'])?>
-		  </div>
-		<?php endif; ?>
-      <div class="model-meta-col">
-        <?php if(!empty($model['location'])): ?>
-          <div class="model-meta-item">
-            <b>Location:</b> <?=htmlspecialchars($model['location'])?>
-          </div>
-        <?php endif; ?>
-        <?php if(!empty($model['spoken_languages'])): ?>
-          <div class="model-meta-item">
-            <b>Language:</b> <?=htmlspecialchars($model['spoken_languages'])?>
-          </div>
-        <?php endif; ?>
-        <?php if(!empty($model['birthday'])): ?>
-          <div class="model-meta-item">
-            <b>Birthday:</b> <?=human_birthday($model['birthday'])?>
-          </div>
+        <?php if (!empty($model['room_subject'])): ?>
+          <p style="margin: 0; opacity: 0.9; font-size: 1.1rem;"><?= htmlspecialchars($model['room_subject']) ?></p>
         <?php endif; ?>
       </div>
-      <div class="model-meta-col">
-        <?php if(!empty($model['room_subject'])): ?>
-          <div class="model-meta-item">
-            <b>Room Topic:</b>
-            <span class="room-topic-value"><?=preg_replace('/<br\s*\/?>/i', ' ', $model['room_subject'])?></span>
+
+      <div class="model-hero-stats">
+        <?php if($model_online && isset($model['num_users'])): ?>
+          <div>
+            <div class="hero-stat-large"><?=number_format(intval($model['num_users']))?></div>
+            <div class="hero-stat-label">Current Viewers</div>
           </div>
-        <?php endif; ?>
-        <?php if(!empty($model['tags'])): ?>
-          <div class="model-meta-item">
-            <b>Tags:</b>
-            <?php foreach(array_slice($model['tags'],0,18) as $t): ?>
-              <span class="model-tag-chip">#<?=htmlspecialchars($t)?></span>
-            <?php endforeach; ?>
+        <?php else: ?>
+          <div>
+            <div class="hero-stat-large"><?=number_format(intval($model['num_followers'] ?? 0))?></div>
+            <div class="hero-stat-label">Total Followers</div>
           </div>
-        <?php endif; ?>
-      </div>
-    </div>
-    
-    <!-- Analytics Dashboard Section -->
-    <div class="analytics-dashboard">
-      <div class="dashboard-header">
-        <h2 class="dashboard-title">
-          <span class="dashboard-icon">📊</span>
-          Performance Analytics
-        </h2>
-        <p class="dashboard-subtitle">Complete insights based on <?= htmlspecialchars($model['username']) ?>'s activity data</p>
-      </div>
-      
-      <!-- Key Metrics Cards -->
-      <div class="metrics-row">
-        <div class="metric-card">
-          <div class="metric-icon-wrapper">
-            <span class="metric-icon">👁️</span>
-          </div>
-          <div class="metric-content">
-            <div class="metric-number"><?= number_format($model_insights['peak_viewers']) ?></div>
-            <div class="metric-label">Peak Viewers</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon-wrapper">
-            <span class="metric-icon">📊</span>
-          </div>
-          <div class="metric-content">
-            <div class="metric-number"><?= number_format($model_insights['avg_viewers']) ?></div>
-            <div class="metric-label">Avg Viewers</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon-wrapper">
-            <span class="metric-icon">✨</span>
-          </div>
-          <div class="metric-content">
-            <div class="metric-number"><?= $model_insights['consistency_score'] ?>%</div>
-            <div class="metric-label">Consistency</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon-wrapper">
-            <span class="metric-icon">📈</span>
-          </div>
-          <div class="metric-content">
-            <div class="metric-number"><?= $model_insights['total_snapshots'] ?></div>
-            <div class="metric-label">Total Snapshots</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon-wrapper">
-            <span class="metric-icon">🎯</span>
-          </div>
-          <div class="metric-content">
-            <div class="metric-number"><?= $model_insights['activity_score'] ?>%</div>
-            <div class="metric-label">Activity Score</div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Two Column Analytics Content -->
-      <div class="analytics-content">
-        <div class="analytics-left">
-          <!-- Session Analytics -->
-          <?php if (!empty($model_insights['session_lengths'])): ?>
-          <div class="analytics-panel">
-            <h3 class="panel-title">
-              <span class="panel-icon">⏱️</span>
-              Session Patterns
-            </h3>
-            <div class="session-stats">
-              <div class="session-stat">
-                <span class="stat-label">Average Session</span>
-                <span class="stat-value">
-                  <?php 
-                  $avg_session = array_sum($model_insights['session_lengths']) / count($model_insights['session_lengths']);
-                  $hours = floor($avg_session / 3600);
-                  $minutes = floor(($avg_session % 3600) / 60);
-                  echo ($hours > 0 ? "$hours hr " : '') . "$minutes min";
-                  ?>
-                </span>
-              </div>
-              <div class="session-stat">
-                <span class="stat-label">Longest Session</span>
-                <span class="stat-value">
-                  <?php 
-                  $max_session = max($model_insights['session_lengths']);
-                  $hours = floor($max_session / 3600);
-                  $minutes = floor(($max_session % 3600) / 60);
-                  echo ($hours > 0 ? "$hours hr " : '') . "$minutes min";
-                  ?>
-                </span>
-              </div>
-            </div>
-          </div>
-          <?php endif; ?>
-          
-          <!-- Peak Hours Chart -->
-          <?php if (!empty($model_insights['peak_hours'])): ?>
-          <div class="analytics-panel">
-            <h3 class="panel-title">
-              <span class="panel-icon">🕒</span>
-              Peak Hours Analysis
-            </h3>
-            <div class="peak-hours-chart">
-              <div class="chart-explanation">Best times to catch <?= htmlspecialchars($model['username']) ?> with high viewer engagement</div>
-              <div class="hours-grid">
-                <?php 
-                $top_hours = array_slice($model_insights['peak_hours'], 0, 6, true);
-                foreach ($top_hours as $hour => $avg_viewers): 
-                  $hour_24 = str_pad($hour, 2, '0', STR_PAD_LEFT);
-                  $hour_12 = date('g A', strtotime($hour_24 . ':00'));
-                  $intensity = min(100, ($avg_viewers / max($model_insights['peak_hours'])) * 100);
-                ?>
-                  <div class="hour-block" data-intensity="<?= $intensity ?>">
-                    <div class="hour-time"><?= $hour_12 ?></div>
-                    <div class="hour-bar" style="height: <?= $intensity ?>%; background: linear-gradient(to top, var(--primary-color), #ffb347);"></div>
-                    <div class="hour-viewers"><?= intval($avg_viewers) ?> avg</div>
-                  </div>
-                <?php endforeach; ?>
-              </div>
-            </div>
-          </div>
-          <?php endif; ?>
-          
-          <!-- Popular Tags -->
-          <?php if (!empty($model_insights['popular_tags'])): ?>
-          <div class="analytics-panel">
-            <h3 class="panel-title">
-              <span class="panel-icon">🏷️</span>
-              Popular Tags
-            </h3>
-            <div class="tags-cloud">
-              <?php foreach ($model_insights['popular_tags'] as $tag => $count): ?>
-                <span class="tag-item" data-count="<?= $count ?>">
-                  #<?= htmlspecialchars($tag) ?>
-                  <span class="tag-count"><?= $count ?></span>
-                </span>
-              <?php endforeach; ?>
-            </div>
-          </div>
-          <?php endif; ?>
-        </div>
-        
-        <div class="analytics-right">
-          <!-- Enhanced Room Topics History -->
-          <?php if (!empty($model_insights['room_subjects'])): ?>
-          <div class="analytics-panel">
-            <h3 class="panel-title">
-              <span class="panel-icon">💬</span>
-              Room Topic History
-            </h3>
-            <div class="topics-timeline">
-              <div class="timeline-explanation">Recent room topics and goal progressions</div>
-              <?php foreach (array_slice($model_insights['room_subjects'], 0, 5) as $index => $subject): 
-                $topic_length = strlen($subject);
-                $has_goal = preg_match('/goal|target|\[.*\]/i', $subject);
-                $is_completed = preg_match('/completed?|reached?|done/i', $subject);
-              ?>
-                <div class="topic-timeline-item <?= $is_completed ? 'completed' : ($has_goal ? 'has-goal' : 'normal') ?>">
-                  <div class="timeline-marker">
-                    <span class="timeline-number"><?= $index + 1 ?></span>
-                    <?php if ($is_completed): ?>
-                      <span class="timeline-status completed">✅</span>
-                    <?php elseif ($has_goal): ?>
-                      <span class="timeline-status goal">🎯</span>
-                    <?php endif; ?>
-                  </div>
-                  <div class="timeline-content">
-                    <div class="topic-text"><?= htmlspecialchars(substr($subject, 0, 100)) ?><?= strlen($subject) > 100 ? '...' : '' ?></div>
-                    <div class="topic-meta">
-                      <span class="topic-length"><?= $topic_length ?> chars</span>
-                      <?php if ($has_goal): ?>
-                        <span class="topic-type goal">Goal-oriented</span>
-                      <?php endif; ?>
-                      <?php if ($is_completed): ?>
-                        <span class="topic-type completed">Completed</span>
-                      <?php endif; ?>
-                    </div>
-                  </div>
-                </div>
-              <?php endforeach; ?>
-            </div>
-          </div>
-          <?php endif; ?>
-          
-          <!-- Language Analysis -->
-          <?php if (!empty($model_data['spoken_languages'])): ?>
-          <div class="analytics-panel">
-            <h3 class="panel-title">
-              <span class="panel-icon">🗣️</span>
-              Language Breakdown
-            </h3>
-            <div class="language-analysis">
-              <?php 
-              $languages = explode(',', $model_data['spoken_languages']);
-              $language_count = count($languages);
-              foreach ($languages as $index => $lang): 
-                $lang = trim($lang);
-                $is_primary = $index === 0;
-              ?>
-                <div class="language-item <?= $is_primary ? 'primary' : 'secondary' ?>">
-                  <div class="language-name"><?= htmlspecialchars($lang) ?></div>
-                  <div class="language-meta">
-                    <?php if ($is_primary): ?>
-                      <span class="language-badge primary">Primary</span>
-                    <?php else: ?>
-                      <span class="language-badge secondary">Secondary</span>
-                    <?php endif; ?>
-                  </div>
-                </div>
-              <?php endforeach; ?>
-              <div class="language-summary">
-                <div class="multilingual-status">
-                  <?php if ($language_count > 1): ?>
-                    <span class="multilingual-badge">🌍 Multilingual</span>
-                    <span class="language-count"><?= $language_count ?> languages</span>
-                  <?php else: ?>
-                    <span class="monolingual-badge">Single Language</span>
-                  <?php endif; ?>
-                </div>
-              </div>
-            </div>
-          </div>
-          <?php endif; ?>
-          
-          <!-- Similar Models -->
-          <?php if (!empty($similar_models) && count($similar_models) > 0): ?>
-          <div class="analytics-panel">
-            <h3 class="panel-title">
-              <span class="panel-icon">👥</span>
-              Similar Models
-            </h3>
-            <div class="similar-models">
-              <?php foreach (array_slice($similar_models, 0, 4) as $similar): ?>
-                <a href="/<?= htmlspecialchars($similar['username']) ?>" class="similar-model">
-                  <img src="<?= htmlspecialchars($similar['image_url']) ?>" alt="<?= htmlspecialchars($similar['username']) ?>" class="similar-avatar">
-                  <div class="similar-details">
-                    <div class="similar-name"><?= htmlspecialchars($similar['username']) ?></div>
-                    <div class="similar-info"><?= $similar['age'] ?>yr • <?= ucfirst($similar['gender']) ?></div>
-                  </div>
-                </a>
-              <?php endforeach; ?>
-            </div>
-          </div>
-          <?php endif; ?>
-        </div>
-      </div>
-    </div>
-    </div>
-    
-    <!-- Analytics and Heat Map Section -->
-    <div class="model-full-width-section">
-      <!-- Online Time Tracker Heat Map -->
-      <div class="online-time-tracker">
-        <div class="heatmap-header">
-          <div class="heatmap-title">
-            <span class="heatmap-icon">📊</span>
-            <h3>Weekly Activity Pattern</h3>
-            <p class="heatmap-subtitle">Typical online hours based on recent activity</p>
-          </div>
-        </div>
-      
-      <div class="heatmap-container">
-        <!-- Full-width responsive SVG container -->
-        <div class="heatmap-chart">
-          <!-- Hour labels across the top -->
-          <div class="heatmap-hours-row">
-            <div class="heatmap-weekday-spacer"></div>
-            <?php for ($h = 0; $h < 24; $h++): ?>
-              <div class="heatmap-hour-cell">
-                <?php if ($h % 2 == 0): ?>
-                  <span class="heatmap-hour-label"><?= sprintf('%02d', $h) ?></span>
-                <?php endif; ?>
-              </div>
-            <?php endfor; ?>
-          </div>
-          
-          <!-- Heat map grid with day labels -->
-          <?php 
-          $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-          $day_full = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-          $colors = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e'];
-          $activity_labels = ['Never seen online', 'Rarely online', 'Sometimes online', 'Often online'];
-          
-          for ($day = 0; $day < 7; $day++): ?>
-            <div class="heatmap-day-row">
-              <div class="heatmap-weekday-label">
-                <span><?= $days[$day] ?></span>
-              </div>
-              
-              <?php for ($hour = 0; $hour < 24; $hour++): 
-                $activity_level = $online_activity[$day][$hour];
-                $color = $colors[$activity_level];
-                $is_current = ($hour == $current_hour && $day == $current_day);
-                $tooltip = $day_full[$day] . ' ' . sprintf('%02d:00', $hour) . ' - ' . $activity_labels[$activity_level];
-                if ($is_current) $tooltip .= ' (Current time)';
-                $current_class = $is_current ? ' current-time' : '';
-              ?>
-                <div class="heatmap-cell<?= $current_class ?>" 
-                     style="background-color: <?= $color ?>;<?= $is_current ? ' border: 2px solid #fd8c73; animation: cell-pulse 2s infinite;' : '' ?>" 
-                     data-tooltip="<?= htmlspecialchars($tooltip) ?>"
-                     data-activity="<?= $activity_level ?>"
-                     data-hour="<?= $hour ?>"
-                     data-day="<?= $day ?>">
-                </div>
-              <?php endfor; ?>
-            </div>
-          <?php endfor; ?>
-        </div>
-        
-        <!-- Tooltip -->
-        <div id="heatmap-tooltip" class="heatmap-tooltip" style="display: none;"></div>
-        
-        <script>
-        // Simple, reliable tooltip positioning
-        document.addEventListener('DOMContentLoaded', function() {
-          const tooltip = document.getElementById('heatmap-tooltip');
-          const cells = document.querySelectorAll('.heatmap-cell');
-          
-          function positionTooltip(e) {
-            // Get viewport dimensions
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-            
-            // Set content first to measure tooltip
-            tooltip.style.visibility = 'hidden';
-            tooltip.style.display = 'block';
-            
-            const tooltipRect = tooltip.getBoundingClientRect();
-            const tooltipWidth = tooltipRect.width;
-            const tooltipHeight = tooltipRect.height;
-            
-            // Calculate position relative to mouse
-            let left = e.clientX + 15;
-            let top = e.clientY - 35;
-            
-            // Check right boundary
-            if (left + tooltipWidth > viewportWidth - 20) {
-              left = e.clientX - tooltipWidth - 15;
-            }
-            
-            // Check left boundary  
-            if (left < 20) {
-              left = 20;
-            }
-            
-            // Check top boundary
-            if (top < 20) {
-              top = e.clientY + 20;
-            }
-            
-            // Check bottom boundary
-            if (top + tooltipHeight > viewportHeight - 20) {
-              top = e.clientY - tooltipHeight - 15;
-            }
-            
-            // Apply position
-            tooltip.style.left = left + 'px';
-            tooltip.style.top = top + 'px';
-            tooltip.style.visibility = 'visible';
-          }
-          
-          cells.forEach(cell => {
-            cell.addEventListener('mouseenter', function(e) {
-              tooltip.textContent = this.getAttribute('data-tooltip');
-              tooltip.style.opacity = '0';
-              positionTooltip(e);
-              tooltip.style.opacity = '1';
-            });
-            
-            cell.addEventListener('mousemove', function(e) {
-              positionTooltip(e);
-            });
-            
-            cell.addEventListener('mouseleave', function() {
-              tooltip.style.display = 'none';
-              tooltip.style.opacity = '0';
-            });
-          });
-        });
-        </script>
-        
-        <!-- Modern Legend -->
-        <div class="heatmap-legend">
-          <div class="legend-title">Activity Level</div>
-          <div class="legend-items">
-            <div class="legend-item">
-              <div class="legend-color" style="background: #ebedf0;"></div>
-              <span>Never online</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background: #9be9a8;"></div>
-              <span>Rarely online</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background: #40c463;"></div>
-              <span>Sometimes online</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background: #30a14e;"></div>
-              <span>Often online</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Similar Models Section - Integrated with Heat Map -->
-        <?php if (!empty($similar_models)): ?>
-        <div class="similar-models-section">
-          <h3>🎯 Models Like This</h3>
-          <p class="similar-models-subtitle">Based on shared tags, age, and location</p>
-          <div class="similar-models-grid">
-            <?php foreach (array_slice($similar_models, 0, 6) as $similar): 
-              $sim_model = $similar['model'];
-              $sim_score = $similar['similarity'];
-            ?>
-              <div class="similar-model-card">
-                <div class="similar-model-image">
-                  <img src="<?= htmlspecialchars($sim_model['image_url'] ?? '/assets/offline.png') ?>" 
-                       alt="<?= htmlspecialchars($sim_model['username']) ?>"
-                       onerror="this.src='/assets/offline.png'">
-                  <div class="similarity-badge"><?= $sim_score ?>% match</div>
-                </div>
-                <div class="similar-model-info">
-                  <a href="/model/<?= htmlspecialchars($sim_model['username']) ?>" class="similar-model-name">
-                    <?= htmlspecialchars($sim_model['username']) ?>
-                  </a>
-                  <div class="similar-model-stats">
-                    <span class="similar-age"><?= intval($sim_model['age'] ?? 0) ?>y</span>
-                    <span class="similar-viewers">👁 <?= number_format($sim_model['num_users'] ?? 0) ?></span>
-                    <?php if ($sim_model['is_hd'] ?? false): ?><span class="similar-hd">HD</span><?php endif; ?>
-                  </div>
-                  <div class="similar-model-tags">
-                    <?php foreach (array_slice($sim_model['tags'] ?? [], 0, 3) as $tag): ?>
-                      <span class="similar-tag">#<?= htmlspecialchars($tag) ?></span>
-                    <?php endforeach; ?>
-                  </div>
-                </div>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        </div>
         <?php endif; ?>
       </div>
     </div>
   </div>
+
+  <!-- Main Content Grid -->
+  <div class="model-content-grid">
+    <!-- Main Content -->
+    <div class="model-main-content">
+      
+      <?php if($model_online): ?>
+      <!-- Live Stream Card -->
+      <div class="stream-card">
+        <div class="stream-header">
+          <h2 style="margin: 0; font-size: 1.4rem; font-weight: 600;">Live Stream</h2>
+          <div class="live-indicator">
+            <div class="live-dot"></div>
+            LIVE
+          </div>
+        </div>
+        <?=ensure_iframe_fullscreen(chaturbate_whitelabel_replace($model['iframe_embed_revshare'], $config['whitelabel_domain']), $iframe_height)?>
+        <div class="model-fallback-msg" id="cb-embed-fallback" style="display: none; color: #e44; margin: 16px 0 8px 0; text-align: center; font-size: 1em; padding: 12px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px;">
+          The cam video may be blocked by your browser, privacy, or adblocker settings. Try disabling shields or using a different browser if the cam does not display.
+        </div>
+        <script>
+        setTimeout(function() {
+          var f=document.querySelector('.cb-cam-iframe');
+          if(f && ((!f.contentWindow&&f.offsetHeight<150)||f.offsetHeight===0))
+              document.getElementById('cb-embed-fallback').style.display = 'block';
+        }, 2600);
+        </script>
+      </div>
+      <?php endif; ?>
+
+      <!-- Model Details and Similar Models Row -->
+      <div class="model-info-row">
+        <!-- Model Details -->
+        <div class="compact-analytics-card">
+          <div class="card-header">
+            <div class="card-icon"><i class="fas fa-user"></i></div>
+            <h3 class="card-title">Model Details</h3>
+          </div>
+          
+          <?php if (!empty($model['tags'])): ?>
+          <div style="margin-bottom: 20px;">
+            <h4 style="margin-bottom: 10px; color: #64748b; font-size: 0.875rem; font-weight: 600;">TAGS</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <?php foreach (array_slice($model['tags'], 0, 12) as $tag): ?>
+              <span style="background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">
+                #<?= htmlspecialchars($tag) ?>
+              </span>
+              <?php endforeach; ?>
+            </div>
+          </div>
+          <?php endif; ?>
+
+          <?php if (!empty($model['spoken_languages'])): ?>
+          <div style="margin-bottom: 15px;">
+            <h4 style="margin-bottom: 8px; color: #64748b; font-size: 0.875rem; font-weight: 600;">LANGUAGES</h4>
+            <p style="margin: 0; color: #1e293b;"><?= htmlspecialchars($model['spoken_languages']) ?></p>
+          </div>
+          <?php endif; ?>
+
+          <?php if (!empty($model['location'])): ?>
+          <div style="margin-bottom: 15px;">
+            <h4 style="margin-bottom: 8px; color: #64748b; font-size: 0.875rem; font-weight: 600;">LOCATION</h4>
+            <p style="margin: 0; color: #1e293b;"><?= htmlspecialchars($model['location']) ?></p>
+          </div>
+          <?php endif; ?>
+        </div>
+
+        <!-- Similar Models -->
+        <?php if (!empty($similar_models)): ?>
+        <div class="compact-analytics-card">
+          <div class="card-header">
+            <div class="card-icon"><i class="fas fa-users"></i></div>
+            <h3 class="card-title">Similar Models</h3>
+          </div>
+          <?php foreach (array_slice($similar_models, 0, 4) as $similar): 
+            $sim_model = $similar['model'];
+            $sim_score = $similar['similarity'];
+          ?>
+          <div class="similar-model-row" style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; position: relative;">
+            <a href="/model/<?= htmlspecialchars($sim_model['username']) ?>" style="display: flex; align-items: center; gap: 12px; text-decoration: none; width: 100%; position: relative; z-index: 1;">
+              <img src="<?= htmlspecialchars($sim_model['image_url'] ?? '/assets/offline.png') ?>" 
+                   alt="<?= htmlspecialchars($sim_model['username']) ?>"
+                   style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;"
+                   onerror="this.src='/assets/offline.png'">
+              <div style="flex: 1; min-width: 0;">
+                <div class="similar-username" style="color: #1e293b; font-weight: 500; font-size: 0.9rem;">
+                  <?= htmlspecialchars($sim_model['username']) ?>
+                </div>
+                <div style="color: #64748b; font-size: 0.8rem;">
+                  <?= intval($sim_model['age'] ?? 0) ?>y • <?= number_format($sim_model['num_users'] ?? 0) ?> viewers
+                </div>
+              </div>
+            </a>
+            <div style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+              <?= $sim_score ?>%
+            </div>
+          </div>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </div>
+
+      <!-- Analytics Row -->
+      <div class="analytics-row">
+        <!-- Performance Analytics -->
+        <div class="compact-analytics-card">
+          <div class="card-header">
+            <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+            <h3 class="card-title">Performance Metrics</h3>
+          </div>
+          <div class="metrics-mini-grid">
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= number_format($model_insights['peak_viewers']) ?></div>
+              <div class="metric-mini-label">Peak Viewers</div>
+            </div>
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= number_format($model_insights['avg_viewers']) ?></div>
+              <div class="metric-mini-label">Avg Viewers</div>
+            </div>
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= $enhanced_analytics['performance_score']['score'] ?>%</div>
+              <div class="metric-mini-label">Performance</div>
+            </div>
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= $model_insights['consistency_score'] ?>%</div>
+              <div class="metric-mini-label">Consistency</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Pattern -->
+        <div class="compact-analytics-card">
+          <div class="card-header">
+            <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
+            <h3 class="card-title">Activity Pattern</h3>
+          </div>
+          <?php if ($enhanced_analytics['historical'] && isset($enhanced_analytics['historical']['weekly_pattern'])): 
+            $pattern = $enhanced_analytics['historical']['weekly_pattern'];
+            $day_names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          ?>
+          <div class="metrics-mini-grid">
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= $pattern['activity_score'] ?>%</div>
+              <div class="metric-mini-label">Weekly Activity</div>
+            </div>
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= $day_names[$pattern['best_day']] ?? 'N/A' ?></div>
+              <div class="metric-mini-label">Best Day</div>
+            </div>
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= sprintf('%02d:00', $pattern['best_hour']) ?></div>
+              <div class="metric-mini-label">Peak Hour</div>
+            </div>
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= $pattern['total_sessions'] ?></div>
+              <div class="metric-mini-label">Sessions (7d)</div>
+            </div>
+          </div>
+          <?php else: ?>
+          <div style="text-align: center; color: #64748b; font-style: italic; padding: 20px;">
+            <i class="fas fa-info-circle"></i><br>
+            Activity pattern data will appear after a few days of tracking
+          </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- Weekly Activity Heatmap with Proper Axes -->
+      <div class="heatmap-compact">
+        <div class="card-header">
+          <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
+          <h3 class="card-title">Weekly Activity Pattern</h3>
+        </div>
+        
+        <div class="heatmap-container-with-labels">
+          <!-- Hour labels (x-axis) -->
+          <div class="heatmap-hour-labels">
+            <div class="hour-label-spacer"></div>
+            <?php for ($hour = 0; $hour < 24; $hour += 2): ?>
+              <div class="hour-label"><?= sprintf('%02d', $hour) ?></div>
+            <?php endfor; ?>
+          </div>
+          
+          <!-- Main heatmap grid with day labels -->
+          <div class="heatmap-with-days">
+            <?php 
+            $colors = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e'];
+            $day_names = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            $day_names_full = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            
+            // Use analytics data if available, otherwise show empty heatmap
+            if ($enhanced_analytics['historical'] && isset($enhanced_analytics['historical']['weekly_pattern'])) {
+              $pattern = $enhanced_analytics['historical']['weekly_pattern'];
+              $activity_by_day = $pattern['activity_by_day'] ?? array_fill(0, 7, 0);
+              $activity_by_hour = $pattern['activity_by_hour'] ?? array_fill(0, 24, 0);
+              
+              for ($day = 0; $day < 7; $day++): ?>
+                <div class="heatmap-day-row">
+                  <div class="day-label"><?= $day_names[$day] ?></div>
+                  <div class="heatmap-hour-row">
+                    <?php for ($hour = 0; $hour < 24; $hour++): 
+                      // Get actual sessions for this specific day+hour combination
+                      $activity_level = 0;
+                      $sessions_this_slot = 0;
+                      
+                      // Access the full analytics data to get viewer history
+                      if (isset($enhanced_analytics['historical']) && 
+                          is_array($enhanced_analytics['historical']) && 
+                          isset($enhanced_analytics['historical']['viewer_history'])) {
+                        
+                        // Look through the last 7 days of viewer history
+                        $viewer_history = $enhanced_analytics['historical']['viewer_history'];
+                        $week_ago = time() - (7 * 24 * 3600);
+                        
+                        foreach ($viewer_history as $session) {
+                          if ($session['timestamp'] > $week_ago) {
+                            $session_day = isset($session['day_of_week']) ? 
+                                          $session['day_of_week'] : 
+                                          date('w', $session['timestamp']);
+                            $session_hour = isset($session['hour_of_day']) ? 
+                                           $session['hour_of_day'] : 
+                                           date('G', $session['timestamp']);
+                            
+                            if ($session_day == $day && $session_hour == $hour) {
+                              $sessions_this_slot++;
+                            }
+                          }
+                        }
+                      }
+                      
+                      // Set activity level based on actual sessions in this time slot
+                      if ($sessions_this_slot == 0) {
+                        $activity_level = 0; // Never online
+                      } elseif ($sessions_this_slot == 1) {
+                        $activity_level = 1; // Rarely online  
+                      } elseif ($sessions_this_slot <= 3) {
+                        $activity_level = 2; // Sometimes online
+                      } else {
+                        $activity_level = 3; // Often online
+                      }
+                      
+                      $color = $colors[$activity_level];
+                      $activity_labels = ['Never online', 'Rarely online', 'Sometimes online', 'Often online'];
+                    ?>
+                      <div class="heatmap-cell" 
+                           style="background-color: <?= $color ?>;" 
+                           title="<?= $day_names_full[$day] ?> <?= sprintf('%02d:00', $hour) ?> - <?= $activity_labels[$activity_level] ?>"
+                           data-day="<?= $day ?>" 
+                           data-hour="<?= $hour ?>"
+                           data-activity="<?= $activity_level ?>"></div>
+                    <?php endfor; ?>
+                  </div>
+                </div>
+              <?php endfor;
+            } else {
+              // Show empty heatmap when no data available
+              for ($day = 0; $day < 7; $day++): ?>
+                <div class="heatmap-day-row">
+                  <div class="day-label"><?= $day_names[$day] ?></div>
+                  <div class="heatmap-hour-row">
+                    <?php for ($hour = 0; $hour < 24; $hour++): ?>
+                      <div class="heatmap-cell" 
+                           style="background-color: <?= $colors[0] ?>;" 
+                           title="<?= $day_names_full[$day] ?> <?= sprintf('%02d:00', $hour) ?> - No data available"
+                           data-day="<?= $day ?>" 
+                           data-hour="<?= $hour ?>"
+                           data-activity="0"></div>
+                    <?php endfor; ?>
+                  </div>
+                </div>
+              <?php endfor;
+            }
+            ?>
+          </div>
+          
+          <!-- Legend -->
+          <div class="heatmap-legend-enhanced">
+            <div class="legend-left">
+              <span style="font-size: 0.8rem; color: #64748b;">
+                <?php if ($enhanced_analytics['historical'] && isset($enhanced_analytics['historical']['weekly_pattern'])): ?>
+                  <?= $enhanced_analytics['historical']['weekly_pattern']['total_sessions'] ?> sessions in last 7 days
+                <?php else: ?>
+                  No activity data yet
+                <?php endif; ?>
+              </span>
+            </div>
+            <div class="legend-right">
+              <span style="font-size: 0.8rem; color: #64748b; margin-right: 8px;">Less</span>
+              <?php foreach ($colors as $color): ?>
+                <div class="legend-square" style="background: <?= $color ?>;"></div>
+              <?php endforeach; ?>
+              <span style="font-size: 0.8rem; color: #64748b; margin-left: 8px;">More</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="model-sidebar">
+      <!-- Performance Insights -->
+      <?php if (!empty($performance_insights)): ?>
+      <div class="compact-analytics-card">
+        <div class="card-header">
+          <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+          <h3 class="card-title">Performance Insights</h3>
+        </div>
+        <?php foreach (array_slice($performance_insights, 0, 3) as $insight): ?>
+        <div style="background: <?= $insight['type'] === 'positive' ? '#f0fdf4' : ($insight['type'] === 'opportunity' ? '#fefce8' : '#f8fafc') ?>; border-left: 3px solid <?= $insight['type'] === 'positive' ? '#10b981' : ($insight['type'] === 'opportunity' ? '#f59e0b' : '#64748b') ?>; padding: 12px 15px; margin-bottom: 12px; border-radius: 8px;">
+          <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;"><?= htmlspecialchars($insight['title']) ?></div>
+          <div style="font-size: 0.875rem; color: #64748b; line-height: 1.4;"><?= htmlspecialchars($insight['message']) ?></div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
+    </div>
+  </div>
 </div>
-<?php include('templates/footer.php'); ?>
+<?php include("templates/footer.php"); ?>

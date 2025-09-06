@@ -268,20 +268,6 @@ a.tag-cb.subject-tag:focus {
   </div>
 </div>
   <div class="filter-section">
-    <div class="filter-label">Spotlights</div>
-    <div class="filter-spotlights">
-      <span class="filter-chip" data-spotlight="super-star">🌟 Superstar</span>
-      <span class="filter-chip" data-spotlight="trending">🔥 Trending</span>
-      <span class="filter-chip" data-spotlight="top-performer">⭐ Top Performer</span>
-      <span class="filter-chip" data-spotlight="just-live">⚡ Just Live</span>
-      <span class="filter-chip" data-spotlight="marathon">🎯 Marathon</span>
-      <span class="filter-chip" data-spotlight="rising-star">🚀 Rising Star</span>
-      <span class="filter-chip" data-spotlight="hd-quality">✨ HD Stream</span>
-      <span class="filter-chip" data-spotlight="interactive">🎪 Interactive</span>
-      <span class="filter-chip" data-spotlight="multilingual">🗣️ Multilingual</span>
-    </div>
-  </div>
-  <div class="filter-section">
     <div>
       <label style="font-weight: 600; cursor:pointer;">
         <input type="checkbox" id="filter-new-models" style="vertical-align: middle;"> New Models Only
@@ -318,40 +304,221 @@ a.tag-cb.subject-tag:focus {
   
   <!-- Enhanced Discovery Section -->
   <div class="discovery-controls" style="display: flex; justify-content: space-between; align-items: center; margin: 16px 8px; padding: 12px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-    <div class="sort-controls">
-      <label style="font-weight: 600; margin-right: 8px; color: #333;">Sort by:</label>
-      <select id="sort-by" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-size: 14px;">
-        <option value="default">Default</option>
-        <option value="viewers">Most Viewers</option>
-        <option value="newest">Just Went Live</option>
-        <option value="marathon">Marathon Streamers</option>
-        <option value="engagement">Viewer/Follower Ratio</option>
-        <option value="hidden-gems">Hidden Gems</option>
-        <option value="hd-first">HD Streams First</option>
-        <option value="new-models">New Models</option>
-      </select>
+    <div class="sort-controls" style="display: none;">
     </div>
     <div class="view-controls">
-      <button id="show-stats" style="padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📊 Show Stats</button>
+      <button id="show-stats" style="padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🔍 Discovery Hub</button>
     </div>
   </div>
 
   <!-- Discovery Highlights -->
-  <div id="discovery-highlights" style="margin: 16px 8px; display: none;">
-    <div class="discovery-sections" style="display: grid; gap: 16px; margin-bottom: 20px;">
-      <div class="discovery-section" id="just-live-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <h3 style="margin: 0 0 12px 0; color: #00d4ff; font-size: 16px;">⚡ Just Went Live (Last 30 mins)</h3>
-        <div class="discovery-grid" id="just-live-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;"></div>
+  <div id="discovery-highlights" style="margin: 16px 8px; display: none; width: calc(100% - 16px); max-width: calc(100% - 16px); box-sizing: border-box; overflow-x: hidden;">
+    <!-- Stats Dashboard Header -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+      <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700;">🔍 Discovery Hub</h2>
+      <p style="margin: 0; opacity: 0.9; font-size: 14px;">Discover amazing models you might have missed</p>
+    </div>
+
+    <!-- Key Metrics Overview -->
+    <div id="stats-overview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+      <div class="stat-card" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;">
+        <div style="font-size: 28px; font-weight: 700; color: #2196F3; margin-bottom: 8px;" id="total-models">0</div>
+        <div style="color: #666; font-weight: 500;">Total Models Online</div>
+      </div>
+      <div class="stat-card" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;">
+        <div style="font-size: 28px; font-weight: 700; color: #4CAF50; margin-bottom: 8px;" id="total-viewers">0</div>
+        <div style="color: #666; font-weight: 500;">Total Viewers</div>
+      </div>
+      <div class="stat-card" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;">
+        <div style="font-size: 28px; font-weight: 700; color: #FF9800; margin-bottom: 8px;" id="avg-viewers">0</div>
+        <div style="color: #666; font-weight: 500;">Avg Viewers/Model</div>
+      </div>
+      <div class="stat-card" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;">
+        <div style="font-size: 28px; font-weight: 700; color: #9C27B0; margin-bottom: 8px;" id="hd-percentage">0%</div>
+        <div style="color: #666; font-weight: 500;">HD Streams</div>
+      </div>
+    </div>
+
+    <!-- Performance Insights -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+      <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 16px 0; color: #333; font-size: 18px;">🏆 Top Performers</h3>
+        <div id="top-performers" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Top performers will be populated here -->
+        </div>
       </div>
       
-      <div class="discovery-section" id="hidden-gems-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <h3 style="margin: 0 0 12px 0; color: #9b59b6; font-size: 16px;">💎 Hidden Gems (High followers, low current viewers)</h3>
-        <div class="discovery-grid" id="hidden-gems-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;"></div>
+      <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 16px 0; color: #333; font-size: 18px;">📈 Activity Trends</h3>
+        <div id="activity-trends">
+          <!-- Activity trends will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Filters -->
+    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;">
+      <h3 style="margin: 0 0 8px 0; color: #333; font-size: 18px;">🎯 Quick Discovery Filters</h3>
+      <p style="margin: 0 0 16px 0; color: #666; font-size: 13px;">Click any category to filter discovery sections</p>
+      <div id="category-breakdown" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px;">
+        <!-- Category breakdown will be populated here -->
+      </div>
+    </div>
+
+    <!-- Age Filters Section -->
+    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;">
+      <h3 style="margin: 0 0 8px 0; color: #333; font-size: 18px;">🎂 Filter by Age</h3>
+      <p style="margin: 0 0 16px 0; color: #666; font-size: 13px;">Click an age range to filter discovery sections</p>
+      <div id="age-filter-breakdown" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px;">
+        <!-- Age filters will be populated here -->
+      </div>
+    </div>
+
+    <!-- Popular Tags Section -->
+    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; color: #333; font-size: 18px;">🏷️ Popular Tags</h3>
+        <button onclick="refreshPopularTags()" style="background: none; border: 1px solid #333; color: #333; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+      </div>
+      <p style="margin: 0 0 16px 0; color: #666; font-size: 13px;">Click any tag to discover models with similar interests</p>
+      <div id="popular-tags-carousel" style="position: relative;">
+        <!-- Navigation buttons -->
+        <button class="tag-carousel-nav tag-carousel-prev" 
+                onclick="scrollTagCarousel('prev')"
+                style="position: absolute; 
+                       left: -12px; 
+                       top: 50%; 
+                       transform: translateY(-50%); 
+                       z-index: 10; 
+                       background: rgba(255, 255, 255, 0.9); 
+                       border: 1px solid #ddd; 
+                       border-radius: 50%; 
+                       width: 32px; 
+                       height: 32px; 
+                       cursor: pointer; 
+                       font-size: 12px; 
+                       display: none;
+                       align-items: center; 
+                       justify-content: center; 
+                       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                       transition: all 0.3s ease;"
+                onmouseover="this.style.background='rgba(102, 126, 234, 0.9)'; this.style.color='white';"
+                onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.color='black';">
+          ◀
+        </button>
+        
+        <div class="tag-carousel-container" style="overflow: hidden; border-radius: 8px;">
+          <div class="tag-carousel-track" id="popular-tags" style="display: flex; transition: transform 0.3s ease; gap: 8px;">
+            <!-- Popular tags will be populated here -->
+          </div>
+        </div>
+        
+        <button class="tag-carousel-nav tag-carousel-next" 
+                onclick="scrollTagCarousel('next')"
+                style="position: absolute; 
+                       right: -12px; 
+                       top: 50%; 
+                       transform: translateY(-50%); 
+                       z-index: 10; 
+                       background: rgba(255, 255, 255, 0.9); 
+                       border: 1px solid #ddd; 
+                       border-radius: 50%; 
+                       width: 32px; 
+                       height: 32px; 
+                       cursor: pointer; 
+                       font-size: 12px; 
+                       display: none;
+                       align-items: center; 
+                       justify-content: center; 
+                       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                       transition: all 0.3s ease;"
+                onmouseover="this.style.background='rgba(102, 126, 234, 0.9)'; this.style.color='white';"
+                onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.color='black';">
+          ▶
+        </button>
+      </div>
+    </div>
+
+    <!-- Discovery Sections -->
+    <div class="discovery-sections" style="display: grid; gap: 16px; margin-bottom: 20px; width: 100%; max-width: 100%; overflow-x: hidden;">
+      <div class="discovery-section" id="trending-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #ff4757; font-size: 16px;">🔥 Trending Now</h3>
+          <button onclick="refreshDiscoverySection('trending')" style="background: none; border: 1px solid #ff4757; color: #ff4757; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="trending-grid"></div>
       </div>
       
-      <div class="discovery-section" id="marathon-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <h3 style="margin: 0 0 12px 0; color: #e74c3c; font-size: 16px;">🎯 Marathon Streamers (3+ hours)</h3>
-        <div class="discovery-grid" id="marathon-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;"></div>
+      <div class="discovery-section" id="new-models-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #2ed573; font-size: 16px;">🌟 New Models</h3>
+          <button onclick="refreshDiscoverySection('new-models')" style="background: none; border: 1px solid #2ed573; color: #2ed573; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="new-models-grid"></div>
+      </div>
+      
+      <div class="discovery-section" id="just-live-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #00d4ff; font-size: 16px;">⚡ Just Went Live</h3>
+          <button onclick="refreshDiscoverySection('just-live')" style="background: none; border: 1px solid #00d4ff; color: #00d4ff; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="just-live-grid"></div>
+      </div>
+      
+      <div class="discovery-section" id="hidden-gems-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #9b59b6; font-size: 16px;">💎 Hidden Gems</h3>
+          <button onclick="refreshDiscoverySection('hidden-gems')" style="background: none; border: 1px solid #9b59b6; color: #9b59b6; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="hidden-gems-grid"></div>
+      </div>
+      
+      <div class="discovery-section" id="high-energy-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #ff6b35; font-size: 16px;">⚡ High Energy</h3>
+          <button onclick="refreshDiscoverySection('high-energy')" style="background: none; border: 1px solid #ff6b35; color: #ff6b35; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="high-energy-grid"></div>
+      </div>
+      
+      <div class="discovery-section" id="marathon-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #e74c3c; font-size: 16px;">🎯 Marathon Streamers (5+ hours)</h3>
+          <button onclick="refreshDiscoverySection('marathon')" style="background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="marathon-grid"></div>
+      </div>
+      
+      <div class="discovery-section" id="international-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #6c5ce7; font-size: 16px;">🌍 International Models</h3>
+          <button onclick="refreshDiscoverySection('international')" style="background: none; border: 1px solid #6c5ce7; color: #6c5ce7; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="international-grid"></div>
+      </div>
+      
+      <div class="discovery-section" id="interactive-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #e84393; font-size: 16px;">🎪 Interactive Shows</h3>
+          <button onclick="refreshDiscoverySection('interactive')" style="background: none; border: 1px solid #e84393; color: #e84393; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="interactive-grid"></div>
+      </div>
+      
+      <div class="discovery-section" id="couples-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #fd79a8; font-size: 16px;">👫 Couples & Groups</h3>
+          <button onclick="refreshDiscoverySection('couples')" style="background: none; border: 1px solid #fd79a8; color: #fd79a8; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="couples-grid"></div>
+      </div>
+      
+      <div class="discovery-section" id="mature-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; color: #a29bfe; font-size: 16px;">🍷 Mature & Experienced</h3>
+          <button onclick="refreshDiscoverySection('mature')" style="background: none; border: 1px solid #a29bfe; color: #a29bfe; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        </div>
+        <div class="discovery-grid" id="mature-grid"></div>
       </div>
     </div>
   </div>
@@ -765,16 +932,16 @@ function detectAllModelSpotlights(model, allModels, globalStats) {
     if (debugThis) console.log(`✓ TOP PERFORMER: ${viewerCount} >= ${performerThreshold.toFixed(1)}`);
   } else if (debugThis) console.log(`✗ top-performer: ${viewerCount} < ${performerThreshold.toFixed(1)}`);
   
-  const justLiveThreshold = Math.max(1, globalStats.avgViewers * 0.2);
-  if (secondsOnline <= 3600 && viewerCount >= justLiveThreshold) {
+  const justLiveThreshold = Math.max(10, globalStats.avgViewers * 0.6);
+  if (secondsOnline <= 1800 && viewerCount >= justLiveThreshold) {
     spotlights.push({ type: 'just-live', label: 'JUST LIVE', icon: '⚡', priority: 8 });
-    if (debugThis) console.log(`✓ JUST LIVE: ${secondsOnline}s <= 3600 && ${viewerCount} >= ${justLiveThreshold.toFixed(1)}`);
-  } else if (debugThis) console.log(`✗ just-live: ${secondsOnline}s > 3600 || ${viewerCount} < ${justLiveThreshold.toFixed(1)}`);
+    if (debugThis) console.log(`✓ JUST LIVE: ${secondsOnline}s <= 1800 && ${viewerCount} >= ${justLiveThreshold.toFixed(1)}`);
+  } else if (debugThis) console.log(`✗ just-live: ${secondsOnline}s > 1800 || ${viewerCount} < ${justLiveThreshold.toFixed(1)}`);
   
-  if (hoursOnline >= 3) {
+  if (hoursOnline >= 5) {
     spotlights.push({ type: 'marathon', label: 'MARATHON', icon: '🎯', priority: 7 });
-    if (debugThis) console.log(`✓ MARATHON: ${hoursOnline.toFixed(1)}h >= 3`);
-  } else if (debugThis) console.log(`✗ marathon: ${hoursOnline.toFixed(1)}h < 3`);
+    if (debugThis) console.log(`✓ MARATHON: ${hoursOnline.toFixed(1)}h >= 5`);
+  } else if (debugThis) console.log(`✗ marathon: ${hoursOnline.toFixed(1)}h < 5`);
   
   const risingStarThreshold = Math.max(5, globalStats.avgViewers * 0.5);
   if (isNew && viewerCount >= risingStarThreshold) {
@@ -975,10 +1142,19 @@ function renderModels(models) {
     el.addEventListener('click', function(e) {
       e.preventDefault();
       let tag = el.dataset.tag;
-      if(!FILTERS.tag.includes(tag)) {
-        if(FILTERS.tag.length>=5) FILTERS.tag.shift();
-        FILTERS.tag.push(tag);
-        onFilterChange();
+      
+      // Check if we're in discovery mode
+      const discoveryHighlights = document.getElementById('discovery-highlights');
+      if (discoveryHighlights && discoveryHighlights.style.display !== 'none') {
+        // In discovery mode - use discovery tag filtering
+        filterDiscoveryByTag(tag);
+      } else {
+        // In normal mode - use regular filtering
+        if(!FILTERS.tag.includes(tag)) {
+          if(FILTERS.tag.length>=5) FILTERS.tag.shift();
+          FILTERS.tag.push(tag);
+          onFilterChange();
+        }
       }
     });
   });
@@ -1369,10 +1545,19 @@ function doAutoRefresh() {
         el.addEventListener('click', function (e) {
           e.preventDefault();
           let tag = el.dataset.tag;
-          if (!FILTERS.tag.includes(tag)) {
-            if (FILTERS.tag.length >= 5) FILTERS.tag.shift();
-            FILTERS.tag.push(tag);
-            onFilterChange();
+          
+          // Check if we're in discovery mode
+          const discoveryHighlights = document.getElementById('discovery-highlights');
+          if (discoveryHighlights && discoveryHighlights.style.display !== 'none') {
+            // In discovery mode - use discovery tag filtering
+            filterDiscoveryByTag(tag);
+          } else {
+            // In normal mode - use regular filtering
+            if (!FILTERS.tag.includes(tag)) {
+              if (FILTERS.tag.length >= 5) FILTERS.tag.shift();
+              FILTERS.tag.push(tag);
+              onFilterChange();
+            }
           }
         });
       });
@@ -1390,7 +1575,7 @@ function sortModels(models, sortBy) {
       return sorted.filter(m => (m.seconds_online || 0) <= 1800).sort((a, b) => (a.seconds_online || 0) - (b.seconds_online || 0));
       
     case 'marathon':
-      return sorted.filter(m => (m.seconds_online || 0) >= 10800).sort((a, b) => (b.seconds_online || 0) - (a.seconds_online || 0));
+      return sorted.filter(m => (m.seconds_online || 0) >= 18000).sort((a, b) => (b.seconds_online || 0) - (a.seconds_online || 0));
       
     case 'engagement':
       return sorted.sort((a, b) => {
@@ -1425,7 +1610,82 @@ function sortModels(models, sortBy) {
   }
 }
 
-function renderDiscoverySection(models, sectionId, limit = 6) {
+function renderCarouselItems(models, globalStats) {
+  return models.map(m => {
+    // Detect spotlights for this model
+    const modelSpotlights = detectModelSpotlights(m, models, globalStats);
+    const spotlightElements = renderSophisticatedSpotlight(modelSpotlights);
+    
+    let rawSubject = m.room_subject ? m.room_subject : '';
+    let subjectWithTags = rawSubject.replace(
+      /#(\w+)/g,
+      '<a href="#" class="tag-cb subject-tag" data-tag="$1">#$1</a>'
+    );
+    let tmpDiv = document.createElement('div');
+    tmpDiv.innerHTML = subjectWithTags;
+    let nodes = Array.from(tmpDiv.childNodes);
+    let displaySubject = '';
+    let charCount = 0;
+    for (let node of nodes) {
+      let text = node.nodeType === 3 ? node.textContent : node.outerHTML;
+      let c = node.nodeType === 3 ? text.length : node.textContent.length;
+      if (charCount + c > 63) {
+        if (node.nodeType === 3) displaySubject += text.slice(0, 63 - charCount) + '...';
+        else break;
+        break;
+      }
+      displaySubject += text;
+      charCount += c;
+    }
+
+    // One chip per card (show type or new)
+    let chipHTML = '';
+    const showType = (m.current_show || '').toLowerCase();
+    if (showType && showType !== 'public') {
+      const showColors = { private: 'status-private', group: 'status-group', away: 'status-away', hidden: 'status-hidden' };
+      const showLabels = { private: 'PRIVATE', group: 'GROUP', away: 'AWAY', hidden: 'HIDDEN' };
+      let label = showLabels[showType] || m.current_show.toUpperCase();
+      let colorClass = showColors[showType] || 'status-away';
+      chipHTML = `<div class="current-show-chip ${colorClass}">${label}</div>`;
+    } else if (m.is_new) {
+      chipHTML = `<div class="current-show-chip status-new">NEW</div>`;
+    }
+    let arrMeta = [];
+    arrMeta.push(`<span class="age-cb">${m.age}</span>`);
+    if (m.gender) arrMeta.push(getGenderIcon(m.gender));
+    if (m.country) arrMeta.push(`<span class="country-cb"><img class="flag-cb" src="https://flagcdn.com/16x12/${m.country.toLowerCase()}.png" alt="${m.country}"></span>`);
+    let metaRow = `<div class="row-meta-cb">${arrMeta.join('')}</div>`;
+    let href = "/model/" + encodeURIComponent(m.username);
+    let timeString = (m.seconds_online >= 3600) ? ((m.seconds_online/3600).toFixed(1) + ' hrs') : (Math.floor((m.seconds_online%3600)/60) + ' mins');
+    let viewers = (m.num_users ? `${m.num_users} viewers` : '');
+    
+    return `
+      <div class="carousel-item model-card-cb ${spotlightElements.cardClass}" style="flex: 0 0 170px; min-width: 170px; max-width: 170px;">
+        <div class="model-img-wrap-cb" style="position:relative;">
+          <a href="${href}">
+            <img src="${m.image_url_360x270||m.image_url}" class="model-img-cb" alt="${m.username}">
+          </a>
+          ${chipHTML}
+          ${spotlightElements.cornerHTML}
+          ${spotlightElements.overlayHTML}
+        </div>
+        <div class="model-info-cb">
+          <div class="row-top-cb">
+            <a href="${href}" class="username-cb">${m.username}</a>
+            ${metaRow}
+          </div>
+          <div class="subject-cb">${displaySubject}</div>
+          <div class="meta-row-cb">
+            <span class="meta-group-cb"><span class="icon-cb">&#128065;</span><span>${viewers}</span></span>
+            <span class="meta-group-cb"><span class="icon-cb">&#9201;</span><span>${timeString}</span></span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderDiscoverySection(models, sectionId, limit = 24) {
   const container = document.getElementById(sectionId);
   if (!container) return;
   
@@ -1434,43 +1694,121 @@ function renderDiscoverySection(models, sectionId, limit = 6) {
     return;
   }
   
-  container.innerHTML = models.slice(0, limit).map(model => {
-    const spotlights = detectModelSpotlights(model, models, {
-      avgViewers: models.reduce((sum, m) => sum + parseInt(m.num_users || 0), 0) / models.length,
-      maxViewers: Math.max(...models.map(m => parseInt(m.num_users || 0)))
-    });
-    const spotlightElements = renderSophisticatedSpotlight(spotlights);
-    
-    const stats = [];
-    stats.push(`${model.num_users || 0} viewers`);
-    if (model.seconds_online) {
-      const hours = (model.seconds_online / 3600).toFixed(1);
-      stats.push(`${hours}h online`);
-    }
-    if (model.num_followers) {
-      const followers = model.num_followers > 1000 ? 
-        (model.num_followers / 1000).toFixed(1) + 'k' : 
-        model.num_followers;
-      stats.push(`${followers} followers`);
-    }
-    
-    return `
-      <div class="discovery-card" style="background: #fff; border-radius: 8px; padding: 12px; border: 1px solid #eee; transition: transform 0.2s ease; cursor: pointer;" 
-           onclick="window.open('/model/${encodeURIComponent(model.username)}', '_blank');">
-        <div style="position: relative; margin-bottom: 8px;">
-          <img src="${model.image_url || ''}" alt="${model.username}" 
-               style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px;">
-          ${spotlightElements}
-          ${model.is_hd ? '<div style="position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">HD</div>' : ''}
-        </div>
-        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #333;">${model.username}</div>
-        <div style="font-size: 12px; color: #666; margin-bottom: 6px;">${stats.join(' • ')}</div>
-        <div style="font-size: 11px; color: #888; height: 32px; overflow: hidden; line-height: 1.3;">
-          ${(model.room_subject || '').substring(0, 80)}${(model.room_subject || '').length > 80 ? '...' : ''}
+  // Store all models for carousel
+  if (!window.discoveryReelData) {
+    window.discoveryReelData = {};
+  }
+  // Calculate how many items can fit in the viewport (for display purposes)
+  const viewportWidth = window.innerWidth;
+  const availableWidth = Math.max(300, viewportWidth - 100); // Simple calculation with buffer
+  const itemWidth = 170; // Standard model card width
+  const gap = 12; // Standard gap
+  const itemsPerView = Math.max(1, Math.floor(availableWidth / (itemWidth + gap)));
+  
+  window.discoveryReelData[sectionId] = {
+    allModels: models,
+    currentIndex: 0,
+    itemsPerView: itemsPerView // Use calculated itemsPerView directly
+  };
+  
+  // Calculate global stats for spotlight detection (same as main page)
+  const globalStats = {
+    avgViewers: models.reduce((sum, m) => sum + parseInt(m.num_users || 0), 0) / models.length,
+    maxViewers: Math.max(...models.map(m => parseInt(m.num_users || 0))),
+    avgOnlineTime: models.reduce((sum, m) => sum + parseInt(m.seconds_online || 0), 0) / models.length,
+    maxOnlineTime: Math.max(...models.map(m => parseInt(m.seconds_online || 0)))
+  };
+
+  // Create carousel structure
+  const reelData = window.discoveryReelData[sectionId];
+  const totalModels = models.length;
+  const canScrollLeft = reelData.currentIndex > 0;
+  const canScrollRight = reelData.currentIndex + reelData.itemsPerView < totalModels;
+  
+  // Calculate exact carousel width to prevent overflow
+  const maxCarouselWidth = (itemWidth * itemsPerView) + (gap * (itemsPerView - 1));
+  
+  container.innerHTML = `
+    <div class="discovery-carousel" style="position: relative; width: 100%; max-width: 100%; box-sizing: border-box; padding: 0 20px;">
+      <!-- Navigation buttons positioned inside padded container -->
+      <button class="carousel-nav carousel-prev" 
+              onclick="scrollDiscoveryCarousel('${sectionId}', 'prev')"
+              style="position: absolute; 
+                     left: 0; 
+                     top: 50%; 
+                     transform: translateY(-50%); 
+                     z-index: 10; 
+                     background: rgba(255, 255, 255, 0.9); 
+                     border: 1px solid #ddd; 
+                     border-radius: 50%; 
+                     width: 32px; 
+                     height: 32px; 
+                     cursor: pointer; 
+                     font-size: 12px; 
+                     display: ${canScrollLeft ? 'flex' : 'none'};
+                     align-items: center; 
+                     justify-content: center; 
+                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                     transition: all 0.3s ease;"
+              onmouseover="this.style.background='rgba(255, 71, 87, 0.9)'; this.style.color='white';"
+              onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.color='black';">
+        ◀
+      </button>
+      
+      <button class="carousel-nav carousel-next" 
+              onclick="scrollDiscoveryCarousel('${sectionId}', 'next')"
+              style="position: absolute; 
+                     right: 0; 
+                     top: 50%; 
+                     transform: translateY(-50%); 
+                     z-index: 10; 
+                     background: rgba(255, 255, 255, 0.9); 
+                     border: 1px solid #ddd; 
+                     border-radius: 50%; 
+                     width: 32px; 
+                     height: 32px; 
+                     cursor: pointer; 
+                     font-size: 12px; 
+                     display: ${canScrollRight ? 'flex' : 'none'};
+                     align-items: center; 
+                     justify-content: center; 
+                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                     transition: all 0.3s ease;"
+              onmouseover="this.style.background='rgba(255, 71, 87, 0.9)'; this.style.color='white';"
+              onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.color='black';">
+        ▶
+      </button>
+      
+      
+      <div class="carousel-container" style="overflow: hidden; border-radius: 8px; width: 100%; box-sizing: border-box;">
+        <div class="carousel-track" style="display: flex; transition: transform 0.3s ease; transform: translateX(0px); gap: 12px;">
+          ${renderCarouselItems(models, globalStats)}
         </div>
       </div>
-    `;
-  }).join('');
+    </div>
+  `;
+  
+  // Add tag event listeners for the newly rendered tags
+  container.querySelectorAll('.tag-cb.subject-tag').forEach(el => {
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      let tag = el.dataset.tag;
+      
+      // Check if we're in discovery mode
+      const discoveryHighlights = document.getElementById('discovery-highlights');
+      if (discoveryHighlights && discoveryHighlights.style.display !== 'none') {
+        // In discovery mode - use discovery tag filtering
+        filterDiscoveryByTag(tag);
+      } else {
+        // In normal mode - use regular filtering
+        if (!FILTERS.tag.includes(tag)) {
+          if (FILTERS.tag.length >= 5) FILTERS.tag.shift();
+          FILTERS.tag.push(tag);
+          onFilterChange();
+        }
+      }
+    });
+  });
 }
 
 function showDiscoveryHighlights() {
@@ -1479,27 +1817,1111 @@ function showDiscoveryHighlights() {
   
   if (highlights.style.display === 'none') {
     highlights.style.display = 'block';
-    showBtn.textContent = '📊 Hide Stats';
+    showBtn.textContent = '🔍 Hide Discovery';
     
-    // Populate discovery sections
-    if (allModels.length > 0) {
-      const justLive = sortModels(allModels, 'newest');
-      const hiddenGems = sortModels(allModels, 'hidden-gems');
-      const marathon = sortModels(allModels, 'marathon');
-      
-      renderDiscoverySection(justLive, 'just-live-grid', 8);
-      renderDiscoverySection(hiddenGems, 'hidden-gems-grid', 8);
-      renderDiscoverySection(marathon, 'marathon-grid', 8);
-      
-      // Hide empty sections
-      document.getElementById('just-live-section').style.display = justLive.length > 0 ? 'block' : 'none';
-      document.getElementById('hidden-gems-section').style.display = hiddenGems.length > 0 ? 'block' : 'none';
-      document.getElementById('marathon-section').style.display = marathon.length > 0 ? 'block' : 'none';
-    }
+    // Store discovery state in sessionStorage
+    sessionStorage.setItem('discoveryHubActive', 'true');
+    
+    // Hide main model grid, sidebar filters, and header elements when in discovery mode
+    document.getElementById('model-grid').style.display = 'none';
+    document.getElementById('pagination-bar').style.display = 'none';
+    document.getElementById('filter-sidebar').style.display = 'none';
+    
+    // Hide header filter elements
+    const resetFiltersLink = document.getElementById('reset-filters-link');
+    if (resetFiltersLink) resetFiltersLink.style.display = 'none';
+    
+    const autoRefreshBar = document.getElementById('auto-refresh-bar');
+    if (autoRefreshBar) autoRefreshBar.style.display = 'none';
+    
+    const filterToggleBtn = document.getElementById('filter-toggle');
+    if (filterToggleBtn) filterToggleBtn.style.display = 'none';
+    
+    // Load ALL cached data for accurate stats (not just filtered models)
+    loadAllCachedDataForStats().then(allCachedModels => {
+      if (allCachedModels.length > 0) {
+        // Calculate and populate stats overview using ALL cached data
+        populateStatsOverview(allCachedModels);
+        
+        // Populate performance insights using ALL cached data
+        populateTopPerformers(allCachedModels);
+        populateActivityTrends(allCachedModels);
+        
+        // Populate category breakdown using ALL cached data
+        populateCategoryBreakdown(allCachedModels);
+        
+        // For discovery sections, use a curated subset of interesting models
+        window.cachedModelsForDiscovery = allCachedModels; // Store for refresh functionality
+        
+        // Populate age filters
+        populateAgeFilters(allCachedModels);
+        
+        // Populate popular tags
+        populatePopularTags(allCachedModels);
+        
+        populateDiscoverySections(allCachedModels);
+      }
+    }).catch(error => {
+      console.error('Error loading stats data:', error);
+      // Fallback to existing filtered models if API call fails
+      if (allModels.length > 0) {
+        populateStatsOverview(allModels);
+        populateTopPerformers(allModels);
+        populateActivityTrends(allModels);
+        populateCategoryBreakdown(allModels);
+        
+        window.cachedModelsForDiscovery = allModels; // Store for refresh functionality
+        populateAgeFilters(allModels);
+        populatePopularTags(allModels);
+        populateDiscoverySections(allModels);
+      }
+    });
   } else {
     highlights.style.display = 'none';
-    showBtn.textContent = '📊 Show Stats';
+    showBtn.textContent = '🔍 Discovery Hub';
+    
+    // Remove discovery state from sessionStorage
+    sessionStorage.removeItem('discoveryHubActive');
+    
+    // Show main model grid, sidebar filters, and header elements when discovery is hidden
+    document.getElementById('model-grid').style.display = 'grid';
+    document.getElementById('pagination-bar').style.display = 'flex';
+    document.getElementById('filter-sidebar').style.display = 'block';
+    
+    // Show header filter elements
+    const resetFiltersLink = document.getElementById('reset-filters-link');
+    if (resetFiltersLink && (FILTERS.gender.length || FILTERS.tag.length || FILTERS.minAge !== 18 || FILTERS.maxAge !== 99 || FILTERS.hd || FILTERS.size || FILTERS.current_show.length || FILTERS.is_new)) {
+      resetFiltersLink.style.display = 'inline';
+    }
+    
+    const autoRefreshBar = document.getElementById('auto-refresh-bar');
+    if (autoRefreshBar && isDesktop()) autoRefreshBar.style.display = 'inline';
+    
+    const filterToggleBtn = document.getElementById('filter-toggle');
+    if (filterToggleBtn) filterToggleBtn.style.display = 'inline';
   }
+}
+
+async function loadAllCachedDataForStats() {
+  const allRegions = ['northamerica', 'europe_russia', 'southamerica', 'asia', 'other'];
+  
+  // Load all regions without any filters
+  const response = await fetch(`${API}?region=${allRegions.join(',')}&limit=10000`);
+  const data = await response.json();
+  
+  return data.results || [];
+}
+
+function populateStatsOverview(models) {
+  const totalModels = models.length;
+  const totalViewers = models.reduce((sum, m) => sum + (parseInt(m.num_users) || 0), 0);
+  const avgViewers = totalModels > 0 ? Math.round(totalViewers / totalModels) : 0;
+  const hdModels = models.filter(m => m.is_hd).length;
+  const hdPercentage = totalModels > 0 ? Math.round((hdModels / totalModels) * 100) : 0;
+  
+  document.getElementById('total-models').textContent = totalModels.toLocaleString();
+  document.getElementById('total-viewers').textContent = totalViewers.toLocaleString();
+  document.getElementById('avg-viewers').textContent = avgViewers.toLocaleString();
+  document.getElementById('hd-percentage').textContent = hdPercentage + '%';
+}
+
+function populateTopPerformers(models) {
+  const topModels = [...models]
+    .sort((a, b) => (parseInt(b.num_users) || 0) - (parseInt(a.num_users) || 0))
+    .slice(0, 5);
+  
+  const container = document.getElementById('top-performers');
+  container.innerHTML = topModels.map((model, index) => `
+    <div style="display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 8px; background: ${index === 0 ? '#fff3cd' : '#f8f9fa'}; cursor: pointer; transition: transform 0.2s ease;" 
+         onclick="window.open('/model/${encodeURIComponent(model.username)}', '_blank');" 
+         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)';" 
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+      <span style="font-weight: 700; color: ${index === 0 ? '#b8860b' : '#666'};">#${index + 1}</span>
+      <img src="${model.image_url}" alt="${model.username}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+      <div style="flex: 1;">
+        <div style="font-weight: 600; font-size: 14px; color: #333;">${model.username}</div>
+        <div style="font-size: 12px; color: #666;">${(parseInt(model.num_users) || 0).toLocaleString()} viewers</div>
+      </div>
+      ${model.is_hd ? '<span style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">HD</span>' : ''}
+    </div>
+  `).join('');
+}
+
+function populateActivityTrends(models) {
+  const onlineTimeRanges = {
+    'Under 1 hour': models.filter(m => (m.seconds_online || 0) < 3600).length,
+    '1-3 hours': models.filter(m => (m.seconds_online || 0) >= 3600 && (m.seconds_online || 0) < 10800).length,
+    '3-5 hours': models.filter(m => (m.seconds_online || 0) >= 10800 && (m.seconds_online || 0) < 18000).length,
+    '5+ hours': models.filter(m => (m.seconds_online || 0) >= 18000).length
+  };
+  
+  const viewerRanges = {
+    '1-10 viewers': models.filter(m => (m.num_users || 0) >= 1 && (m.num_users || 0) <= 10).length,
+    '11-50 viewers': models.filter(m => (m.num_users || 0) >= 11 && (m.num_users || 0) <= 50).length,
+    '51-100 viewers': models.filter(m => (m.num_users || 0) >= 51 && (m.num_users || 0) <= 100).length,
+    '100+ viewers': models.filter(m => (m.num_users || 0) > 100).length
+  };
+  
+  const container = document.getElementById('activity-trends');
+  container.innerHTML = `
+    <div style="margin-bottom: 16px;">
+      <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #333;">Online Duration</h4>
+      ${Object.entries(onlineTimeRanges).map(([range, count]) => `
+        <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+          <span style="font-size: 13px; color: #666;">${range}</span>
+          <span style="font-size: 13px; font-weight: 600; color: #333;">${count}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div>
+      <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #333;">Viewer Ranges</h4>
+      ${Object.entries(viewerRanges).map(([range, count]) => `
+        <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+          <span style="font-size: 13px; color: #666;">${range}</span>
+          <span style="font-size: 13px; font-weight: 600; color: #333;">${count}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function populateCategoryBreakdown(models) {
+  const genderCounts = {
+    'Female': { count: models.filter(m => m.gender === 'f').length, filter: 'f' },
+    'Male': { count: models.filter(m => m.gender === 'm').length, filter: 'm' },
+    'Couple': { count: models.filter(m => m.gender === 'c').length, filter: 'c' },
+    'Trans': { count: models.filter(m => m.gender === 't').length, filter: 't' }
+  };
+  
+  const showTypeCounts = {
+    'Public': { count: models.filter(m => m.current_show === 'public').length, filter: 'public' },
+    'Private': { count: models.filter(m => m.current_show === 'private').length, filter: 'private' },
+    'Group': { count: models.filter(m => m.current_show === 'group').length, filter: 'group' },
+    'Away': { count: models.filter(m => m.current_show === 'away').length, filter: 'away' }
+  };
+  
+  const newModels = models.filter(m => m.is_new).length;
+  const hdModels = models.filter(m => m.is_hd).length;
+  
+  // Check current filter for selected state
+  const currentFilter = window.currentDiscoveryFilter;
+  
+  // Helper function to get selected styles
+  function getFilterStyles(filterType, filterValue, baseColor) {
+    // Check if this specific filter is selected (support multiple filters)
+    const currentFilters = window.currentDiscoveryFilters || {};
+    const isSelected = currentFilters[filterType] === filterValue;
+    if (isSelected) {
+      return {
+        background: baseColor,
+        border: `2px solid ${baseColor}`,
+        textColor: '#fff',
+        numberColor: '#fff'
+      };
+    }
+    return {
+      background: '#f8f9fa',
+      border: '1px solid transparent',
+      textColor: '#666',
+      numberColor: baseColor
+    };
+  }
+  
+  const container = document.getElementById('category-breakdown');
+  container.innerHTML = `
+    ${Object.entries(genderCounts).filter(([_, data]) => data.count > 0).map(([category, data]) => {
+      const styles = getFilterStyles('gender', data.filter, '#e91e63');
+      return `
+        <div onclick="filterDiscoveryByCategory('gender', '${data.filter}')" 
+             style="text-align: center; padding: 12px; background: ${styles.background}; border: ${styles.border}; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" 
+             onmouseover="if(!this.style.background.includes('rgb(233, 30, 99)')) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'; }" 
+             onmouseout="if(!this.style.background.includes('rgb(233, 30, 99)')) { this.style.transform='translateY(0)'; this.style.boxShadow='none'; }">
+          <div style="font-size: 20px; font-weight: 700; color: ${styles.numberColor}; margin-bottom: 4px;">${data.count}</div>
+          <div style="font-size: 12px; color: ${styles.textColor};">${category}</div>
+        </div>
+      `;
+    }).join('')}
+    ${Object.entries(showTypeCounts).filter(([_, data]) => data.count > 0).map(([category, data]) => {
+      const styles = getFilterStyles('show_type', data.filter, '#2196F3');
+      return `
+        <div onclick="filterDiscoveryByCategory('show_type', '${data.filter}')" 
+             style="text-align: center; padding: 12px; background: ${styles.background}; border: ${styles.border}; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" 
+             onmouseover="if(!this.style.background.includes('rgb(33, 150, 243)')) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'; }" 
+             onmouseout="if(!this.style.background.includes('rgb(33, 150, 243)')) { this.style.transform='translateY(0)'; this.style.boxShadow='none'; }">
+          <div style="font-size: 20px; font-weight: 700; color: ${styles.numberColor}; margin-bottom: 4px;">${data.count}</div>
+          <div style="font-size: 12px; color: ${styles.textColor};">${category}</div>
+        </div>
+      `;
+    }).join('')}
+    ${(() => {
+      const styles = getFilterStyles('is_new', true, '#FF5722');
+      return `
+        <div onclick="filterDiscoveryByCategory('is_new', true)" 
+             style="text-align: center; padding: 12px; background: ${styles.background}; border: ${styles.border}; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" 
+             onmouseover="if(!this.style.background.includes('rgb(255, 87, 34)')) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'; }" 
+             onmouseout="if(!this.style.background.includes('rgb(255, 87, 34)')) { this.style.transform='translateY(0)'; this.style.boxShadow='none'; }">
+          <div style="font-size: 20px; font-weight: 700; color: ${styles.numberColor}; margin-bottom: 4px;">${newModels}</div>
+          <div style="font-size: 12px; color: ${styles.textColor};">New Models</div>
+        </div>
+      `;
+    })()}
+    ${(() => {
+      const styles = getFilterStyles('is_hd', true, '#4CAF50');
+      return `
+        <div onclick="filterDiscoveryByCategory('is_hd', true)" 
+             style="text-align: center; padding: 12px; background: ${styles.background}; border: ${styles.border}; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" 
+             onmouseover="if(!this.style.background.includes('rgb(76, 175, 80)')) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'; }" 
+             onmouseout="if(!this.style.background.includes('rgb(76, 175, 80)')) { this.style.transform='translateY(0)'; this.style.boxShadow='none'; }">
+          <div style="font-size: 20px; font-weight: 700; color: ${styles.numberColor}; margin-bottom: 4px;">${hdModels}</div>
+          <div style="font-size: 12px; color: ${styles.textColor};">HD Streams</div>
+        </div>
+      `;
+    })()}
+    <div onclick="clearDiscoveryFilters()" style="text-align: center; padding: 12px; background: #e8f4fd; border: 1px solid #2196F3; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" 
+         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)';" 
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+      <div style="font-size: 16px; font-weight: 700; color: #2196F3; margin-bottom: 4px;">🔄</div>
+      <div style="font-size: 12px; color: #2196F3;">Clear Filters</div>
+    </div>
+  `;
+}
+
+function populateAgeFilters(models) {
+  const container = document.getElementById('age-filter-breakdown');
+  if (!container) return;
+  
+  // Define age ranges
+  const ageRanges = [
+    { label: '18-21', min: 18, max: 21 },
+    { label: '22-25', min: 22, max: 25 },
+    { label: '26-30', min: 26, max: 30 },
+    { label: '31-35', min: 31, max: 35 },
+    { label: '36-40', min: 36, max: 40 },
+    { label: '41-50', min: 41, max: 50 },
+    { label: '50+', min: 50, max: 99 }
+  ];
+  
+  // Count models in each age range
+  const ageCounts = ageRanges.map(range => {
+    const count = models.filter(m => {
+      const age = parseInt(m.age);
+      return age >= range.min && age <= range.max;
+    }).length;
+    return { ...range, count };
+  }).filter(range => range.count > 0); // Only show ranges with models
+  
+  if (ageCounts.length === 0) {
+    container.innerHTML = '<p style="color: #666; font-style: italic;">No age data available</p>';
+    return;
+  }
+  
+  container.innerHTML = ageCounts.map(range => {
+    const isSelected = window.currentDiscoveryAgeFilter && 
+      window.currentDiscoveryAgeFilter.min === range.min && 
+      window.currentDiscoveryAgeFilter.max === range.max;
+    
+    return `
+      <div class="filter-item age-filter-item" 
+           onclick="filterDiscoveryByAge(${range.min}, ${range.max})"
+           style="background: ${isSelected ? 'linear-gradient(135deg, #ff4757 0%, #ff6b7a 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}; 
+                  color: white; 
+                  padding: 16px; 
+                  border-radius: 8px; 
+                  text-align: center; 
+                  cursor: pointer; 
+                  transition: all 0.3s ease;
+                  box-shadow: 0 2px 8px rgba(${isSelected ? '255, 71, 87' : '102, 126, 234'}, 0.3);"
+           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(${isSelected ? '255, 71, 87' : '102, 126, 234'}, 0.4)';"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(${isSelected ? '255, 71, 87' : '102, 126, 234'}, 0.3)';">
+        <div style="font-size: 18px; font-weight: bold; margin-bottom: 4px;">${range.label}</div>
+        <div style="font-size: 12px; opacity: 0.9;">${range.count} models</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterDiscoveryByAge(minAge, maxAge) {
+  if (!window.cachedModelsForDiscovery) return;
+  
+  // Check if this age filter is already selected - if so, toggle it off
+  if (window.currentDiscoveryAgeFilter && 
+      window.currentDiscoveryAgeFilter.min === minAge && 
+      window.currentDiscoveryAgeFilter.max === maxAge) {
+    clearAgeFilter();
+    return;
+  }
+  
+  // Set the current age filter
+  window.currentDiscoveryAgeFilter = { min: minAge, max: maxAge };
+  
+  // Filter models by age range
+  const filteredModels = window.cachedModelsForDiscovery.filter(m => {
+    const age = parseInt(m.age);
+    return age >= minAge && age <= maxAge;
+  });
+  
+  // Update age filters display to show selected state
+  populateAgeFilters(window.cachedModelsForDiscovery);
+  
+  // Repopulate all discovery sections with filtered models
+  populateDiscoverySections(filteredModels);
+  
+  // Add an "Age Filter Active" indicator
+  addAgeFilterIndicator(minAge, maxAge, filteredModels.length);
+}
+
+function clearAgeFilter() {
+  // Remove current age filter
+  window.currentDiscoveryAgeFilter = null;
+  
+  // Remove indicator
+  const indicator = document.getElementById('age-filter-indicator');
+  if (indicator) {
+    indicator.remove();
+  }
+  
+  // Reset age filters display
+  if (window.cachedModelsForDiscovery) {
+    populateAgeFilters(window.cachedModelsForDiscovery);
+    populateDiscoverySections(window.cachedModelsForDiscovery);
+  }
+}
+
+function addAgeFilterIndicator(minAge, maxAge, count) {
+  // Add indicator above discovery sections
+  const sectionsContainer = document.querySelector('.discovery-sections');
+  if (!sectionsContainer) return;
+  
+  // Remove existing indicator
+  const existingIndicator = document.getElementById('age-filter-indicator');
+  if (existingIndicator) {
+    existingIndicator.remove();
+  }
+  
+  // Create new indicator
+  const indicator = document.createElement('div');
+  indicator.id = 'age-filter-indicator';
+  const ageLabel = maxAge >= 99 ? `${minAge}+` : `${minAge}-${maxAge}`;
+  indicator.innerHTML = `
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; 
+                padding: 12px 20px; 
+                border-radius: 8px; 
+                margin-bottom: 16px; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+      <span>🎂 Showing ${count} models aged ${ageLabel}</span>
+      <button onclick="clearAgeFilter()" 
+              style="background: rgba(255,255,255,0.2); 
+                     border: 1px solid rgba(255,255,255,0.3); 
+                     color: white; 
+                     padding: 4px 8px; 
+                     border-radius: 4px; 
+                     font-size: 12px; 
+                     cursor: pointer;">
+        Clear Filter
+      </button>
+    </div>
+  `;
+  
+  sectionsContainer.parentNode.insertBefore(indicator, sectionsContainer);
+}
+
+function populatePopularTags(models) {
+  const container = document.getElementById('popular-tags');
+  if (!container) return;
+  
+  // Extract all tags from models and count occurrences
+  const tagCounts = {};
+  models.forEach(m => {
+    if (m.tags && Array.isArray(m.tags)) {
+      m.tags.forEach(tag => {
+        const cleanTag = tag.toLowerCase().trim();
+        if (cleanTag.length > 1 && cleanTag.length <= 15) { // Reasonable tag length
+          tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
+        }
+      });
+    }
+    // Also extract hashtags from room subjects
+    if (m.room_subject) {
+      const hashtagMatches = m.room_subject.match(/#(\w+)/g);
+      if (hashtagMatches) {
+        hashtagMatches.forEach(hashtag => {
+          const cleanTag = hashtag.slice(1).toLowerCase().trim();
+          if (cleanTag.length > 1 && cleanTag.length <= 15) {
+            tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
+          }
+        });
+      }
+    }
+  });
+  
+  // Sort tags by popularity and get top 50 (more for carousel)
+  const popularTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 50);
+  
+  if (popularTags.length === 0) {
+    container.innerHTML = '<p style="color: #666; font-style: italic;">No tags found</p>';
+    return;
+  }
+  
+  // Initialize tag carousel data
+  if (!window.tagCarouselData) {
+    window.tagCarouselData = {
+      allTags: popularTags,
+      currentIndex: 0,
+      itemsPerView: 8 // Show 8 tags at a time
+    };
+  }
+  window.tagCarouselData.allTags = popularTags;
+  window.tagCarouselData.currentIndex = 0;
+  
+  container.innerHTML = popularTags.map(([tag, count]) => {
+    const fontSize = Math.min(16, Math.max(12, 12 + (count / 10)));
+    const opacity = Math.min(1, Math.max(0.6, count / 50));
+    return `
+      <button onclick="filterDiscoveryByTag('${tag}')" 
+              style="flex: 0 0 auto;
+                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                     border: none; 
+                     color: white; 
+                     padding: 6px 12px; 
+                     border-radius: 16px; 
+                     font-size: ${fontSize}px; 
+                     cursor: pointer; 
+                     opacity: ${opacity};
+                     transition: all 0.3s ease;
+                     box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+                     white-space: nowrap;"
+              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(102, 126, 234, 0.4)';"
+              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(102, 126, 234, 0.3)';">
+        #${tag} (${count})
+      </button>
+    `;
+  }).join('');
+  
+  // Update carousel navigation buttons visibility
+  updateTagCarouselNavigation();
+}
+
+function scrollTagCarousel(direction) {
+  const data = window.tagCarouselData;
+  if (!data) return;
+  
+  const totalTags = data.allTags.length;
+  const scrollAmount = 4; // Scroll 4 tags at a time
+  
+  if (direction === 'next' && data.currentIndex + data.itemsPerView < totalTags) {
+    data.currentIndex = Math.min(data.currentIndex + scrollAmount, totalTags - data.itemsPerView);
+  } else if (direction === 'prev' && data.currentIndex > 0) {
+    data.currentIndex = Math.max(data.currentIndex - scrollAmount, 0);
+  }
+  
+  // Update the carousel display
+  const container = document.getElementById('popular-tags');
+  if (!container) return;
+  
+  // Calculate translation based on the visible items width
+  const tagButtons = container.querySelectorAll('button');
+  let translateX = 0;
+  for (let i = 0; i < data.currentIndex; i++) {
+    if (tagButtons[i]) {
+      translateX += tagButtons[i].offsetWidth + 8; // 8px gap
+    }
+  }
+  
+  container.style.transform = `translateX(-${translateX}px)`;
+  
+  // Update navigation buttons
+  updateTagCarouselNavigation();
+}
+
+function updateTagCarouselNavigation() {
+  const data = window.tagCarouselData;
+  if (!data) return;
+  
+  const prevBtn = document.querySelector('.tag-carousel-prev');
+  const nextBtn = document.querySelector('.tag-carousel-next');
+  
+  const totalTags = data.allTags.length;
+  const canScrollLeft = data.currentIndex > 0;
+  const canScrollRight = data.currentIndex + data.itemsPerView < totalTags;
+  
+  if (prevBtn) prevBtn.style.display = canScrollLeft ? 'flex' : 'none';
+  if (nextBtn) nextBtn.style.display = canScrollRight ? 'flex' : 'none';
+}
+
+function refreshPopularTags() {
+  if (!window.cachedModelsForDiscovery) return;
+  populatePopularTags(window.cachedModelsForDiscovery);
+}
+
+function filterDiscoveryByTag(tag) {
+  if (!window.cachedModelsForDiscovery) return;
+  
+  // Check if this tag is already selected - if so, toggle it off
+  if (window.currentDiscoveryTagFilter === tag) {
+    clearTagFilter();
+    return;
+  }
+  
+  // Set the current tag filter
+  window.currentDiscoveryTagFilter = tag;
+  
+  // Filter models that have this tag in their tags array or room subject
+  const filteredModels = window.cachedModelsForDiscovery.filter(m => {
+    // Check if tag is in the tags array
+    if (m.tags && m.tags.some(t => t.toLowerCase() === tag.toLowerCase())) {
+      return true;
+    }
+    // Check if tag is in the room subject as hashtag
+    if (m.room_subject && m.room_subject.toLowerCase().includes('#' + tag.toLowerCase())) {
+      return true;
+    }
+    return false;
+  });
+  
+  // Update popular tags to highlight selected tag
+  highlightSelectedTag(tag);
+  
+  // Repopulate all discovery sections with filtered models
+  populateDiscoverySections(filteredModels);
+  
+  // Add a "Clear Tag Filter" message
+  addTagFilterIndicator(tag, filteredModels.length);
+}
+
+function highlightSelectedTag(selectedTag) {
+  const container = document.getElementById('popular-tags');
+  if (!container) return;
+  
+  // Update all tag buttons to show selected state
+  container.querySelectorAll('button').forEach(btn => {
+    const tagMatch = btn.textContent.match(/#(\w+)/);
+    if (tagMatch && tagMatch[1].toLowerCase() === selectedTag.toLowerCase()) {
+      btn.style.background = 'linear-gradient(135deg, #ff4757 0%, #ff6b7a 100%)';
+      btn.style.boxShadow = '0 4px 8px rgba(255, 71, 87, 0.4)';
+    } else {
+      btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      btn.style.boxShadow = '0 2px 4px rgba(102, 126, 234, 0.3)';
+    }
+  });
+}
+
+function addTagFilterIndicator(tag, count) {
+  // Add indicator above discovery sections
+  const sectionsContainer = document.querySelector('.discovery-sections');
+  if (!sectionsContainer) return;
+  
+  // Remove existing indicator
+  const existingIndicator = document.getElementById('tag-filter-indicator');
+  if (existingIndicator) {
+    existingIndicator.remove();
+  }
+  
+  // Create new indicator
+  const indicator = document.createElement('div');
+  indicator.id = 'tag-filter-indicator';
+  indicator.innerHTML = `
+    <div style="background: linear-gradient(135deg, #ff4757 0%, #ff6b7a 100%); 
+                color: white; 
+                padding: 12px 20px; 
+                border-radius: 8px; 
+                margin-bottom: 16px; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center;
+                box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);">
+      <span>📋 Showing ${count} models with tag: <strong>#${tag}</strong></span>
+      <button onclick="clearTagFilter()" 
+              style="background: rgba(255,255,255,0.2); 
+                     border: 1px solid rgba(255,255,255,0.3); 
+                     color: white; 
+                     padding: 4px 8px; 
+                     border-radius: 4px; 
+                     font-size: 12px; 
+                     cursor: pointer;">
+        Clear Filter
+      </button>
+    </div>
+  `;
+  
+  sectionsContainer.parentNode.insertBefore(indicator, sectionsContainer);
+}
+
+function clearTagFilter() {
+  // Remove current tag filter
+  window.currentDiscoveryTagFilter = null;
+  
+  // Remove indicator
+  const indicator = document.getElementById('tag-filter-indicator');
+  if (indicator) {
+    indicator.remove();
+  }
+  
+  // Reset tag highlighting
+  const container = document.getElementById('popular-tags');
+  if (container) {
+    container.querySelectorAll('button').forEach(btn => {
+      btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      btn.style.boxShadow = '0 2px 4px rgba(102, 126, 234, 0.3)';
+    });
+  }
+  
+  // Repopulate sections with all models
+  if (window.cachedModelsForDiscovery) {
+    populateDiscoverySections(window.cachedModelsForDiscovery);
+  }
+}
+
+function populateDiscoverySections(models) {
+  const trending = getDiscoveryModels(models, 'trending');
+  const newModels = getDiscoveryModels(models, 'new-models');
+  const justLive = getDiscoveryModels(models, 'just-live');
+  const hiddenGems = getDiscoveryModels(models, 'hidden-gems');
+  const highEnergy = getDiscoveryModels(models, 'high-energy');
+  const marathon = getDiscoveryModels(models, 'marathon');
+  const international = getDiscoveryModels(models, 'international');
+  const interactive = getDiscoveryModels(models, 'interactive');
+  const couples = getDiscoveryModels(models, 'couples');
+  const mature = getDiscoveryModels(models, 'mature');
+  
+  renderDiscoverySection(trending, 'trending-grid', 24);
+  renderDiscoverySection(newModels, 'new-models-grid', 24);
+  renderDiscoverySection(justLive, 'just-live-grid', 24);
+  renderDiscoverySection(hiddenGems, 'hidden-gems-grid', 24);
+  renderDiscoverySection(highEnergy, 'high-energy-grid', 24);
+  renderDiscoverySection(marathon, 'marathon-grid', 24);
+  renderDiscoverySection(international, 'international-grid', 24);
+  renderDiscoverySection(interactive, 'interactive-grid', 24);
+  renderDiscoverySection(couples, 'couples-grid', 24);
+  renderDiscoverySection(mature, 'mature-grid', 24);
+  
+  // Show sections with data
+  document.getElementById('trending-section').style.display = trending.length > 0 ? 'block' : 'none';
+  document.getElementById('new-models-section').style.display = newModels.length > 0 ? 'block' : 'none';
+  document.getElementById('just-live-section').style.display = justLive.length > 0 ? 'block' : 'none';
+  document.getElementById('hidden-gems-section').style.display = hiddenGems.length > 0 ? 'block' : 'none';
+  document.getElementById('high-energy-section').style.display = highEnergy.length > 0 ? 'block' : 'none';
+  document.getElementById('marathon-section').style.display = marathon.length > 0 ? 'block' : 'none';
+  document.getElementById('international-section').style.display = international.length > 0 ? 'block' : 'none';
+  document.getElementById('interactive-section').style.display = interactive.length > 0 ? 'block' : 'none';
+  document.getElementById('couples-section').style.display = couples.length > 0 ? 'block' : 'none';
+  document.getElementById('mature-section').style.display = mature.length > 0 ? 'block' : 'none';
+}
+
+function getDiscoveryModels(models, category) {
+  let filtered = [];
+  const now = Date.now() / 1000;
+  
+  switch(category) {
+    case 'trending':
+      // High viewer count with good engagement
+      filtered = [...models]
+        .filter(m => (m.num_users || 0) > 50)
+        .sort((a, b) => {
+          const scoreA = (a.num_users || 0) * Math.log((a.num_followers || 1) + 1);
+          const scoreB = (b.num_users || 0) * Math.log((b.num_followers || 1) + 1);
+          return scoreB - scoreA;
+        })
+        .slice(0, 100);
+      break;
+      
+    case 'new-models':
+      filtered = [...models]
+        .filter(m => m.is_new)
+        .sort((a, b) => (b.num_users || 0) - (a.num_users || 0))
+        .slice(0, 100);
+      break;
+      
+    case 'just-live':
+      // Recently came online (within 30 minutes) with strong initial viewership
+      const avgViewers = models.reduce((sum, m) => sum + (parseInt(m.num_users) || 0), 0) / models.length;
+      const justLiveViewerThreshold = Math.max(10, avgViewers * 0.6);
+      filtered = [...models]
+        .filter(m => (m.seconds_online || 0) <= 1800 && (m.num_users || 0) >= justLiveViewerThreshold)
+        .sort((a, b) => (b.num_users || 0) - (a.num_users || 0))
+        .slice(0, 100);
+      break;
+      
+    case 'hidden-gems':
+      filtered = [...models]
+        .filter(m => {
+          const followers = m.num_followers || 0;
+          const viewers = m.num_users || 0;
+          return followers > 10000 && viewers < 100 && viewers > 5;
+        })
+        .sort((a, b) => (b.num_followers || 0) - (a.num_followers || 0))
+        .slice(0, 100);
+      break;
+      
+    case 'high-energy':
+      // Models with lots of tags (indicating activity) and decent viewer count
+      filtered = [...models]
+        .filter(m => (m.tags || []).length >= 3 && (m.num_users || 0) > 20)
+        .sort((a, b) => {
+          const scoreA = (a.tags || []).length * (a.num_users || 0);
+          const scoreB = (b.tags || []).length * (b.num_users || 0);
+          return scoreB - scoreA;
+        })
+        .slice(0, 100);
+      break;
+      
+    case 'marathon':
+      filtered = [...models]
+        .filter(m => (m.seconds_online || 0) >= 18000) // 5+ hours
+        .sort((a, b) => (b.seconds_online || 0) - (a.seconds_online || 0))
+        .slice(0, 100);
+      break;
+      
+    case 'international':
+      // Models from diverse countries excluding US
+      filtered = [...models]
+        .filter(m => m.country && m.country.toLowerCase() !== 'us' && (m.num_users || 0) > 10)
+        .sort((a, b) => (b.num_users || 0) - (a.num_users || 0))
+        .slice(0, 100);
+      break;
+      
+    case 'interactive':
+      // Models likely doing interactive shows (lovense, interactive tags)
+      const interactiveTags = ['lovense', 'lush', 'interactive', 'tip', 'goal', 'ohmibod', 'nora'];
+      filtered = [...models]
+        .filter(m => {
+          const modelTags = (m.tags || []).map(t => t.toLowerCase());
+          const roomSubject = (m.room_subject || '').toLowerCase();
+          return interactiveTags.some(tag => 
+            modelTags.includes(tag) || roomSubject.includes(tag)
+          ) && (m.num_users || 0) > 15;
+        })
+        .sort((a, b) => (b.num_users || 0) - (a.num_users || 0))
+        .slice(0, 100);
+      break;
+      
+    case 'couples':
+      // Couples and group shows
+      const couplesTags = ['couple', 'couples', 'threesome', 'group', 'lesbian'];
+      filtered = [...models]
+        .filter(m => {
+          const modelTags = (m.tags || []).map(t => t.toLowerCase());
+          const roomSubject = (m.room_subject || '').toLowerCase();
+          return couplesTags.some(tag => 
+            modelTags.includes(tag) || roomSubject.includes(tag)
+          ) && (m.num_users || 0) > 10;
+        })
+        .sort((a, b) => (b.num_users || 0) - (a.num_users || 0))
+        .slice(0, 100);
+      break;
+      
+    case 'mature':
+      // Mature and experienced models
+      filtered = [...models]
+        .filter(m => (m.age || 0) >= 35 && (m.num_users || 0) > 8)
+        .sort((a, b) => (b.num_users || 0) - (a.num_users || 0))
+        .slice(0, 100);
+      break;
+  }
+  
+  // Shuffle for variety on refresh
+  return shuffleArray(filtered);
+}
+
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function scrollDiscoveryCarousel(sectionId, direction) {
+  const reelData = window.discoveryReelData[sectionId];
+  if (!reelData) return;
+  
+  const totalModels = reelData.allModels.length;
+  const scrollAmount = Math.min(3, reelData.itemsPerView); // Scroll by items per view or 3, whichever is smaller
+  const itemWidth = 170; // Fixed item width (matches model card width)
+  const gap = 12; // Gap between items
+  const itemWithGap = itemWidth + gap;
+  
+  if (direction === 'next' && reelData.currentIndex + reelData.itemsPerView < totalModels) {
+    reelData.currentIndex = Math.min(reelData.currentIndex + scrollAmount, totalModels - reelData.itemsPerView);
+  } else if (direction === 'prev' && reelData.currentIndex > 0) {
+    reelData.currentIndex = Math.max(reelData.currentIndex - scrollAmount, 0);
+  }
+  
+  // Update the carousel display
+  const container = document.getElementById(sectionId);
+  if (!container) return;
+  
+  const track = container.querySelector('.carousel-track');
+  const prevBtn = container.querySelector('.carousel-prev');
+  const nextBtn = container.querySelector('.carousel-next');
+  const infoDiv = container.querySelector('.carousel-info');
+  
+  if (track) {
+    // Calculate the transform based on item width + gap, but subtract one gap since the first item doesn't need it
+    const translateX = reelData.currentIndex > 0 
+      ? (reelData.currentIndex * itemWithGap) - gap 
+      : 0;
+    track.style.transform = `translateX(-${translateX}px)`;
+  }
+  
+  // Update button visibility
+  const canScrollLeft = reelData.currentIndex > 0;
+  const canScrollRight = reelData.currentIndex + reelData.itemsPerView < totalModels;
+  
+  if (prevBtn) prevBtn.style.display = canScrollLeft ? 'flex' : 'none';
+  if (nextBtn) nextBtn.style.display = canScrollRight ? 'flex' : 'none';
+  
+  // Update info text
+  if (infoDiv) {
+    const visibleEnd = Math.min(reelData.currentIndex + reelData.itemsPerView, totalModels);
+    infoDiv.textContent = `${reelData.currentIndex + 1}-${visibleEnd} of ${totalModels} models`;
+  }
+}
+
+function showMoreDiscoveryModels(sectionId) {
+  const reelData = window.discoveryReelData[sectionId];
+  if (!reelData) return;
+  
+  // Increment page
+  reelData.currentPage++;
+  
+  const startIndex = reelData.currentPage * reelData.modelsPerPage;
+  const endIndex = startIndex + reelData.modelsPerPage;
+  const nextModels = reelData.allModels.slice(startIndex, endIndex);
+  
+  if (nextModels.length === 0) return;
+  
+  const container = document.getElementById(sectionId);
+  if (!container) return;
+  
+  // Calculate global stats for spotlight detection
+  const globalStats = {
+    avgViewers: reelData.allModels.reduce((sum, m) => sum + parseInt(m.num_users || 0), 0) / reelData.allModels.length,
+    maxViewers: Math.max(...reelData.allModels.map(m => parseInt(m.num_users || 0))),
+    avgOnlineTime: reelData.allModels.reduce((sum, m) => sum + parseInt(m.seconds_online || 0), 0) / reelData.allModels.length,
+    maxOnlineTime: Math.max(...reelData.allModels.map(m => parseInt(m.seconds_online || 0)))
+  };
+  
+  // Find and remove the existing "Show More" button
+  const existingButton = container.querySelector('button[onclick*="showMoreDiscoveryModels"]');
+  if (existingButton) {
+    existingButton.parentElement.remove();
+  }
+  
+  // Add new model cards
+  const newCardsHTML = nextModels.map(m => {
+    // Detect spotlights for this model
+    let spotlightElements = detectSpotlight(m, globalStats);
+    
+    let chipHTML = '';
+    if (m.current_show) {
+      const showColors = {
+        'public': 'status-public',
+        'group': 'status-group', 
+        'private': 'status-private',
+        'away': 'status-away'
+      };
+      let showType = m.current_show.toLowerCase();
+      let label = showType === 'group' ? 'GROUP' : showType.toUpperCase();
+      let showTypeNormalized = showType === 'ticket' ? 'private' : showType;
+      let colorClass = showColors[showTypeNormalized] || 'status-away';
+      chipHTML = `<div class="current-show-chip ${colorClass}">${label}</div>`;
+    } else if (m.is_new) {
+      chipHTML = `<div class="current-show-chip status-new">NEW</div>`;
+    }
+    let arrMeta = [];
+    arrMeta.push(`<span class="age-cb">${m.age}</span>`);
+    if (m.gender) arrMeta.push(getGenderIcon(m.gender));
+    if (m.country) arrMeta.push(`<span class="country-cb"><img class="flag-cb" src="https://flagcdn.com/16x12/${m.country.toLowerCase()}.png" alt="${m.country}"></span>`);
+    let metaRow = `<div class="row-meta-cb">${arrMeta.join('')}</div>`;
+    let href = "/model/" + encodeURIComponent(m.username);
+    let timeString = (m.seconds_online >= 3600) ? ((m.seconds_online/3600).toFixed(1) + ' hrs') : (Math.floor((m.seconds_online%3600)/60) + ' mins');
+    let viewers = (m.num_users ? `${m.num_users} viewers` : '');
+    let rawSubject = m.room_subject ? m.room_subject : '';
+    let subjectWithTags = rawSubject.replace(
+      /#(\w+)/g,
+      '<a href="#" class="tag-cb subject-tag" data-tag="$1">#$1</a>'
+    );
+    let tmpDiv = document.createElement('div'); tmpDiv.innerHTML = subjectWithTags;
+    let nodes = Array.from(tmpDiv.childNodes); let displaySubject = ''; let charCount = 0;
+    for (let node of nodes) {
+      let text = node.nodeType === 3 ? node.textContent : node.outerHTML;
+      let c = node.nodeType === 3 ? text.length : node.textContent.length;
+      if (charCount + c > 63) {
+        if (node.nodeType === 3) displaySubject += text.slice(0, 63 - charCount) + '...';
+        else break;
+        break;
+      }
+      displaySubject += text;
+      charCount += c;
+    }
+    let imgUrl = (m.image_url_360x270 || m.image_url) + ((m.image_url_360x270 || m.image_url).indexOf('?') === -1 ? '?' : '&') + 'cb=' + Date.now();
+    
+    return `
+      <div class="model-card-cb ${spotlightElements.cardClass}">
+        <div class="model-img-wrap-cb" style="position:relative;">
+          <a href="${href}">
+            <img src="${imgUrl}" class="model-img-cb" alt="${m.username}">
+          </a>
+          ${chipHTML}
+          ${spotlightElements.cornerHTML}
+          ${spotlightElements.overlayHTML}
+        </div>
+        <div class="model-info-cb">
+          <div class="row-top-cb">
+            <a href="${href}" class="username-cb">${m.username}</a>
+            ${metaRow}
+          </div>
+          <div class="subject-cb">${displaySubject}</div>
+          <div class="meta-row-cb">
+            <span class="meta-group-cb"><span class="icon-cb">&#128065;</span><span>${viewers}</span></span>
+            <span class="meta-group-cb"><span class="icon-cb">&#9201;</span><span>${timeString}</span></span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  container.innerHTML += newCardsHTML;
+  
+  // Add "Show More" button if there are still more models
+  const totalModels = reelData.allModels.length;
+  const currentlyShown = (reelData.currentPage + 1) * reelData.modelsPerPage;
+  
+  if (totalModels > currentlyShown) {
+    const remainingModels = totalModels - currentlyShown;
+    const showMoreText = remainingModels <= reelData.modelsPerPage 
+      ? `Show ${remainingModels} More` 
+      : `Show ${reelData.modelsPerPage} More`;
+      
+    container.innerHTML += `
+      <div style="text-align: center; margin-top: 16px;">
+        <button onclick="showMoreDiscoveryModels('${sectionId}')" 
+                style="background: linear-gradient(45deg, #ff4757, #ff6b7a); 
+                       border: none; 
+                       color: white; 
+                       padding: 10px 20px; 
+                       border-radius: 20px; 
+                       font-size: 14px; 
+                       font-weight: 600; 
+                       cursor: pointer; 
+                       box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+                       transition: all 0.3s ease;"
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255, 71, 87, 0.4)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255, 71, 87, 0.3)';">
+          ${showMoreText} (${remainingModels} total remaining)
+        </button>
+      </div>
+    `;
+  }
+}
+
+function refreshDiscoverySection(category) {
+  if (!window.cachedModelsForDiscovery) return;
+  
+  let models = window.cachedModelsForDiscovery;
+  
+  // Apply current discovery filter if any
+  if (window.currentDiscoveryFilter) {
+    models = applyDiscoveryFilter(models, window.currentDiscoveryFilter);
+  }
+  
+  const discoveryModels = getDiscoveryModels(models, category);
+  const gridId = category + '-grid';
+  
+  // Reset reel pagination on refresh
+  if (window.discoveryReelData && window.discoveryReelData[gridId]) {
+    window.discoveryReelData[gridId].currentPage = 0;
+  }
+  
+  renderDiscoverySection(discoveryModels, gridId, 24);
+}
+
+function filterDiscoveryByCategory(filterType, filterValue) {
+  if (!window.cachedModelsForDiscovery) return;
+  
+  // Initialize filters object if it doesn't exist
+  if (!window.currentDiscoveryFilters) {
+    window.currentDiscoveryFilters = {};
+  }
+  
+  // Toggle behavior: if this filter is already active, remove it
+  if (window.currentDiscoveryFilters[filterType] === filterValue) {
+    delete window.currentDiscoveryFilters[filterType];
+  } else {
+    // Add or update this filter
+    window.currentDiscoveryFilters[filterType] = filterValue;
+  }
+  
+  // Apply all active filters and repopulate sections
+  const filteredModels = applyMultipleDiscoveryFilters(window.cachedModelsForDiscovery, window.currentDiscoveryFilters);
+  populateDiscoverySections(filteredModels);
+  
+  // Update category breakdown to show filtered counts
+  populateCategoryBreakdown(filteredModels);
+}
+
+function applyMultipleDiscoveryFilters(models, filters) {
+  // If no filters are active, return all models
+  if (!filters || Object.keys(filters).length === 0) {
+    return models;
+  }
+  
+  // Apply all filters sequentially
+  return models.filter(model => {
+    // Check each active filter
+    for (const [filterType, filterValue] of Object.entries(filters)) {
+      switch(filterType) {
+        case 'gender':
+          if (model.gender !== filterValue) return false;
+          break;
+        case 'show_type':
+          if (model.current_show !== filterValue) return false;
+          break;
+        case 'is_new':
+          if (model.is_new !== filterValue) return false;
+          break;
+        case 'is_hd':
+          if (model.is_hd !== filterValue) return false;
+          break;
+      }
+    }
+    return true; // Model passes all active filters
+  });
+}
+
+// Keep old function for backward compatibility
+function applyDiscoveryFilter(models, filter) {
+  switch(filter.type) {
+    case 'gender':
+      return models.filter(m => m.gender === filter.value);
+    case 'show_type':
+      return models.filter(m => m.current_show === filter.value);
+    case 'is_new':
+      return models.filter(m => m.is_new === filter.value);
+    case 'is_hd':
+      return models.filter(m => m.is_hd === filter.value);
+    default:
+      return models;
+  }
+}
+
+function clearDiscoveryFilters() {
+  if (!window.cachedModelsForDiscovery) return;
+  
+  // Clear both old and new filter systems
+  window.currentDiscoveryFilter = null;
+  window.currentDiscoveryFilters = {};
+  
+  // Repopulate all sections with unfiltered data
+  populateDiscoverySections(window.cachedModelsForDiscovery);
+  populateCategoryBreakdown(window.cachedModelsForDiscovery);
 }
 
 function setupAgeSliders() {
@@ -1866,6 +3288,17 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Setup comparison tool
   setupComparisonTool();
+  
+  // Check for and restore discovery hub state
+  if (sessionStorage.getItem('discoveryHubActive') === 'true') {
+    // Small delay to ensure DOM is fully ready
+    setTimeout(() => {
+      const showStatsBtn = document.getElementById('show-stats');
+      if (showStatsBtn) {
+        showStatsBtn.click(); // This will trigger showDiscoveryHighlights
+      }
+    }, 100);
+  }
 });
 </script>
 
@@ -1927,7 +3360,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <span class="spotlight-icon-large">🎯</span>
               <div class="spotlight-details">
                 <div class="spotlight-name">MARATHON</div>
-                <div class="spotlight-description">Streaming for 4+ hours straight - impressive dedication!</div>
+                <div class="spotlight-description">Streaming for 5+ hours straight - impressive dedication!</div>
               </div>
             </div>
             <div class="spotlight-item">
@@ -1965,6 +3398,13 @@ document.addEventListener('DOMContentLoaded', function() {
               <div class="spotlight-details">
                 <div class="spotlight-name">MULTILINGUAL</div>
                 <div class="spotlight-description">Speaks 3+ languages - internationally accessible</div>
+              </div>
+            </div>
+            <div class="spotlight-item">
+              <span class="spotlight-icon-large">💎</span>
+              <div class="spotlight-details">
+                <div class="spotlight-name">HIDDEN GEMS</div>
+                <div class="spotlight-description">Established models (10k+ followers) with lower current viewers - discovery opportunities</div>
               </div>
             </div>
           </div>
