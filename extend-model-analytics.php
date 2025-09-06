@@ -581,14 +581,18 @@ class SimpleAnalyticsExtender {
             // "something @ 999 tokens" or "something @999 tokens"
             '/([^@\n]+)\s*@\s*(\d+)\s*tokens/i' => ['text' => 1, 'tokens' => 2],
             // "Multi Goal: something [123 tokens left]"
-            '/Multi Goal:\s*([^\[\n]+)\s*\[(\d+)\s*tokens?\s*(left|remaining)/i' => ['text' => 1, 'tokens' => 2]
+            '/Multi Goal:\s*([^\[\n]+)\s*\[(\d+)\s*tokens?\s*(left|remaining)/i' => ['text' => 1, 'tokens' => 2],
+            // "Current Goal: something" (without token count) - NEW PATTERN
+            '/Current Goal:\s*([^#\n]+?)(?:\s*#|\s*$)/i' => ['text' => 1, 'tokens' => 0],
+            // "Goal: something" (without token count) - NEW PATTERN  
+            '/Goal:\s*([^#\n]+?)(?:\s*#|\s*$)/i' => ['text' => 1, 'tokens' => 0]
         ];
         
         foreach ($patterns as $pattern => $groups) {
             if (preg_match($pattern, $subject, $matches)) {
                 $goal_info['has_goal'] = true;
                 $goal_info['goal_text'] = trim($matches[$groups['text']]);
-                $goal_info['tokens_remaining'] = intval($matches[$groups['tokens']]);
+                $goal_info['tokens_remaining'] = $groups['tokens'] === 0 ? 0 : intval($matches[$groups['tokens']]);
                 
                 // Determine goal type based on keywords
                 $goal_text_lower = strtolower($goal_info['goal_text']);
@@ -642,14 +646,31 @@ class SimpleAnalyticsExtender {
             if ($current_goal) {
                 // Same goal text but fewer tokens = progress
                 if ($current_goal['goal_text'] === $goal_info['goal_text']) {
-                    if ($goal_info['tokens_remaining'] < $current_goal['tokens_remaining']) {
+                    if ($goal_info['tokens_remaining'] < $current_goal['tokens_remaining'] || $goal_info['tokens_remaining'] == 0) {
                         // Goal progress - update current goal
                         $time_elapsed = $now - $current_goal['started_at'];
                         $tokens_collected = $current_goal['initial_tokens'] - $goal_info['tokens_remaining'];
-                        $progress_percent = $tokens_collected / $current_goal['initial_tokens'] * 100;
                         
-                        // Calculate token velocity (tokens per minute)
-                        $velocity = $time_elapsed > 0 ? ($tokens_collected / ($time_elapsed / 60)) : 0;
+                        $progress_percent = 0;
+                        $velocity = 0;
+                        $estimated_completion = null;
+                        
+                        // Only calculate progress for goals with token counts
+                        if ($current_goal['initial_tokens'] > 0) {
+                            $progress_percent = ($tokens_collected / $current_goal['initial_tokens']) * 100;
+                            
+                            // Calculate token velocity (tokens per minute)
+                            $velocity = $time_elapsed > 0 ? ($tokens_collected / ($time_elapsed / 60)) : 0;
+                            
+                            // Estimate completion time
+                            if ($velocity > 0 && $goal_info['tokens_remaining'] > 0) {
+                                $estimated_completion = $now + ($goal_info['tokens_remaining'] / $velocity * 60);
+                            }
+                        }
+                        
+                        // Get historical velocity for better predictions
+                        $historical_velocity = $this->calculateHistoricalVelocity($actual_goals);
+                        $predicted_velocity = $velocity > 0 ? $velocity : $historical_velocity;
                         
                         $actual_goals['current_goal'] = array_merge($goal_info, [
                             'started_at' => $current_goal['started_at'],
@@ -659,7 +680,12 @@ class SimpleAnalyticsExtender {
                             'tokens_collected' => $tokens_collected,
                             'time_elapsed' => $time_elapsed,
                             'token_velocity' => round($velocity, 2),
-                            'estimated_completion' => $velocity > 0 ? $now + ($goal_info['tokens_remaining'] / $velocity * 60) : null
+                            'historical_velocity' => round($historical_velocity, 2),
+                            'predicted_velocity' => round($predicted_velocity, 2),
+                            'estimated_completion' => $estimated_completion,
+                            'goal_classification' => $goal_info['tokens_remaining'] > 0 ? 'tip_goal' : 'show_goal',
+                            'engagement_level' => $this->calculateEngagementLevel($velocity, $historical_velocity),
+                            'completion_confidence' => $this->calculateCompletionConfidence($goal_info, $velocity, $historical_velocity)
                         ]);
                     }
                     
@@ -697,10 +723,27 @@ class SimpleAnalyticsExtender {
                 }
             } else {
                 // No current goal, this is a new goal
+                $historical_velocity = $this->calculateHistoricalVelocity($actual_goals);
+                $estimated_completion = null;
+                
+                if ($historical_velocity > 0 && $goal_info['tokens_remaining'] > 0) {
+                    $estimated_completion = $now + ($goal_info['tokens_remaining'] / $historical_velocity * 60);
+                }
+                
                 $actual_goals['current_goal'] = array_merge($goal_info, [
                     'started_at' => $now,
                     'last_seen_at' => $now,
-                    'initial_tokens' => $goal_info['tokens_remaining']
+                    'initial_tokens' => $goal_info['tokens_remaining'],
+                    'progress' => 0,
+                    'tokens_collected' => 0,
+                    'time_elapsed' => 0,
+                    'token_velocity' => 0,
+                    'historical_velocity' => round($historical_velocity, 2),
+                    'predicted_velocity' => round($historical_velocity, 2),
+                    'estimated_completion' => $estimated_completion,
+                    'goal_classification' => $goal_info['tokens_remaining'] > 0 ? 'tip_goal' : 'show_goal',
+                    'engagement_level' => 'new',
+                    'completion_confidence' => $this->calculateCompletionConfidence($goal_info, 0, $historical_velocity)
                 ]);
             }
         } else {
@@ -720,6 +763,91 @@ class SimpleAnalyticsExtender {
         
         // Update comprehensive stats
         $this->updateComprehensiveGoalStats($actual_goals, $now);
+    }
+    
+    /**
+     * Calculate historical velocity from completed goals
+     */
+    private function calculateHistoricalVelocity($actual_goals) {
+        if (empty($actual_goals['completed_goals'])) {
+            return 0;
+        }
+        
+        $velocities = [];
+        foreach ($actual_goals['completed_goals'] as $goal) {
+            if (isset($goal['final_velocity']) && $goal['final_velocity'] > 0) {
+                $velocities[] = $goal['final_velocity'];
+            }
+        }
+        
+        if (empty($velocities)) {
+            return 0;
+        }
+        
+        // Use median for more stable predictions (less affected by outliers)
+        sort($velocities);
+        $count = count($velocities);
+        $middle = floor($count / 2);
+        
+        if ($count % 2 == 0) {
+            return ($velocities[$middle - 1] + $velocities[$middle]) / 2;
+        } else {
+            return $velocities[$middle];
+        }
+    }
+    
+    /**
+     * Calculate engagement level based on current vs historical velocity
+     */
+    private function calculateEngagementLevel($current_velocity, $historical_velocity) {
+        if ($historical_velocity <= 0) {
+            return $current_velocity > 0 ? 'active' : 'new';
+        }
+        
+        $ratio = $current_velocity / $historical_velocity;
+        
+        if ($ratio > 1.5) return 'excellent';
+        if ($ratio > 1.2) return 'high';
+        if ($ratio > 0.8) return 'normal';
+        if ($ratio > 0.5) return 'low';
+        return 'very_low';
+    }
+    
+    /**
+     * Calculate completion confidence based on goal and velocity data
+     */
+    private function calculateCompletionConfidence($goal_info, $current_velocity, $historical_velocity) {
+        $confidence = 50; // Base confidence
+        
+        // Boost confidence based on goal type
+        $goal_text_lower = strtolower($goal_info['goal_text']);
+        if (strpos($goal_text_lower, 'naked') !== false || strpos($goal_text_lower, 'nude') !== false) {
+            $confidence += 20; // Popular goal type
+        }
+        if (strpos($goal_text_lower, 'cum') !== false || strpos($goal_text_lower, 'squirt') !== false) {
+            $confidence += 15; // High-demand goal
+        }
+        
+        // Adjust based on token amount
+        $tokens = $goal_info['tokens_remaining'];
+        if ($tokens > 0) {
+            if ($tokens < 100) $confidence += 15;      // Easy goals
+            elseif ($tokens < 500) $confidence += 5;   // Medium goals  
+            elseif ($tokens > 2000) $confidence -= 10; // Difficult goals
+        }
+        
+        // Adjust based on velocity performance
+        $velocity = $current_velocity > 0 ? $current_velocity : $historical_velocity;
+        if ($velocity > 30) $confidence += 20;        // Fast audience
+        elseif ($velocity > 15) $confidence += 10;    // Active audience
+        elseif ($velocity < 5 && $velocity > 0) $confidence -= 15; // Slow audience
+        
+        // Show goals (no tokens) have different confidence
+        if ($tokens == 0) {
+            $confidence = 75; // Generally completed as they're shows, not tips
+        }
+        
+        return max(10, min(95, $confidence));
     }
     
     /**
@@ -819,16 +947,37 @@ class SimpleAnalyticsExtender {
         $stats['completion_rate'] = $total_started > 0 ? (count($completed) / $total_started) * 100 : 0;
         
         // Consistency rating
-        if (count($completed) < 5) {
-            $stats['consistency_rating'] = 'new';
-        } elseif ($stats['completion_rate'] > 80 && $stats['avg_tokens_per_minute'] > 15) {
-            $stats['consistency_rating'] = 'excellent';
-        } elseif ($stats['completion_rate'] > 60 && $stats['avg_tokens_per_minute'] > 10) {
-            $stats['consistency_rating'] = 'good';  
-        } elseif ($stats['completion_rate'] > 40) {
-            $stats['consistency_rating'] = 'average';
+        $consistency = 0;
+        if (count($completed) > 3) {
+            $times = array_column($completed, 'completion_time_seconds');
+            $avg_time = array_sum($times) / count($times);
+            $variance = 0;
+            foreach ($times as $time) {
+                $variance += pow($time - $avg_time, 2);
+            }
+            $std_dev = sqrt($variance / count($times));
+            $consistency = max(0, 100 - ($std_dev / $avg_time * 100));
+        }
+        $stats['consistency_rating'] = round($consistency, 1);
+        
+        // Recent performance trend (last 5 vs previous 5)
+        if (count($completed) >= 10) {
+            $recent = array_slice($completed, -5);
+            $previous = array_slice($completed, -10, 5);
+            
+            $recent_avg = array_sum(array_column($recent, 'final_velocity')) / 5;
+            $previous_avg = array_sum(array_column($previous, 'final_velocity')) / 5;
+            
+            if ($previous_avg > 0) {
+                $trend_ratio = $recent_avg / $previous_avg;
+                if ($trend_ratio > 1.2) $stats['performance_trend'] = 'improving';
+                elseif ($trend_ratio < 0.8) $stats['performance_trend'] = 'declining';
+                else $stats['performance_trend'] = 'stable';
+            } else {
+                $stats['performance_trend'] = 'stable';
+            }
         } else {
-            $stats['consistency_rating'] = 'inconsistent';
+            $stats['performance_trend'] = 'insufficient_data';
         }
     }
 }
