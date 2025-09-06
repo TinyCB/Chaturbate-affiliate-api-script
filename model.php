@@ -1631,6 +1631,10 @@ main {
     grid-template-columns: 1fr;
     gap: clamp(15px, 3vw, 25px);
   }
+  
+  .model-sidebar {
+    display: none;
+  }
 }
   
   .model-hero-content {
