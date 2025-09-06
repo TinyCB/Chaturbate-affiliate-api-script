@@ -1875,7 +1875,7 @@ main {
           <?php if (!empty($actual_goals['current_goal'])): ?>
           <?php $current = $actual_goals['current_goal']; ?>
           <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <h4 style="margin: 0; color: #0ea5e9; font-size: 0.9rem;">CURRENT GOAL</h4>
               <span style="background: #0ea5e9; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; text-transform: uppercase;">
                 <?= htmlspecialchars($current['goal_type']) ?>
@@ -1884,10 +1884,36 @@ main {
             <div style="font-weight: 600; color: #1e293b; margin-bottom: 8px;">
               <?= htmlspecialchars($current['goal_text']) ?>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #64748b;">
-              <span><?= number_format($current['tokens_remaining']) ?> tokens remaining</span>
+            
+            <!-- Progress Bar -->
+            <?php if (isset($current['progress']) && $current['progress'] > 0): ?>
+            <div style="background: #e2e8f0; border-radius: 10px; height: 8px; margin-bottom: 10px; overflow: hidden;">
+              <div style="background: linear-gradient(90deg, #0ea5e9, #06b6d4); height: 100%; width: <?= min(100, $current['progress']) ?>%; transition: width 0.3s ease;"></div>
+            </div>
+            <?php endif; ?>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; font-size: 0.8rem; color: #64748b;">
+              <div>
+                <strong style="color: #0ea5e9;"><?= number_format($current['tokens_remaining']) ?></strong><br>
+                <span>tokens left</span>
+              </div>
               <?php if (isset($current['progress'])): ?>
-                <span><?= round($current['progress']) ?>% complete</span>
+              <div>
+                <strong style="color: #10b981;"><?= round($current['progress']) ?>%</strong><br>
+                <span>complete</span>
+              </div>
+              <?php endif; ?>
+              <?php if (isset($current['token_velocity']) && $current['token_velocity'] > 0): ?>
+              <div>
+                <strong style="color: #f59e0b;"><?= round($current['token_velocity']) ?></strong><br>
+                <span>tokens/min</span>
+              </div>
+              <?php endif; ?>
+              <?php if (isset($current['estimated_completion'])): ?>
+              <div>
+                <strong style="color: #8b5cf6;"><?= round(($current['estimated_completion'] - time()) / 60) ?>min</strong><br>
+                <span>estimated</span>
+              </div>
               <?php endif; ?>
             </div>
           </div>
@@ -1896,6 +1922,38 @@ main {
           <!-- Goal Stats -->
           <?php if (!empty($actual_goals['goal_stats']) && $actual_goals['goal_stats']['total_goals_completed'] > 0): ?>
           <?php $stats = $actual_goals['goal_stats']; ?>
+          
+          <!-- Performance Summary -->
+          <div style="background: #f8fafc; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h4 style="margin: 0; color: #374151; font-size: 0.9rem;">GOAL PERFORMANCE</h4>
+              <span style="background: <?= $stats['consistency_rating'] === 'excellent' ? '#10b981' : ($stats['consistency_rating'] === 'good' ? '#f59e0b' : '#64748b') ?>; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; text-transform: uppercase;">
+                <?= htmlspecialchars($stats['consistency_rating']) ?>
+              </span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 12px; font-size: 0.8rem;">
+              <div style="text-align: center;">
+                <div style="font-size: 1.3rem; font-weight: 700; color: #10b981;"><?= round($stats['completion_rate']) ?>%</div>
+                <div style="color: #64748b;">Success Rate</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 1.3rem; font-weight: 700; color: #f59e0b;"><?= round($stats['avg_tokens_per_minute']) ?></div>
+                <div style="color: #64748b;">Tokens/Min</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 1.3rem; font-weight: 700; color: #3b82f6;"><?= round($stats['goal_difficulty_score'], 1) ?>/10</div>
+                <div style="color: #64748b;">Difficulty</div>
+              </div>
+              <?php if ($stats['peak_tipping_hour'] !== null): ?>
+              <div style="text-align: center;">
+                <div style="font-size: 1.3rem; font-weight: 700; color: #8b5cf6;"><?= sprintf('%02d:00', $stats['peak_tipping_hour']) ?></div>
+                <div style="color: #64748b;">Peak Hour</div>
+              </div>
+              <?php endif; ?>
+            </div>
+          </div>
+          
+          <!-- Basic Stats -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-bottom: 20px;">
             <div style="text-align: center;">
               <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;"><?= $stats['total_goals_completed'] ?></div>
@@ -1925,18 +1983,52 @@ main {
           <div>
             <h4 style="margin-bottom: 12px; color: #64748b; font-size: 0.875rem; font-weight: 600;">RECENT COMPLETED GOALS</h4>
             <?php foreach (array_slice($actual_goals['completed_goals'], -3) as $goal): ?>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 500; color: #1e293b; font-size: 0.85rem; margin-bottom: 2px;">
-                  <?= htmlspecialchars($goal['goal_text']) ?>
+            <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-weight: 600; color: #1e293b; font-size: 0.85rem; margin-bottom: 4px;">
+                    <?= htmlspecialchars($goal['goal_text']) ?>
+                  </div>
+                  <div style="display: flex; gap: 8px; font-size: 0.75rem; color: #64748b; margin-bottom: 6px;">
+                    <span><strong><?= number_format($goal['tokens_collected']) ?></strong> tokens</span>
+                    <span><strong><?= round($goal['completion_time_seconds'] / 60) ?></strong> min</span>
+                    <span><strong><?= round($goal['final_velocity']) ?></strong> tk/min</span>
+                    <span><?= date('M j', $goal['completed_at']) ?></span>
+                  </div>
                 </div>
-                <div style="font-size: 0.75rem; color: #64748b;">
-                  <?= number_format($goal['tokens_collected']) ?> tokens • <?= round($goal['completion_time_seconds'] / 60) ?> min • <?= date('M j', $goal['completed_at']) ?>
+                <div style="text-align: right;">
+                  <span style="background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 8px; font-size: 0.7rem; text-transform: capitalize;">
+                    <?= htmlspecialchars($goal['goal_type']) ?>
+                  </span>
+                  <?php if (isset($goal['difficulty_score'])): ?>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">
+                    Difficulty: <?= round($goal['difficulty_score'], 1) ?>/10
+                  </div>
+                  <?php endif; ?>
                 </div>
               </div>
-              <span style="background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 8px; font-size: 0.7rem; text-transform: capitalize;">
-                <?= htmlspecialchars($goal['goal_type']) ?>
-              </span>
+              
+              <!-- Success Factors -->
+              <?php if (!empty($goal['success_factors'])): ?>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <?php foreach ($goal['success_factors'] as $factor): ?>
+                <span style="background: #10b981; color: white; padding: 1px 6px; border-radius: 10px; font-size: 0.65rem;">
+                  <?php
+                  $factor_labels = [
+                    'quick_completion' => '⚡ Quick',
+                    'marathon_goal' => '🎯 Marathon',
+                    'high_tip_rate' => '🔥 High Rate',
+                    'steady_support' => '📈 Steady',
+                    'nudity_goal' => '👄 Nudity',
+                    'climax_goal' => '💦 Climax',
+                    'prime_time' => '🌟 Prime Time'
+                  ];
+                  echo $factor_labels[$factor] ?? $factor;
+                  ?>
+                </span>
+                <?php endforeach; ?>
+              </div>
+              <?php endif; ?>
             </div>
             <?php endforeach; ?>
           </div>

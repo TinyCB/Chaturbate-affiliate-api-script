@@ -600,7 +600,12 @@ class SimpleAnalyticsExtender {
                     'total_goals_completed' => 0,
                     'total_tokens_reached' => 0,
                     'avg_goal_completion_time' => 0,
-                    'most_popular_goal_type' => null
+                    'most_popular_goal_type' => null,
+                    'completion_rate' => 0,
+                    'avg_tokens_per_minute' => 0,
+                    'peak_tipping_hour' => null,
+                    'goal_difficulty_score' => 0,
+                    'consistency_rating' => 'new'
                 ]
             ];
         }
@@ -615,26 +620,45 @@ class SimpleAnalyticsExtender {
                 if ($current_goal['goal_text'] === $goal_info['goal_text']) {
                     if ($goal_info['tokens_remaining'] < $current_goal['tokens_remaining']) {
                         // Goal progress - update current goal
+                        $time_elapsed = $now - $current_goal['started_at'];
+                        $tokens_collected = $current_goal['initial_tokens'] - $goal_info['tokens_remaining'];
+                        $progress_percent = $tokens_collected / $current_goal['initial_tokens'] * 100;
+                        
+                        // Calculate token velocity (tokens per minute)
+                        $velocity = $time_elapsed > 0 ? ($tokens_collected / ($time_elapsed / 60)) : 0;
+                        
                         $actual_goals['current_goal'] = array_merge($goal_info, [
                             'started_at' => $current_goal['started_at'],
                             'last_seen_at' => $now,
                             'initial_tokens' => $current_goal['initial_tokens'] ?? $current_goal['tokens_remaining'],
-                            'progress' => ($current_goal['initial_tokens'] - $goal_info['tokens_remaining']) / $current_goal['initial_tokens'] * 100
+                            'progress' => $progress_percent,
+                            'tokens_collected' => $tokens_collected,
+                            'time_elapsed' => $time_elapsed,
+                            'token_velocity' => round($velocity, 2),
+                            'estimated_completion' => $velocity > 0 ? $now + ($goal_info['tokens_remaining'] / $velocity * 60) : null
                         ]);
                     }
                     
                     // Goal completed (0 tokens or very close)
                     if ($goal_info['tokens_remaining'] <= 5 && $current_goal['tokens_remaining'] > 5) {
                         $completion_time = $now - $current_goal['started_at'];
+                        $tokens_collected = $current_goal['initial_tokens'] - $goal_info['tokens_remaining'];
+                        $final_velocity = $completion_time > 0 ? ($tokens_collected / ($completion_time / 60)) : 0;
+                        
                         $completed_goal = array_merge($current_goal, [
                             'completed_at' => $now,
                             'completion_time_seconds' => $completion_time,
-                            'tokens_collected' => $current_goal['initial_tokens'] - $goal_info['tokens_remaining']
+                            'tokens_collected' => $tokens_collected,
+                            'final_velocity' => round($final_velocity, 2),
+                            'completion_hour' => date('G', $now),
+                            'completion_day' => date('w', $now),
+                            'difficulty_score' => $this->calculateGoalDifficulty($current_goal, $completion_time),
+                            'success_factors' => $this->analyzeSuccessFactors($current_goal, $completion_time, $final_velocity)
                         ]);
                         
                         $actual_goals['completed_goals'][] = $completed_goal;
                         $actual_goals['goal_stats']['total_goals_completed']++;
-                        $actual_goals['goal_stats']['total_tokens_reached'] += $completed_goal['tokens_collected'];
+                        $actual_goals['goal_stats']['total_tokens_reached'] += $tokens_collected;
                         
                         // Clear current goal
                         $actual_goals['current_goal'] = null;
@@ -670,14 +694,117 @@ class SimpleAnalyticsExtender {
             $actual_goals['completed_goals'] = array_slice($actual_goals['completed_goals'], -50);
         }
         
-        // Update stats
-        if (count($actual_goals['completed_goals']) > 0) {
-            $completion_times = array_column($actual_goals['completed_goals'], 'completion_time_seconds');
-            $actual_goals['goal_stats']['avg_goal_completion_time'] = array_sum($completion_times) / count($completion_times);
-            
-            $goal_types = array_column($actual_goals['completed_goals'], 'goal_type');
-            $type_counts = array_count_values($goal_types);
-            $actual_goals['goal_stats']['most_popular_goal_type'] = array_search(max($type_counts), $type_counts);
+        // Update comprehensive stats
+        $this->updateComprehensiveGoalStats($actual_goals, $now);
+    }
+    
+    /**
+     * Calculate goal difficulty based on tokens and completion time
+     */
+    private function calculateGoalDifficulty($goal, $completion_time) {
+        $tokens = $goal['initial_tokens'] ?? 0;
+        $minutes = $completion_time / 60;
+        
+        // Base difficulty on token amount
+        $token_difficulty = min(10, $tokens / 100); // 1000 tokens = difficulty 10
+        
+        // Adjust based on completion speed (faster = easier audience)
+        $speed_factor = 1;
+        if ($minutes > 0) {
+            $tokens_per_minute = $tokens / $minutes;
+            if ($tokens_per_minute > 50) $speed_factor = 0.7; // Easy crowd
+            elseif ($tokens_per_minute < 10) $speed_factor = 1.3; // Tough crowd
+        }
+        
+        return min(10, round($token_difficulty * $speed_factor, 1));
+    }
+    
+    /**
+     * Analyze what made a goal successful
+     */
+    private function analyzeSuccessFactors($goal, $completion_time, $velocity) {
+        $factors = [];
+        $minutes = $completion_time / 60;
+        
+        if ($minutes < 30) {
+            $factors[] = 'quick_completion';
+        } elseif ($minutes > 120) {
+            $factors[] = 'marathon_goal';
+        }
+        
+        if ($velocity > 30) {
+            $factors[] = 'high_tip_rate';
+        } elseif ($velocity < 5) {
+            $factors[] = 'steady_support';
+        }
+        
+        $goal_text_lower = strtolower($goal['goal_text']);
+        if (strpos($goal_text_lower, 'naked') !== false || strpos($goal_text_lower, 'nude') !== false) {
+            $factors[] = 'nudity_goal';
+        }
+        if (strpos($goal_text_lower, 'cum') !== false || strpos($goal_text_lower, 'orgasm') !== false) {
+            $factors[] = 'climax_goal';
+        }
+        
+        $hour = date('G', $goal['started_at']);
+        if ($hour >= 20 || $hour <= 2) {
+            $factors[] = 'prime_time';
+        }
+        
+        return $factors;
+    }
+    
+    /**
+     * Update comprehensive goal statistics
+     */
+    private function updateComprehensiveGoalStats(&$actual_goals, $now) {
+        $completed = $actual_goals['completed_goals'];
+        $stats = &$actual_goals['goal_stats'];
+        
+        if (empty($completed)) return;
+        
+        // Basic stats
+        $completion_times = array_column($completed, 'completion_time_seconds');
+        $stats['avg_goal_completion_time'] = array_sum($completion_times) / count($completion_times);
+        
+        $goal_types = array_column($completed, 'goal_type');
+        $type_counts = array_count_values($goal_types);
+        $stats['most_popular_goal_type'] = array_search(max($type_counts), $type_counts);
+        
+        // Enhanced stats
+        $velocities = array_column($completed, 'final_velocity');
+        $stats['avg_tokens_per_minute'] = array_sum($velocities) / count($velocities);
+        
+        // Peak tipping hour analysis
+        $hour_tokens = [];
+        foreach ($completed as $goal) {
+            $hour = $goal['completion_hour'];
+            if (!isset($hour_tokens[$hour])) $hour_tokens[$hour] = 0;
+            $hour_tokens[$hour] += $goal['tokens_collected'];
+        }
+        if (!empty($hour_tokens)) {
+            $stats['peak_tipping_hour'] = array_search(max($hour_tokens), $hour_tokens);
+        }
+        
+        // Goal difficulty analysis
+        $difficulties = array_column($completed, 'difficulty_score');
+        $stats['goal_difficulty_score'] = array_sum($difficulties) / count($difficulties);
+        
+        // Completion rate (completed vs started goals estimate)
+        $total_started = count($completed) + ($actual_goals['current_goal'] ? 1 : 0);
+        $stats['completion_rate'] = $total_started > 0 ? (count($completed) / $total_started) * 100 : 0;
+        
+        // Consistency rating
+        if (count($completed) < 5) {
+            $stats['consistency_rating'] = 'new';
+        } elseif ($stats['completion_rate'] > 80 && $stats['avg_tokens_per_minute'] > 15) {
+            $stats['consistency_rating'] = 'excellent';
+        } elseif ($stats['completion_rate'] > 60 && $stats['avg_tokens_per_minute'] > 10) {
+            $stats['consistency_rating'] = 'good';  
+        } elseif ($stats['completion_rate'] > 40) {
+            $stats['consistency_rating'] = 'average';
+        } else {
+            $stats['consistency_rating'] = 'inconsistent';
         }
     }
 }
