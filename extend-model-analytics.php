@@ -140,32 +140,16 @@ class SimpleAnalyticsExtender {
             return [];
         }
         
-        // Increase memory limit temporarily for large files
-        $original_limit = ini_get('memory_limit');
-        ini_set('memory_limit', '256M');
-        
         $json = file_get_contents($this->profiles_file);
-        $profiles = json_decode($json, true) ?: [];
-        
-        // Restore original memory limit
-        ini_set('memory_limit', $original_limit);
-        
-        return $profiles;
+        return json_decode($json, true) ?: [];
     }
     
     /**
      * Save model profiles
      */
     private function saveProfiles($profiles) {
-        // Increase memory limit temporarily for large files
-        $original_limit = ini_get('memory_limit');
-        ini_set('memory_limit', '256M');
-        
         $json = json_encode($profiles, JSON_PRETTY_PRINT);
         file_put_contents($this->profiles_file, $json);
-        
-        // Restore original memory limit
-        ini_set('memory_limit', $original_limit);
     }
     
     /**
