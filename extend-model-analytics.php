@@ -8,15 +8,25 @@
  * PORTABLE VERSION - Auto-detects installation directory
  * Works with any web root structure (shared hosting, VPS, Docker, etc.)
  * 
+ * SECURITY: CLI-only execution to ensure proper file permissions
+ * 
  * Usage:
- *   Via web: php extend-model-analytics.php
  *   Via cron: /usr/bin/php /path/to/extend-model-analytics.php
+ *   Via command line: php extend-model-analytics.php
  * 
  * Requirements:
  *   - PHP 7.4+
+ *   - CLI execution (not web accessible)
  *   - cache/ directory with cams_*.json files
  *   - Write permissions to cache/ and logs/ directories
  */
+
+// Enforce CLI-only execution to ensure proper file permissions
+if (php_sapi_name() !== 'cli') {
+    header('HTTP/1.1 403 Forbidden');
+    echo "This script can only be executed from command line for security reasons.";
+    exit;
+}
 
 class SimpleAnalyticsExtender {
     private $profiles_file;
@@ -82,7 +92,12 @@ class SimpleAnalyticsExtender {
      */
     public function updateAnalytics() {
         // Log startup for cron debugging
-        $startup_log = "Analytics update started at " . date('Y-m-d H:i:s') . " [PID: " . getmypid() . ", CWD: " . getcwd() . "]";
+        $user_info = "User: " . get_current_user();
+        if (function_exists('posix_geteuid')) {
+            $user_info .= ", UID: " . posix_geteuid();
+        }
+        
+        $startup_log = "Analytics update started at " . date('Y-m-d H:i:s') . " [PID: " . getmypid() . ", CWD: " . getcwd() . ", " . $user_info . "]";
         error_log($startup_log);
         
         $log_file = $this->base_dir . '/logs/analytics_cron.log';
