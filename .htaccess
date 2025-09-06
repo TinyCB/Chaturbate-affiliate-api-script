@@ -1,5 +1,8 @@
 # TinyCB V2 .htaccess
 
+# Increase memory limit for analytics
+php_value memory_limit 256M
+
 # Block sensitive scripts and config from public web access
 <FilesMatch "^(fetch-and-cache\.php|generate-sitemap\.php|config\.php)$">
     Require all denied
