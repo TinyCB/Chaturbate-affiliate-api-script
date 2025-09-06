@@ -238,14 +238,14 @@ a.tag-cb.subject-tag:focus {
   <div class="filter-section">
     <div class="filter-label">Age Range</div>
     <div class="filter-ages-enhanced">
-      <div class="age-display" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #555;">
-        <span>Min: <strong id="min-age-display">18</strong></span>
-        <span>Max: <strong id="max-age-display">99</strong></span>
+      <div class="age-display" style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #374151; font-weight: 500;">
+        <span>Min: <strong id="min-age-display" style="color: var(--primary-color);">18</strong></span>
+        <span>Max: <strong id="max-age-display" style="color: var(--primary-color);">99</strong></span>
       </div>
-      <div class="dual-range-slider" style="position: relative; height: 6px; background: #ddd; border-radius: 3px; margin: 12px 0;">
-        <input type="range" min="18" max="99" value="18" id="min-age-slider" style="position: absolute; width: 100%; height: 6px; background: none; pointer-events: none; -webkit-appearance: none;">
-        <input type="range" min="18" max="99" value="99" id="max-age-slider" style="position: absolute; width: 100%; height: 6px; background: none; pointer-events: none; -webkit-appearance: none;">
-        <div class="slider-track" style="position: absolute; height: 6px; background: var(--primary-color); border-radius: 3px;"></div>
+      <div class="dual-range-slider" style="position: relative; height: 20px; background: #e2e8f0; border-radius: 10px; margin: 12px 0;">
+        <input type="range" min="18" max="99" value="18" id="min-age-slider" style="position: absolute; width: 100%; height: 20px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; z-index: 2;">
+        <input type="range" min="18" max="99" value="99" id="max-age-slider" style="position: absolute; width: 100%; height: 20px; background: transparent; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; z-index: 1;">
+        <div class="slider-track" style="position: absolute; height: 6px; top: 7px; background: var(--primary-color); border-radius: 3px; z-index: 0;"></div>
       </div>
       <div class="age-inputs-fallback" style="display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px;">
         <input type="number" min="18" max="99" id="min-age" value="18" style="width: 50px; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">

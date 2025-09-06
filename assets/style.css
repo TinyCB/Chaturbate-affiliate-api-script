@@ -680,6 +680,10 @@ main {
 }
 
 /* Enhanced Age Range Sliders */
+.dual-range-slider {
+  position: relative;
+}
+
 .dual-range-slider input[type="range"] {
   pointer-events: all;
   -webkit-appearance: none;
@@ -687,37 +691,53 @@ main {
   appearance: none;
   background: transparent;
   cursor: pointer;
+  outline: none;
 }
 
 .dual-range-slider input[type="range"]::-webkit-slider-thumb {
   pointer-events: all;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--primary-color);
   cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   -webkit-appearance: none;
+  transition: all 0.2s ease;
+}
+
+.dual-range-slider input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .dual-range-slider input[type="range"]::-moz-range-thumb {
   pointer-events: all;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--primary-color);
   cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  -moz-appearance: none;
+  transition: all 0.2s ease;
+}
+
+.dual-range-slider input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.1);
 }
 
 .dual-range-slider input[type="range"]::-webkit-slider-track {
   background: transparent;
+  height: 20px;
 }
 
 .dual-range-slider input[type="range"]::-moz-range-track {
   background: transparent;
+  height: 20px;
+  border: none;
 }
 
 /* Discovery Cards Hover Effects */
