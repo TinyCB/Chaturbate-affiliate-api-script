@@ -4,25 +4,100 @@
  * 
  * Extends the existing model_profiles.json with historical performance data
  * Run this script periodically (every 30 minutes) to update analytics
+ * 
+ * PORTABLE VERSION - Auto-detects installation directory
+ * Works with any web root structure (shared hosting, VPS, Docker, etc.)
+ * 
+ * Usage:
+ *   Via web: php extend-model-analytics.php
+ *   Via cron: /usr/bin/php /path/to/extend-model-analytics.php
+ * 
+ * Requirements:
+ *   - PHP 7.4+
+ *   - cache/ directory with cams_*.json files
+ *   - Write permissions to cache/ and logs/ directories
  */
 
 class SimpleAnalyticsExtender {
     private $profiles_file;
     private $regions;
+    private $base_dir; // Cache the detected directory
     
     public function __construct() {
-        $this->profiles_file = __DIR__ . '/cache/model_profiles.json';
+        // Auto-detect the base directory - works with any installation path
+        $this->base_dir = $this->detectBaseDirectory();
+        $this->profiles_file = $this->base_dir . '/cache/model_profiles.json';
         $this->regions = ['northamerica', 'europe_russia', 'southamerica', 'asia', 'other'];
+    }
+    
+    /**
+     * Auto-detect the base directory where the script is installed
+     * This makes the script portable for any installation
+     */
+    private function detectBaseDirectory() {
+        // First, try the directory where this script is located
+        $script_dir = dirname(__FILE__);
+        
+        // Check if cache directory exists in script directory
+        if (is_dir($script_dir . '/cache')) {
+            return $script_dir;
+        }
+        
+        // If running via cron, the script might be in the web root
+        // Look for common web root indicators
+        $possible_dirs = [
+            $script_dir,
+            dirname($script_dir), // parent directory
+            getcwd(), // current working directory
+            $_SERVER['DOCUMENT_ROOT'] ?? '',
+            '/var/www/html',
+            '/home/*/public_html' // will be expanded later
+        ];
+        
+        foreach ($possible_dirs as $dir) {
+            if (empty($dir)) continue;
+            
+            // Expand wildcard for home directories
+            if (strpos($dir, '*') !== false) {
+                $matches = glob($dir);
+                foreach ($matches as $match) {
+                    if (is_dir($match . '/cache')) {
+                        return $match;
+                    }
+                }
+                continue;
+            }
+            
+            if (is_dir($dir . '/cache')) {
+                return $dir;
+            }
+        }
+        
+        // Fallback to script directory
+        return $script_dir;
     }
     
     /**
      * Main function to update analytics data
      */
     public function updateAnalytics() {
+        // Log startup for cron debugging
+        $startup_log = "Analytics update started at " . date('Y-m-d H:i:s') . " [PID: " . getmypid() . ", CWD: " . getcwd() . "]";
+        error_log($startup_log);
+        
+        $log_file = $this->base_dir . '/logs/analytics_cron.log';
+        if (is_dir(dirname($log_file))) {
+            file_put_contents($log_file, date('Y-m-d H:i:s') . " - " . $startup_log . PHP_EOL, FILE_APPEND | LOCK_EX);
+        }
+        
         // Load current profiles
         $profiles = $this->loadProfiles();
         if (empty($profiles)) {
-            error_log("No profiles found to update");
+            $error_msg = "No profiles found to update - profiles file: " . $this->profiles_file;
+            error_log($error_msg);
+            if (is_dir(dirname($log_file))) {
+                file_put_contents($log_file, date('Y-m-d H:i:s') . " - ERROR: " . $error_msg . PHP_EOL, FILE_APPEND | LOCK_EX);
+            }
             return;
         }
         
@@ -147,7 +222,14 @@ class SimpleAnalyticsExtender {
         
         // Save updated profiles
         $this->saveProfiles($profiles);
-        error_log("Updated analytics for {$updated_count} models at " . date('Y-m-d H:i:s'));
+        $log_message = "Updated analytics for {$updated_count} models at " . date('Y-m-d H:i:s') . " [PID: " . getmypid() . "]";
+        error_log($log_message);
+        
+        // Also log to a specific file for cron debugging
+        $log_file = $this->base_dir . '/logs/analytics_cron.log';
+        if (is_dir(dirname($log_file))) {
+            file_put_contents($log_file, date('Y-m-d H:i:s') . " - " . $log_message . PHP_EOL, FILE_APPEND | LOCK_EX);
+        }
     }
     
     /**
@@ -177,7 +259,7 @@ class SimpleAnalyticsExtender {
         $all_models = [];
         
         foreach ($this->regions as $region) {
-            $file = __DIR__ . "/cache/cams_{$region}.json";
+            $file = $this->base_dir . "/cache/cams_{$region}.json";
             if (!file_exists($file)) continue;
             
             $json = json_decode(file_get_contents($file), true);
