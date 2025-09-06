@@ -51,6 +51,19 @@ class SimpleAnalyticsExtender {
                         'total_snapshots' => 0,
                         'avg_viewers_30d' => 0,
                         'consistency_score' => 0,
+                        'goals' => [
+                            'daily_viewer_goal' => 100,
+                            'monthly_goal_progress' => 0,
+                            'goal_achievements' => [],
+                            'streak_days' => 0,
+                            'best_streak' => 0
+                        ],
+                        'performance_milestones' => [
+                            'first_100_viewers' => null,
+                            'first_500_viewers' => null,
+                            'first_1000_viewers' => null,
+                            'most_productive_day' => null
+                        ],
                         'last_updated' => $now
                     ];
                 }
@@ -95,6 +108,12 @@ class SimpleAnalyticsExtender {
                 
                 // Calculate weekly activity pattern (last 7 days)
                 $analytics['weekly_pattern'] = $this->calculateWeeklyPattern($analytics['viewer_history'], $now);
+                
+                // Update goal tracking
+                $this->updateGoalTracking($analytics, $current['num_users'], $now);
+                
+                // Update performance milestones
+                $this->updatePerformanceMilestones($analytics, $current['num_users'], $now);
                 
                 $analytics['last_updated'] = $now;
                 $updated_count++;
@@ -210,6 +229,8 @@ class SimpleAnalyticsExtender {
             'chart_data' => $chart_data,
             'weekly_pattern' => $analytics['weekly_pattern'] ?? null,
             'viewer_history' => $analytics['viewer_history'] ?? [],
+            'goals' => $analytics['goals'] ?? null,
+            'performance_milestones' => $analytics['performance_milestones'] ?? null,
             'last_updated' => $analytics['last_updated']
         ];
     }
@@ -299,6 +320,101 @@ class SimpleAnalyticsExtender {
             'activity_by_hour' => $hour_counts,
             'total_sessions' => count($recent_week)
         ];
+    }
+    
+    /**
+     * Update goal tracking and streaks
+     */
+    private function updateGoalTracking(&$analytics, $current_viewers, $now) {
+        // Initialize goals if not exists
+        if (!isset($analytics['goals'])) {
+            $analytics['goals'] = [
+                'daily_viewer_goal' => 100,
+                'monthly_goal_progress' => 0,
+                'goal_achievements' => [],
+                'streak_days' => 0,
+                'best_streak' => 0
+            ];
+        }
+        
+        $goals = &$analytics['goals'];
+        $today = date('Y-m-d', $now);
+        
+        // Check if daily goal was met
+        if ($current_viewers >= $goals['daily_viewer_goal']) {
+            $last_achievement = end($goals['goal_achievements']);
+            
+            // Only record once per day
+            if (!$last_achievement || $last_achievement['date'] !== $today) {
+                $goals['goal_achievements'][] = [
+                    'date' => $today,
+                    'viewers' => $current_viewers,
+                    'goal' => $goals['daily_viewer_goal'],
+                    'timestamp' => $now
+                ];
+                
+                // Update streak
+                if ($last_achievement && $last_achievement['date'] === date('Y-m-d', $now - 86400)) {
+                    $goals['streak_days']++;
+                } else {
+                    $goals['streak_days'] = 1;
+                }
+                
+                $goals['best_streak'] = max($goals['best_streak'], $goals['streak_days']);
+            }
+        }
+        
+        // Calculate monthly progress
+        $this_month = date('Y-m', $now);
+        $monthly_achievements = array_filter($goals['goal_achievements'], function($achievement) use ($this_month) {
+            return strpos($achievement['date'], $this_month) === 0;
+        });
+        $goals['monthly_goal_progress'] = count($monthly_achievements);
+        
+        // Keep only last 60 days of achievements
+        $cutoff_date = date('Y-m-d', $now - (60 * 86400));
+        $goals['goal_achievements'] = array_filter($goals['goal_achievements'], function($achievement) use ($cutoff_date) {
+            return $achievement['date'] >= $cutoff_date;
+        });
+    }
+    
+    /**
+     * Update performance milestones
+     */
+    private function updatePerformanceMilestones(&$analytics, $current_viewers, $now) {
+        if (!isset($analytics['performance_milestones'])) {
+            $analytics['performance_milestones'] = [
+                'first_100_viewers' => null,
+                'first_500_viewers' => null,
+                'first_1000_viewers' => null,
+                'most_productive_day' => null
+            ];
+        }
+        
+        $milestones = &$analytics['performance_milestones'];
+        
+        // Check milestones
+        if ($current_viewers >= 100 && !$milestones['first_100_viewers']) {
+            $milestones['first_100_viewers'] = date('Y-m-d H:i:s', $now);
+        }
+        
+        if ($current_viewers >= 500 && !$milestones['first_500_viewers']) {
+            $milestones['first_500_viewers'] = date('Y-m-d H:i:s', $now);
+        }
+        
+        if ($current_viewers >= 1000 && !$milestones['first_1000_viewers']) {
+            $milestones['first_1000_viewers'] = date('Y-m-d H:i:s', $now);
+        }
+        
+        // Update most productive day
+        if (!$milestones['most_productive_day'] || 
+            $current_viewers > $milestones['most_productive_day']['viewers']) {
+            $milestones['most_productive_day'] = [
+                'date' => date('Y-m-d', $now),
+                'viewers' => $current_viewers,
+                'timestamp' => $now
+            ];
+        }
     }
 }
 

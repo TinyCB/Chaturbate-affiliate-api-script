@@ -1773,7 +1773,7 @@ main {
 
           <?php if (!empty($model['ai_bio'])): ?>
           <div class="model-written-bio" style="margin-bottom: 15px;">
-            <?= htmlspecialchars($model['ai_bio']) ?>
+            <?= markdown_links_to_html($model['ai_bio']) ?>
           </div>
           <?php endif; ?>
         </div>
@@ -1854,6 +1854,66 @@ main {
             <div style="font-size: 0.875rem; color: #64748b; line-height: 1.4;"><?= htmlspecialchars($insight['message']) ?></div>
           </div>
           <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- Goals & Milestones -->
+        <?php if (!empty($enhanced_analytics['historical']['goals']) || !empty($enhanced_analytics['historical']['performance_milestones'])): ?>
+        <div class="compact-analytics-card">
+          <div class="card-header">
+            <div class="card-icon"><i class="fas fa-trophy"></i></div>
+            <h3 class="card-title">Goals & Achievements</h3>
+          </div>
+          
+          <?php $goals = $enhanced_analytics['historical']['goals']; ?>
+          <?php if (!empty($goals)): ?>
+          <div style="margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 15px;">
+              <div style="text-align: center;">
+                <div style="font-size: 1.8rem; font-weight: 700; color: #10b981;"><?= $goals['streak_days'] ?></div>
+                <div style="font-size: 0.8rem; color: #64748b;">Current Streak</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 1.8rem; font-weight: 700; color: #f59e0b;"><?= $goals['best_streak'] ?></div>
+                <div style="font-size: 0.8rem; color: #64748b;">Best Streak</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 1.8rem; font-weight: 700; color: #3b82f6;"><?= $goals['monthly_goal_progress'] ?></div>
+                <div style="font-size: 0.8rem; color: #64748b;">Goals This Month</div>
+              </div>
+            </div>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #64748b;">
+              Daily Goal: <?= number_format($goals['daily_viewer_goal']) ?> viewers
+            </div>
+          </div>
+          <?php endif; ?>
+          
+          <?php $milestones = $enhanced_analytics['historical']['performance_milestones']; ?>
+          <?php if (!empty($milestones) && array_filter($milestones)): ?>
+          <div>
+            <h4 style="margin-bottom: 10px; color: #64748b; font-size: 0.875rem; font-weight: 600;">MILESTONES ACHIEVED</h4>
+            <?php if ($milestones['first_100_viewers']): ?>
+              <div style="font-size: 0.85rem; color: #10b981; margin-bottom: 5px;">
+                🎯 First 100 viewers: <?= date('M j, Y', strtotime($milestones['first_100_viewers'])) ?>
+              </div>
+            <?php endif; ?>
+            <?php if ($milestones['first_500_viewers']): ?>
+              <div style="font-size: 0.85rem; color: #f59e0b; margin-bottom: 5px;">
+                🔥 First 500 viewers: <?= date('M j, Y', strtotime($milestones['first_500_viewers'])) ?>
+              </div>
+            <?php endif; ?>
+            <?php if ($milestones['first_1000_viewers']): ?>
+              <div style="font-size: 0.85rem; color: #ef4444; margin-bottom: 5px;">
+                🚀 First 1000 viewers: <?= date('M j, Y', strtotime($milestones['first_1000_viewers'])) ?>
+              </div>
+            <?php endif; ?>
+            <?php if ($milestones['most_productive_day']): ?>
+              <div style="font-size: 0.85rem; color: #8b5cf6; margin-bottom: 5px;">
+                💯 Best day: <?= number_format($milestones['most_productive_day']['viewers']) ?> viewers (<?= date('M j', strtotime($milestones['most_productive_day']['date'])) ?>)
+              </div>
+            <?php endif; ?>
+          </div>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
 
