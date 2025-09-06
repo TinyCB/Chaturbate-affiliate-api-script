@@ -1343,28 +1343,11 @@ main {
   width: 100%;
   margin: 0;
   padding: 0 clamp(15px, 2vw, 40px);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
-  gap: clamp(20px, 3vw, 40px);
+  display: block;
   box-sizing: border-box;
   overflow-x: hidden;
 }
 
-/* Medium screens - reduce sidebar width */
-@media (max-width: 1300px) {
-  .model-content-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
-    gap: clamp(15px, 2.5vw, 30px);
-  }
-}
-
-/* Auto-fit layout for ultra-wide screens */
-@media (min-width: 1800px) {
-  .model-content-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 450px);
-    gap: clamp(30px, 4vw, 60px);
-  }
-}
 
 .model-main-content {
   display: flex;
@@ -1626,17 +1609,7 @@ main {
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-  .model-content-grid {
-    grid-template-columns: 1fr;
-    gap: clamp(15px, 3vw, 25px);
-  }
-  
-  .model-sidebar {
-    display: none;
-  }
-}
-  
+@media (max-width: 1200px) {
   .model-hero-content {
     grid-template-columns: auto 1fr;
     gap: 20px;
@@ -1649,6 +1622,7 @@ main {
     justify-content: space-around;
     margin-top: 20px;
   }
+}
 }
 
 @media (max-width: 767px) {
@@ -1867,6 +1841,22 @@ main {
           </div>
         </div>
 
+        <!-- Performance Insights -->
+        <?php if (!empty($performance_insights)): ?>
+        <div class="compact-analytics-card">
+          <div class="card-header">
+            <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+            <h3 class="card-title">Performance Insights</h3>
+          </div>
+          <?php foreach (array_slice($performance_insights, 0, 3) as $insight): ?>
+          <div style="background: <?= $insight['type'] === 'positive' ? '#f0fdf4' : ($insight['type'] === 'opportunity' ? '#fefce8' : '#f8fafc') ?>; border-left: 3px solid <?= $insight['type'] === 'positive' ? '#10b981' : ($insight['type'] === 'opportunity' ? '#f59e0b' : '#64748b') ?>; padding: 12px 15px; margin-bottom: 12px; border-radius: 8px;">
+            <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;"><?= htmlspecialchars($insight['title']) ?></div>
+            <div style="font-size: 0.875rem; color: #64748b; line-height: 1.4;"><?= htmlspecialchars($insight['message']) ?></div>
+          </div>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
         <!-- Activity Pattern -->
         <div class="compact-analytics-card">
           <div class="card-header">
@@ -2035,24 +2025,6 @@ main {
       </div>
     </div>
 
-    <!-- Sidebar -->
-    <div class="model-sidebar">
-      <!-- Performance Insights -->
-      <?php if (!empty($performance_insights)): ?>
-      <div class="compact-analytics-card">
-        <div class="card-header">
-          <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
-          <h3 class="card-title">Performance Insights</h3>
-        </div>
-        <?php foreach (array_slice($performance_insights, 0, 3) as $insight): ?>
-        <div style="background: <?= $insight['type'] === 'positive' ? '#f0fdf4' : ($insight['type'] === 'opportunity' ? '#fefce8' : '#f8fafc') ?>; border-left: 3px solid <?= $insight['type'] === 'positive' ? '#10b981' : ($insight['type'] === 'opportunity' ? '#f59e0b' : '#64748b') ?>; padding: 12px 15px; margin-bottom: 12px; border-radius: 8px;">
-          <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;"><?= htmlspecialchars($insight['title']) ?></div>
-          <div style="font-size: 0.875rem; color: #64748b; line-height: 1.4;"><?= htmlspecialchars($insight['message']) ?></div>
-        </div>
-        <?php endforeach; ?>
-      </div>
-      <?php endif; ?>
-    </div>
   </div>
 </div>
 <?php include("templates/footer.php"); ?>
