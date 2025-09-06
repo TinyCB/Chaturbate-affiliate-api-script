@@ -83,18 +83,36 @@ function calculatePerformanceScore($current, $historical) {
     $score = 0;
     $factors = [];
     
-    // Current performance factors (50% weight)
-    $factors['current_viewers'] = min(25, ($current['avg_viewers'] / 50) * 25); // Up to 25 points
-    $factors['current_activity'] = min(25, $current['activity_score'] * 0.25); // Up to 25 points
-    
-    // Historical factors (50% weight)
     if ($historical) {
-        $factors['peak_performance'] = min(25, ($historical['peak_viewers_ever'] / 100) * 25); // Up to 25 points
-        $factors['consistency'] = min(25, $historical['consistency_score'] * 0.25); // Up to 25 points
+        // Use historical data for more accurate calculation
+        $peak = $historical['peak_viewers_ever'] ?? 0;
+        $low = $historical['low_viewers_ever'] ?? 0;
+        $avg = $historical['avg_viewers_30d'] ?? 0;
+        $consistency = $historical['consistency_score'] ?? 0;
+        
+        // Viewer range performance (20 points) - based on peak vs average ratio
+        if ($peak > 0 && $avg > 0) {
+            $range_ratio = $avg / $peak; // Higher ratio = more consistent high performance
+            $factors['viewer_range'] = min(20, $range_ratio * 20);
+        } else {
+            $factors['viewer_range'] = 0;
+        }
+        
+        // Average performance (30 points) - scaled to reasonable expectations
+        $factors['avg_performance'] = min(30, ($avg / 100) * 30); // 100 viewers = full points
+        
+        // Peak performance (25 points) - scaled for high achievers  
+        $factors['peak_performance'] = min(25, ($peak / 500) * 25); // 500 viewers = full points
+        
+        // Consistency (25 points) - based on streaming schedule consistency
+        $factors['consistency'] = min(25, ($consistency / 100) * 25);
+        
     } else {
-        // No historical data available
+        // Fallback to current data if no historical
+        $factors['current_viewers'] = min(25, ($current['avg_viewers'] / 50) * 25);
+        $factors['current_activity'] = min(25, $current['activity_score'] * 0.25);
         $factors['peak_performance'] = min(25, ($current['peak_viewers'] / 100) * 25);
-        $factors['consistency'] = min(25, $current['consistency_score'] * 0.25);
+        $factors['consistency'] = min(25, ($current['consistency_score'] ?? 0) * 0.25);
     }
     
     $score = array_sum($factors);

@@ -48,6 +48,7 @@ class SimpleAnalyticsExtender {
                     $profile['analytics'] = [
                         'viewer_history' => [],
                         'peak_viewers_ever' => 0,
+                        'low_viewers_ever' => PHP_INT_MAX,
                         'total_snapshots' => 0,
                         'avg_viewers_30d' => 0,
                         'consistency_score' => 0,
@@ -73,6 +74,7 @@ class SimpleAnalyticsExtender {
                 // Parse goal information from room subject
                 $goal_info = $this->parseGoalFromSubject($current['room_subject'] ?? '');
                 
+                
                 // Add current snapshot to history
                 $snapshot = [
                     'timestamp' => $now,
@@ -88,8 +90,13 @@ class SimpleAnalyticsExtender {
                 // Keep only last 30 days of history (720 entries at 30min intervals)
                 $analytics['viewer_history'] = array_slice($analytics['viewer_history'], -720);
                 
-                // Update peak viewers
+                // Update peak and low viewers
                 $analytics['peak_viewers_ever'] = max($analytics['peak_viewers_ever'], $current['num_users']);
+                if (!isset($analytics['low_viewers_ever'])) {
+                    $analytics['low_viewers_ever'] = $current['num_users'];
+                } else {
+                    $analytics['low_viewers_ever'] = min($analytics['low_viewers_ever'], $current['num_users']);
+                }
                 
                 // Update counters
                 $analytics['total_snapshots']++;
@@ -100,15 +107,26 @@ class SimpleAnalyticsExtender {
                     $analytics['avg_viewers_30d'] = round(array_sum($recent_viewers) / count($recent_viewers), 1);
                 }
                 
-                // Calculate consistency (active snapshots / possible snapshots in 30 days)
+                // Calculate consistency using session-based approach
                 $days_ago_30 = $now - (30 * 24 * 3600);
                 $recent_snapshots = array_filter($analytics['viewer_history'], function($h) use ($days_ago_30) {
                     return $h['timestamp'] > $days_ago_30;
                 });
                 
-                // Maximum possible snapshots in 30 days (48 per day at 30min intervals)
-                $max_possible = 30 * 48;
-                $analytics['consistency_score'] = min(100, (count($recent_snapshots) / $max_possible) * 100);
+                if (count($recent_snapshots) > 0) {
+                    // Calculate total online time in last 30 days
+                    $sessions = $this->calculateSessions($recent_snapshots);
+                    $total_online_time = 0;
+                    foreach ($sessions as $session) {
+                        $total_online_time += ($session['end_time'] - $session['start_time']);
+                    }
+                    
+                    // Calculate consistency as percentage of time online (reasonable expectation: 4-8 hours/day)
+                    $total_possible_time = 30 * 6 * 3600; // 6 hours per day for 30 days (reasonable streaming schedule)
+                    $analytics['consistency_score'] = min(100, ($total_online_time / $total_possible_time) * 100);
+                } else {
+                    $analytics['consistency_score'] = 0;
+                }
                 
                 // Calculate weekly activity pattern (last 7 days)
                 $analytics['weekly_pattern'] = $this->calculateWeeklyPattern($analytics['viewer_history'], $now);
@@ -171,7 +189,8 @@ class SimpleAnalyticsExtender {
                     'username' => $model['username'],
                     'num_users' => intval($model['num_users'] ?? 0),
                     'seconds_online' => intval($model['seconds_online'] ?? 0),
-                    'current_show' => $model['current_show'] ?? 'public'
+                    'current_show' => $model['current_show'] ?? 'public',
+                    'room_subject' => $model['room_subject'] ?? ''
                 ];
             }
         }
@@ -229,6 +248,7 @@ class SimpleAnalyticsExtender {
         
         return [
             'peak_viewers_ever' => $analytics['peak_viewers_ever'],
+            'low_viewers_ever' => $analytics['low_viewers_ever'] ?? 0,
             'avg_viewers_30d' => $analytics['avg_viewers_30d'],
             'consistency_score' => round($analytics['consistency_score']),
             'total_snapshots' => $analytics['total_snapshots'],
@@ -283,6 +303,47 @@ class SimpleAnalyticsExtender {
     }
     
     /**
+     * Calculate sessions from snapshots
+     */
+    private function calculateSessions($snapshots) {
+        if (empty($snapshots)) return [];
+        
+        // Sort by timestamp
+        usort($snapshots, function($a, $b) {
+            return $a['timestamp'] <=> $b['timestamp'];
+        });
+        
+        $sessions = [];
+        $current_session = null;
+        $session_gap_threshold = 3600; // 1 hour gap = new session
+        
+        foreach ($snapshots as $snapshot) {
+            if (!$current_session || ($snapshot['timestamp'] - $current_session['end_time']) > $session_gap_threshold) {
+                // Start new session
+                if ($current_session) {
+                    $sessions[] = $current_session;
+                }
+                $current_session = [
+                    'start_time' => $snapshot['timestamp'],
+                    'end_time' => $snapshot['timestamp'],
+                    'snapshots' => [$snapshot]
+                ];
+            } else {
+                // Continue current session
+                $current_session['end_time'] = $snapshot['timestamp'];
+                $current_session['snapshots'][] = $snapshot;
+            }
+        }
+        
+        // Don't forget the last session
+        if ($current_session) {
+            $sessions[] = $current_session;
+        }
+        
+        return $sessions;
+    }
+    
+    /**
      * Calculate weekly activity pattern for the model
      */
     private function calculateWeeklyPattern($history, $now) {
@@ -297,28 +358,68 @@ class SimpleAnalyticsExtender {
                 'best_day' => null,
                 'best_hour' => null,
                 'activity_by_day' => array_fill(0, 7, 0),
-                'activity_by_hour' => array_fill(0, 24, 0)
+                'activity_by_hour' => array_fill(0, 24, 0),
+                'total_sessions' => 0,
+                'avg_session_length' => 0
             ];
         }
         
-        $day_counts = array_fill(0, 7, 0);
-        $hour_counts = array_fill(0, 24, 0);
+        // Sort by timestamp
+        usort($recent_week, function($a, $b) {
+            return $a['timestamp'] <=> $b['timestamp'];
+        });
+        
+        // Group consecutive snapshots into sessions (gaps > 60 minutes = new session)
+        $sessions = [];
+        $current_session = null;
+        $session_gap_threshold = 3600; // 1 hour gap = new session
         
         foreach ($recent_week as $snapshot) {
-            $day = $snapshot['day_of_week'] ?? date('w', $snapshot['timestamp']);
-            $hour = $snapshot['hour_of_day'] ?? date('G', $snapshot['timestamp']);
-            
-            $day_counts[$day]++;
-            $hour_counts[$hour]++;
+            if (!$current_session || ($snapshot['timestamp'] - $current_session['end_time']) > $session_gap_threshold) {
+                // Start new session
+                if ($current_session) {
+                    $sessions[] = $current_session;
+                }
+                $current_session = [
+                    'start_time' => $snapshot['timestamp'],
+                    'end_time' => $snapshot['timestamp'],
+                    'snapshots' => [$snapshot],
+                    'day_of_week' => date('w', $snapshot['timestamp']),
+                    'start_hour' => date('G', $snapshot['timestamp'])
+                ];
+            } else {
+                // Continue current session
+                $current_session['end_time'] = $snapshot['timestamp'];
+                $current_session['snapshots'][] = $snapshot;
+            }
+        }
+        
+        // Don't forget the last session
+        if ($current_session) {
+            $sessions[] = $current_session;
+        }
+        
+        // Count sessions by day and hour
+        $day_counts = array_fill(0, 7, 0);
+        $hour_counts = array_fill(0, 24, 0);
+        $total_session_time = 0;
+        
+        foreach ($sessions as $session) {
+            $day_counts[$session['day_of_week']]++;
+            $hour_counts[$session['start_hour']]++;
+            $total_session_time += ($session['end_time'] - $session['start_time']);
         }
         
         // Find best day and hour
         $best_day = array_search(max($day_counts), $day_counts);
         $best_hour = array_search(max($hour_counts), $hour_counts);
         
-        // Calculate activity score (percentage of time online in last 7 days)
-        $possible_snapshots = 7 * 48; // 48 snapshots per day for 7 days
-        $activity_score = min(100, (count($recent_week) / $possible_snapshots) * 100);
+        // Calculate activity score (total time online / total possible time in 7 days)
+        $total_possible_time = 7 * 24 * 3600; // 7 days in seconds
+        $activity_score = min(100, ($total_session_time / $total_possible_time) * 100);
+        
+        // Average session length
+        $avg_session_length = count($sessions) > 0 ? ($total_session_time / count($sessions)) : 0;
         
         return [
             'activity_score' => round($activity_score, 1),
@@ -326,7 +427,9 @@ class SimpleAnalyticsExtender {
             'best_hour' => $best_hour,
             'activity_by_day' => $day_counts,
             'activity_by_hour' => $hour_counts,
-            'total_sessions' => count($recent_week)
+            'total_sessions' => count($sessions),
+            'avg_session_length' => round($avg_session_length / 3600, 1), // Convert to hours
+            'total_online_hours' => round($total_session_time / 3600, 1)
         ];
     }
     
