@@ -2932,8 +2932,9 @@ function setupAgeSliders() {
   const minDisplay = document.getElementById('min-age-display');
   const maxDisplay = document.getElementById('max-age-display');
   const sliderTrack = document.querySelector('.slider-track');
+  const container = document.querySelector('.dual-range-slider');
   
-  if (!minSlider || !maxSlider) return;
+  if (!minSlider || !maxSlider || !container) return;
   
   function updateSliderTrack() {
     const min = parseInt(minSlider.min);
@@ -2946,21 +2947,6 @@ function setupAgeSliders() {
     
     sliderTrack.style.left = minPercent + '%';
     sliderTrack.style.width = (maxPercent - minPercent) + '%';
-  }
-  
-  function updateSliderPriority() {
-    const minVal = parseInt(minSlider.value);
-    const maxVal = parseInt(maxSlider.value);
-    
-    // If values are close or equal, prioritize max slider
-    // If values are far apart, prioritize min slider 
-    if (Math.abs(maxVal - minVal) <= 5) {
-      maxSlider.style.zIndex = '3';
-      minSlider.style.zIndex = '2';
-    } else {
-      minSlider.style.zIndex = '3';
-      maxSlider.style.zIndex = '2';
-    }
   }
   
   function updateDisplays(minVal, maxVal) {
@@ -2987,28 +2973,103 @@ function setupAgeSliders() {
     
     updateDisplays(minVal, maxVal);
     updateSliderTrack();
-    updateSliderPriority();
     
     FILTERS.minAge = minVal;
     FILTERS.maxAge = maxVal;
     onFilterChange();
   }
   
-  // Add mouse event handlers to bring slider to front
-  function bringSliderToFront(slider) {
-    if (slider === minSlider) {
+  // Intelligent slider selection based on mouse position and values
+  function getCloserSlider(event) {
+    const rect = container.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const containerWidth = rect.width;
+    const clickPercent = (clickX / containerWidth) * 100;
+    
+    const min = parseInt(minSlider.min);
+    const max = parseInt(minSlider.max);
+    const minVal = parseInt(minSlider.value);
+    const maxVal = parseInt(maxSlider.value);
+    
+    const minPercent = ((minVal - min) / (max - min)) * 100;
+    const maxPercent = ((maxVal - min) / (max - min)) * 100;
+    
+    // Calculate distances from click to each slider position
+    const distToMin = Math.abs(clickPercent - minPercent);
+    const distToMax = Math.abs(clickPercent - maxPercent);
+    
+    // Return the closer slider, with preference for max if very close
+    if (Math.abs(distToMin - distToMax) < 5) {
+      return clickPercent > (minPercent + maxPercent) / 2 ? maxSlider : minSlider;
+    }
+    return distToMin < distToMax ? minSlider : maxSlider;
+  }
+  
+  // Handle mouse interactions
+  let activeSlider = null;
+  let isDragging = false;
+  
+  function startDrag(event) {
+    event.preventDefault();
+    activeSlider = getCloserSlider(event);
+    isDragging = true;
+    
+    // Bring active slider to front
+    if (activeSlider === minSlider) {
       minSlider.style.zIndex = '3';
       maxSlider.style.zIndex = '2';
+      minSlider.style.pointerEvents = 'all';
+      maxSlider.style.pointerEvents = 'none';
     } else {
       maxSlider.style.zIndex = '3';
       minSlider.style.zIndex = '2';
+      maxSlider.style.pointerEvents = 'all';
+      minSlider.style.pointerEvents = 'none';
     }
+    
+    // Simulate mousedown on the active slider
+    const rect = container.getBoundingClientRect();
+    const percent = ((event.clientX - rect.left) / rect.width) * 100;
+    const newValue = Math.round((percent / 100) * (99 - 18) + 18);
+    const clampedValue = Math.max(18, Math.min(99, newValue));
+    
+    activeSlider.value = clampedValue;
+    handleSliderChange.call(activeSlider);
+    
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('mouseup', stopDrag);
   }
   
+  function handleDrag(event) {
+    if (!isDragging || !activeSlider) return;
+    
+    const rect = container.getBoundingClientRect();
+    const percent = ((event.clientX - rect.left) / rect.width) * 100;
+    const newValue = Math.round((percent / 100) * (99 - 18) + 18);
+    const clampedValue = Math.max(18, Math.min(99, newValue));
+    
+    activeSlider.value = clampedValue;
+    handleSliderChange.call(activeSlider);
+  }
+  
+  function stopDrag() {
+    isDragging = false;
+    activeSlider = null;
+    
+    // Reset pointer events
+    minSlider.style.pointerEvents = 'all';
+    maxSlider.style.pointerEvents = 'all';
+    
+    document.removeEventListener('mousemove', handleDrag);
+    document.removeEventListener('mouseup', stopDrag);
+  }
+  
+  // Add container mouse events
+  container.addEventListener('mousedown', startDrag);
+  
+  // Keep original slider events as backup
   minSlider.addEventListener('input', handleSliderChange);
   maxSlider.addEventListener('input', handleSliderChange);
-  minSlider.addEventListener('mousedown', () => bringSliderToFront(minSlider));
-  maxSlider.addEventListener('mousedown', () => bringSliderToFront(maxSlider));
   
   // Sync number inputs with sliders
   if (minInput) {
@@ -3030,7 +3091,6 @@ function setupAgeSliders() {
   // Initialize
   updateSliderTrack();
   updateDisplays(parseInt(minSlider.value), parseInt(maxSlider.value));
-  updateSliderPriority();
 }
 
 // Favorites System
