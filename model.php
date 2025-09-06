@@ -1823,11 +1823,15 @@ main {
           </div>
           <div class="metrics-mini-grid">
             <div class="metric-mini">
-              <div class="metric-mini-value"><?= number_format($model_insights['peak_viewers']) ?></div>
+              <div class="metric-mini-value"><?= number_format($enhanced_analytics['historical']['peak_viewers_ever'] ?? $model_insights['peak_viewers']) ?></div>
               <div class="metric-mini-label">Peak Viewers</div>
             </div>
             <div class="metric-mini">
-              <div class="metric-mini-value"><?= number_format($model_insights['avg_viewers']) ?></div>
+              <div class="metric-mini-value"><?= number_format($enhanced_analytics['historical']['low_viewers_ever'] ?? 0) ?></div>
+              <div class="metric-mini-label">Low Viewers</div>
+            </div>
+            <div class="metric-mini">
+              <div class="metric-mini-value"><?= number_format($enhanced_analytics['historical']['avg_viewers_30d'] ?? $model_insights['avg_viewers']) ?></div>
               <div class="metric-mini-label">Avg Viewers</div>
             </div>
             <div class="metric-mini">
