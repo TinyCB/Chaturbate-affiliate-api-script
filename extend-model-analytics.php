@@ -399,15 +399,38 @@ class SimpleAnalyticsExtender {
             $sessions[] = $current_session;
         }
         
-        // Count sessions by day and hour
+        // Count sessions by day and hour - properly track ALL hours during each session
         $day_counts = array_fill(0, 7, 0);
         $hour_counts = array_fill(0, 24, 0);
         $total_session_time = 0;
         
+        // Use a 2D array to track which day+hour combinations had activity
+        $activity_matrix = [];
+        for ($d = 0; $d < 7; $d++) {
+            $activity_matrix[$d] = array_fill(0, 24, 0);
+        }
+        
         foreach ($sessions as $session) {
             $day_counts[$session['day_of_week']]++;
-            $hour_counts[$session['start_hour']]++;
             $total_session_time += ($session['end_time'] - $session['start_time']);
+            
+            // Mark ALL hours during this session as active
+            $start_time = $session['start_time'];
+            $end_time = $session['end_time'];
+            
+            $current_time = $start_time;
+            while ($current_time <= $end_time) {
+                $hour = date('G', $current_time);
+                $day = date('w', $current_time);
+                
+                $activity_matrix[$day][$hour]++;
+                $hour_counts[$hour]++;
+                
+                // Move to next hour
+                $current_time = strtotime('+1 hour', $current_time);
+                // Prevent infinite loops
+                if ($current_time - $start_time > 86400) break; // Max 24 hours
+            }
         }
         
         // Find best day and hour
@@ -427,6 +450,7 @@ class SimpleAnalyticsExtender {
             'best_hour' => $best_hour,
             'activity_by_day' => $day_counts,
             'activity_by_hour' => $hour_counts,
+            'activity_matrix' => $activity_matrix, // 2D array for accurate heatmap
             'total_sessions' => count($sessions),
             'avg_session_length' => round($avg_session_length / 3600, 1), // Convert to hours
             'total_online_hours' => round($total_session_time / 3600, 1)
