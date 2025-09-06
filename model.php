@@ -1344,10 +1344,18 @@ main {
   margin: 0;
   padding: 0 clamp(15px, 2vw, 40px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
   gap: clamp(20px, 3vw, 40px);
   box-sizing: border-box;
   overflow-x: hidden;
+}
+
+/* Medium screens - reduce sidebar width */
+@media (max-width: 1300px) {
+  .model-content-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+    gap: clamp(15px, 2.5vw, 30px);
+  }
 }
 
 /* Auto-fit layout for ultra-wide screens */
@@ -1598,46 +1606,32 @@ main {
   border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* Wide screen optimization - make iframe even wider */
+/* Iframe scaling for larger screens */
 @media (min-width: 1400px) {
-  .model-content-grid {
-    grid-template-columns: 7fr 1fr;
-  }
-  
   .cb-cam-iframe {
     min-height: 500px !important;
   }
 }
 
-/* Large desktop screens - maximize iframe space */
 @media (min-width: 1600px) {
-  .model-content-grid {
-    grid-template-columns: 8fr 1fr;
-  }
-  
   .cb-cam-iframe {
     min-height: 600px !important;
   }
 }
 
-/* Ultra-wide screens - extreme iframe dominance */
 @media (min-width: 1920px) {
-  .model-content-grid {
-    grid-template-columns: 9fr 1fr;
-    gap: 40px;
-  }
-  
   .cb-cam-iframe {
     min-height: 700px !important;
   }
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .model-content-grid {
     grid-template-columns: 1fr;
-    gap: 25px;
+    gap: clamp(15px, 3vw, 25px);
   }
+}
   
   .model-hero-content {
     grid-template-columns: auto 1fr;
@@ -1796,6 +1790,15 @@ main {
           <div style="margin-bottom: 15px;">
             <h4 style="margin-bottom: 8px; color: #64748b; font-size: 0.875rem; font-weight: 600;">LOCATION</h4>
             <p style="margin: 0; color: #1e293b;"><?= htmlspecialchars($model['location']) ?></p>
+          </div>
+          <?php endif; ?>
+
+          <?php if (!empty($model['ai_bio'])): ?>
+          <div style="margin-bottom: 15px;">
+            <h4 style="margin-bottom: 8px; color: #64748b; font-size: 0.875rem; font-weight: 600;">AI BIO</h4>
+            <div class="model-written-bio">
+              <?= htmlspecialchars($model['ai_bio']) ?>
+            </div>
           </div>
           <?php endif; ?>
         </div>
