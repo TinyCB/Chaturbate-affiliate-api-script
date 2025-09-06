@@ -22,10 +22,17 @@
  */
 
 // CLI execution check - only applies when script is run directly, not when included
-if (php_sapi_name() !== 'cli' && basename($_SERVER['SCRIPT_FILENAME']) === basename(__FILE__)) {
-    header('HTTP/1.1 403 Forbidden');
-    echo "This script can only be executed from command line for security reasons.";
-    exit;
+// Check if this script is being executed directly vs being included/required
+if (php_sapi_name() !== 'cli') {
+    $current_script = $_SERVER['SCRIPT_FILENAME'] ?? $_SERVER['PHP_SELF'] ?? '';
+    $this_file = __FILE__;
+    
+    // Block only if this exact script file is being accessed directly
+    if (realpath($current_script) === realpath($this_file)) {
+        header('HTTP/1.1 403 Forbidden');
+        echo "This script can only be executed from command line for security reasons.";
+        exit;
+    }
 }
 
 class SimpleAnalyticsExtender {
