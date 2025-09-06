@@ -21,8 +21,8 @@
  *   - Write permissions to cache/ and logs/ directories
  */
 
-// Enforce CLI-only execution to ensure proper file permissions
-if (php_sapi_name() !== 'cli') {
+// CLI execution check - only applies when script is run directly, not when included
+if (php_sapi_name() !== 'cli' && basename($_SERVER['SCRIPT_FILENAME']) === basename(__FILE__)) {
     header('HTTP/1.1 403 Forbidden');
     echo "This script can only be executed from command line for security reasons.";
     exit;
