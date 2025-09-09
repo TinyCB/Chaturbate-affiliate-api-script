@@ -191,6 +191,8 @@ EOT;
 }
 
 // --- Setup ---
+require_once 'bio-cache-manager.php';
+
 $cache_dir = __DIR__ . "/cache/";
 $profile_file = $cache_dir . "model_profiles.json";
 $config = include(__DIR__.'/config.php');
@@ -206,66 +208,103 @@ $ids_to_rewrite = [];
 if (!empty($config['llm_manual_ids'])) {
     $ids_to_rewrite = array_filter(array_map('trim', preg_split('/[\s,]+/', $config['llm_manual_ids'])));
 }
-$modelProfiles = [];
-if (file_exists($profile_file)) {
-    $json = @file_get_contents($profile_file);
-    $modelProfiles = json_decode($json, true);
-    if (!is_array($modelProfiles)) $modelProfiles = [];
+
+// Initialize bio cache manager
+$bio_cache = new BioCacheManager();
+
+// Migrate existing bios if this is the first run
+$bio_stats = $bio_cache->getCacheStats();
+if ($bio_stats['file_count'] === 0 && file_exists($profile_file)) {
+    echo "Migrating existing bio data to individual cache files...\n";
+    $migration_result = $bio_cache->migrateFromModelProfiles();
+    echo "Migration complete: {$migration_result['migrated_count']} bios migrated, {$migration_result['error_count']} errors\n";
+    log_debug("Bio migration: {$migration_result['migrated_count']} migrated, {$migration_result['error_count']} errors");
+}
+
+// Determine which models need bio generation based on mode
+if ($llm_rewrite_all_bios) {
+    $models_to_process = $bio_cache->getModelsNeedingBios('all', $stale_days, $ids_to_rewrite);
+} else {
+    $models_to_process = $bio_cache->getModelsNeedingBios($REWRITE_MODE, $stale_days, $ids_to_rewrite);
 }
 ini_set('max_execution_time', 0);
 set_time_limit(0);
 $count = 0;
 $batch_size = 5;
 $now = time();
-foreach ($modelProfiles as $idx => &$profile) {
-    if (empty($profile['id']) && !empty($profile['username'])) {
-        $profile['id'] = $profile['username'];
-    }
-    $should_generate = false;
-    $last = $profile['ai_bio_last_generated'] ?? 0;
-    if ($llm_rewrite_all_bios) {
-        $should_generate = true;
-    } else if ($REWRITE_MODE === "all") {
-        $should_generate = true;
-    } else if ($REWRITE_MODE === "missing") {
-        $should_generate = empty($profile['ai_bio']);
-    } else if ($REWRITE_MODE === "stale") {
-        $should_generate = empty($profile['ai_bio']) || $last < $now - ($stale_days*24*60*60);
-    } else if ($REWRITE_MODE === "ids" && !empty($ids_to_rewrite)) {
-        $should_generate = in_array($profile['id'], $ids_to_rewrite, true);
-    }
-    if ($should_generate) {
-        echo "Generating bio for: {$profile['username']} ... ";
-        log_debug("Generating bio for: {$profile['username']}");
-        $bio = generate_model_bio(
-            $profile,
-            $llm_provider,
-            $llm_api_url,
-            $llm_model,
-            $llm_api_key,
-            $whitelabel_domain
-        );
-        if ($bio) {
-            $profile['ai_bio'] = $bio;
-            $profile['ai_bio_last_generated'] = time();
-            $profile['ai_bio_version'] = isset($profile['ai_bio_version']) ? $profile['ai_bio_version'] + 1 : 1;
-            if (empty($profile['id'])) $profile['id'] = $profile['username'];
+
+echo "Processing " . count($models_to_process) . " models for bio generation...\n";
+
+foreach ($models_to_process as $profile) {
+    $username = $profile['username'] ?? '';
+    if (empty($username)) continue;
+    
+    echo "Generating bio for: $username ... ";
+    log_debug("Generating bio for: $username");
+    
+    $bio = generate_model_bio(
+        $profile,
+        $llm_provider,
+        $llm_api_url,
+        $llm_model,
+        $llm_api_key,
+        $whitelabel_domain
+    );
+    
+    if ($bio) {
+        // Get existing bio data or create new
+        $existing_bio_data = $bio_cache->getModelBio($username);
+        
+        $bio_data = [
+            'username' => $username,
+            'ai_bio' => $bio,
+            'ai_bio_last_generated' => time(),
+            'ai_bio_version' => ($existing_bio_data['ai_bio_version'] ?? 0) + 1,
+            'generation_config' => [
+                'llm_provider' => $llm_provider,
+                'llm_model' => $llm_model,
+                'whitelabel_domain' => $whitelabel_domain,
+                'generated_at' => time()
+            ],
+            'source_profile' => [
+                'gender' => $profile['gender'] ?? '',
+                'location' => $profile['location'] ?? '',
+                'country' => $profile['country'] ?? '',
+                'spoken_languages' => $profile['spoken_languages'] ?? '',
+                'room_subject' => $profile['room_subject'] ?? '',
+                'tags' => $profile['tags'] ?? [],
+                'display_name' => $profile['display_name'] ?? $username
+            ]
+        ];
+        
+        // Preserve creation timestamp if it exists
+        if (isset($existing_bio_data['created_at'])) {
+            $bio_data['created_at'] = $existing_bio_data['created_at'];
+        }
+        if (isset($existing_bio_data['migrated_at'])) {
+            $bio_data['migrated_at'] = $existing_bio_data['migrated_at'];
+        }
+        
+        if ($bio_cache->saveModelBio($username, $bio_data)) {
             echo "DONE\n";
-            log_debug("DONE for: {$profile['username']}");
+            log_debug("DONE for: $username - saved to bio cache");
         } else {
-            echo "FAILED\n";
-            log_debug("FAILED for: {$profile['username']}");
+            echo "SAVE FAILED\n";
+            log_debug("Bio generation succeeded but save failed for: $username");
         }
-        $count++;
-        usleep(250000);
-        if ($count % $batch_size === 0) {
-            file_put_contents($profile_file, json_encode($modelProfiles, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-            echo "Batch of $batch_size written to archive...\n";
-            log_debug("Batch of $batch_size bios written to model_profiles.json");
-        }
+    } else {
+        echo "FAILED\n";
+        log_debug("FAILED for: $username");
+    }
+    
+    $count++;
+    usleep(250000);
+    
+    if ($count % $batch_size === 0) {
+        echo "Batch of $batch_size bios processed...\n";
+        log_debug("Batch of $batch_size bios processed");
     }
 }
-unset($profile);
 // --- Self-resetting logic for safe admin ops ---
 if ($llm_rewrite_all_bios) {
     $config['llm_rewrite_all_bios'] = "0";
@@ -278,16 +317,27 @@ if (in_array($REWRITE_MODE, ['all', 'stale', 'ids'])) {
     file_put_contents(__DIR__ . "/config.php", "<?php\nreturn " . var_export($config, true) . ";\n");
     echo "LLM rewrite mode auto-reset to 'missing' after batch run.\n";
 }
-if ($count > 0 && $count % $batch_size !== 0) {
-    file_put_contents($profile_file, json_encode($modelProfiles, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-    echo "Final batch written to archive.\n";
-    log_debug("Final batch bios written to model_profiles.json");
-}
+
+// Final summary
 if ($count > 0) {
-    echo "$count AI bios generated and written to archive.\n";
-    log_debug("$count bios written to model_profiles.json");
+    echo "$count AI bios generated and saved to individual cache files.\n";
+    log_debug("$count bios generated and saved to bio cache");
+    
+    // Show cache statistics
+    $final_stats = $bio_cache->getCacheStats();
+    echo "Bio cache stats: {$final_stats['file_count']} files, {$final_stats['total_size_mb']} MB total\n";
 } else {
     echo "No model needed a new bio.\n";
     log_debug("No model needed a new bio.");
+}
+
+// Cleanup old bio files if requested
+if (!empty($config['bio_cleanup_days']) && $config['bio_cleanup_days'] > 0) {
+    $cleanup_days = (int)$config['bio_cleanup_days'];
+    $deleted_count = $bio_cache->cleanupOldBios($cleanup_days);
+    if ($deleted_count > 0) {
+        echo "Cleaned up $deleted_count old bio files (older than $cleanup_days days).\n";
+        log_debug("Cleaned up $deleted_count old bio files");
+    }
 }
 ?>

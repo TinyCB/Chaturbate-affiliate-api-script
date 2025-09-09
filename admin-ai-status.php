@@ -1,4 +1,6 @@
 <?php
+require_once 'bio-cache-manager.php';
+
 $cache_dir = __DIR__ . "/cache/";
 $profile_file = $cache_dir . "model_profiles.json";
 session_start();
@@ -17,40 +19,88 @@ $total = 0; $with_bio = 0; $missing = 0; $stale = 0; $profiles = [];
 $now = time();
 $error_msg = null;
 
+// Initialize bio cache manager
+$bio_cache = new BioCacheManager();
+$bio_stats = $bio_cache->getCacheStats();
+
 if (!is_dir($cache_dir)) {
     if (!@mkdir($cache_dir, 0775, true)) {
         $error_msg = "Server error: Could not create cache directory '$cache_dir'!";
     }
 }
 if (!$error_msg) {
-    if (!file_exists($profile_file)) {
-        $error_msg = "Profiles file '$profile_file' does not exist. Be sure to generate bios on the server first.";
-    } elseif (!is_readable($profile_file)) {
-        $error_msg = "Profiles file '$profile_file' is not readable. Check file permissions.";
-    } else {
+    // Try to load from bio cache first, fallback to model_profiles.json
+    $allModels = [];
+    
+    // Load all models with bios from bio cache
+    $models_with_bios = $bio_cache->getAllModelsWithBios();
+    foreach ($models_with_bios as $username) {
+        $bio_data = $bio_cache->getModelBio($username);
+        if ($bio_data) {
+            $allModels[$username] = [
+                'username' => $username,
+                'id' => $username,
+                'display_name' => $bio_data['source_profile']['display_name'] ?? $username,
+                'ai_bio' => $bio_data['ai_bio'],
+                'ai_bio_last_generated' => $bio_data['ai_bio_last_generated'],
+                'ai_bio_version' => $bio_data['ai_bio_version'],
+                'location' => $bio_data['source_profile']['location'] ?? '',
+                'gender' => $bio_data['source_profile']['gender'] ?? '',
+                'tags' => $bio_data['source_profile']['tags'] ?? [],
+                '_bio_source' => 'bio_cache'
+            ];
+        }
+    }
+    
+    // Fallback: Load models from model_profiles.json for models not in bio cache
+    if (file_exists($profile_file) && is_readable($profile_file)) {
         $json = file_get_contents($profile_file);
-        $allModels = json_decode($json, true);
-        if (!is_array($allModels)) {
-            $error_msg = "Profiles file is not valid JSON or is empty! Try to (re)generate it.";
-        } else {
-            if ($search) {
-                $allModels = array_filter($allModels, function($m) use($search) {
-                    foreach (['id','username','display_name'] as $field)
-                        if (!empty($m[$field]) && stripos($m[$field], $search) !== false) return true;
-                    return false;
-                });
+        $profile_models = json_decode($json, true);
+        if (is_array($profile_models)) {
+            foreach ($profile_models as $model) {
+                $username = $model['username'] ?? '';
+                if (!empty($username) && !isset($allModels[$username])) {
+                    $allModels[$username] = [
+                        'username' => $username,
+                        'id' => $model['id'] ?? $username,
+                        'display_name' => $model['display_name'] ?? $username,
+                        'ai_bio' => $model['ai_bio'] ?? '',
+                        'ai_bio_last_generated' => $model['ai_bio_last_generated'] ?? 0,
+                        'ai_bio_version' => $model['ai_bio_version'] ?? 0,
+                        'location' => $model['location'] ?? '',
+                        'gender' => $model['gender'] ?? '',
+                        'tags' => $model['tags'] ?? [],
+                        '_bio_source' => 'model_profiles'
+                    ];
+                }
             }
-            foreach ($allModels as &$m) {
-                $total++;
-                $hasBio = !empty($m['ai_bio']);
-                $with_bio += $hasBio ? 1 : 0;
-                $missing += $hasBio ? 0 : 1;
-                $lastGen = $m['ai_bio_last_generated'] ?? 0;
-                if ($hasBio && ($lastGen < $now - $stale_secs)) $stale++;
-                $m['_filter_stale']  = $hasBio && ($lastGen < $now - $stale_secs);
-                $m['_filter_fresh']  = $hasBio && ($lastGen >= $now - $stale_secs);
-                $m['_has_bio'] = $hasBio;
-            } unset($m);
+        }
+    }
+    
+    $allModels = array_values($allModels); // Convert to indexed array
+    
+    if (empty($allModels)) {
+        $error_msg = "No model data found. Make sure to generate bios or check that bio cache files exist.";
+    } else {
+        if ($search) {
+            $allModels = array_filter($allModels, function($m) use($search) {
+                foreach (['id','username','display_name'] as $field)
+                    if (!empty($m[$field]) && stripos($m[$field], $search) !== false) return true;
+                return false;
+            });
+        }
+        foreach ($allModels as &$m) {
+            $total++;
+            $hasBio = !empty($m['ai_bio']);
+            $with_bio += $hasBio ? 1 : 0;
+            $missing += $hasBio ? 0 : 1;
+            $lastGen = $m['ai_bio_last_generated'] ?? 0;
+            if ($hasBio && ($lastGen < $now - $stale_secs)) $stale++;
+            $m['_filter_stale']  = $hasBio && ($lastGen < $now - $stale_secs);
+            $m['_filter_fresh']  = $hasBio && ($lastGen >= $now - $stale_secs);
+            $m['_has_bio'] = $hasBio;
+        }
+        unset($m);
 
             // FILTER
             switch ($filter) {
@@ -81,7 +131,6 @@ if (!$error_msg) {
                 });
             }
             $profiles = array_values($allModels);
-        }
     }
 }
 $numPages = max(1, ceil(count($profiles) / $perPage));
@@ -349,6 +398,11 @@ document.addEventListener('DOMContentLoaded',function(){
         <div><span class="ai-status-label">Missing bio:</span> <?=number_format($missing)?></div>
         <div><span class="ai-status-label">Stale bios (&gt;<?=$stale_days?>d):</span> <span style="color:#d21919;"><?=number_format($stale)?></span></div>
     </div>
+    <div class="ai-status-stats" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e5e5;">
+        <div><span class="ai-status-label">Bio cache files:</span> <?=number_format($bio_stats['file_count'])?></div>
+        <div><span class="ai-status-label">Cache size:</span> <?=$bio_stats['total_size_mb']?> MB</div>
+        <div><span class="ai-status-label">Avg file size:</span> <?=round($bio_stats['avg_file_size'] / 1024, 1)?> KB</div>
+    </div>
     <form method="get" style="text-align:center;margin-top:7px;margin-bottom:3px;">
         <select name="filter" style="margin-right:9px;padding:7px 9px;border-radius:6px;font-size:1.06em;">
             <option value="all"    <?= $filter=='all'?'selected':'' ?>>All</option>
@@ -388,6 +442,9 @@ document.addEventListener('DOMContentLoaded',function(){
         $row_class = $is_missing ? "missing" : ($is_stale ? "stale" : "");
         $last = !empty($p['ai_bio_last_generated']) ? date('Y-m-d H:i', $p['ai_bio_last_generated']) : '<span style="color:#ba0;">Never</span>';
         $version = !empty($p['ai_bio_version']) ? "v".intval($p['ai_bio_version']) : "";
+        $bio_source = ($p['_bio_source'] ?? '') === 'bio_cache' ? 
+            '<span style="color:#10b981;font-size:0.8em;margin-left:5px;" title="From bio cache">💚</span>' : 
+            '<span style="color:#f59e0b;font-size:0.8em;margin-left:5px;" title="From model_profiles.json">⚠️</span>';
         $excerpt = !empty($p['ai_bio'])
             ? '<span class="table-bio-excerpt">'.htmlspecialchars(mb_substr($p['ai_bio'],0,80), ENT_QUOTES, 'UTF-8')
                 .(mb_strlen($p['ai_bio'])>80?"…":"").'</span>'
@@ -398,7 +455,7 @@ document.addEventListener('DOMContentLoaded',function(){
     ?>
     <tr class="<?=$row_class?>">
         <td><?=htmlspecialchars($p['id'] ?? $p['username'])?></td>
-        <td><?=htmlspecialchars($p['username'])?></td>
+        <td><?=htmlspecialchars($p['username'])?><?=$bio_source?></td>
         <td><?=htmlspecialchars($p['display_name'] ?? '')?></td>
         <td><?=$last?><?php if ($version): ?><br><span style="font-size:85%;color:#888;"><?=$version?></span><?php endif; ?></td>
         <td class="bio-td"><?=$excerpt?><?=$fullbio?></td>

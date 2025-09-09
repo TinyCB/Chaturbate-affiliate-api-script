@@ -42,18 +42,47 @@ foreach ($regions as $region) {
         }
     }
 }
-// If online, merge in ai_bio from archive if present
+// If online, merge in ai_bio from bio cache or archive fallback
 if ($model_online && !isset($model['ai_bio'])) {
-    $profile_file = $cache_dir . "model_profiles.json";
-    if (file_exists($profile_file)) {
-        $profiles = json_decode(file_get_contents($profile_file), true);
-        if (is_array($profiles)) {
-            foreach ($profiles as $arch) {
-                if (strtolower($arch['username']) === strtolower($model['username'])) {
+    // First try the new bio cache system
+    require_once 'bio-cache-manager.php';
+    $bio_cache = new BioCacheManager();
+    $bio_data = $bio_cache->getModelBio($model['username']);
+    
+    if ($bio_data && !empty($bio_data['ai_bio'])) {
+        $model['ai_bio'] = $bio_data['ai_bio'];
+        $model['ai_bio_last_generated'] = $bio_data['ai_bio_last_generated'] ?? null;
+        $model['ai_bio_version'] = $bio_data['ai_bio_version'] ?? null;
+    } else {
+        // Fallback to old model_profiles.json system for backwards compatibility
+        $profile_file = $cache_dir . "model_profiles.json";
+        if (file_exists($profile_file)) {
+            $profiles = json_decode(file_get_contents($profile_file), true);
+            if ($profiles === null) {
+                error_log("model.php: Could not load or parse $profile_file: " . json_last_error_msg());
+            } elseif (is_array($profiles)) {
+                // Handle both associative array (keyed by username) and numeric array formats
+                $profile_key = strtolower($model['username']);
+                if (isset($profiles[$profile_key])) {
+                    // Direct lookup for associative array
+                    $arch = $profiles[$profile_key];
                     if (!empty($arch['ai_bio'])) {
                         $model['ai_bio'] = $arch['ai_bio'];
+                        $model['ai_bio_last_generated'] = $arch['ai_bio_last_generated'] ?? null;
+                        $model['ai_bio_version'] = $arch['ai_bio_version'] ?? null;
                     }
-                    break;
+                } else {
+                    // Fallback to iteration for numeric array
+                    foreach ($profiles as $arch) {
+                        if (isset($arch['username']) && strtolower($arch['username']) === strtolower($model['username'])) {
+                            if (!empty($arch['ai_bio'])) {
+                                $model['ai_bio'] = $arch['ai_bio'];
+                                $model['ai_bio_last_generated'] = $arch['ai_bio_last_generated'] ?? null;
+                                $model['ai_bio_version'] = $arch['ai_bio_version'] ?? null;
+                            }
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -64,16 +93,41 @@ if(!$model) {
     $profile_file = $cache_dir . "model_profiles.json";
     if (file_exists($profile_file)) {
         $profiles = json_decode(file_get_contents($profile_file), true);
-        if (is_array($profiles)) {
-            foreach ($profiles as $m) {
-                if(strtolower($m['username']) === strtolower($username)) {
-                    $model = $m;
-                    $model_online = false;
-                    $last_online = isset($m['last_online']) ? (int)$m['last_online'] : 0;
-                    break;
+        if ($profiles === null) {
+            error_log("model.php: Could not load or parse $profile_file: " . json_last_error_msg());
+        } elseif (is_array($profiles)) {
+            // Handle both associative array (keyed by username) and numeric array formats
+            $profile_key = strtolower($username);
+            if (isset($profiles[$profile_key])) {
+                // Direct lookup for associative array
+                $model = $profiles[$profile_key];
+                $model_online = false;
+                $last_online = isset($model['last_online']) ? (int)$model['last_online'] : 0;
+            } else {
+                // Fallback to iteration for numeric array
+                foreach ($profiles as $m) {
+                    if(isset($m['username']) && strtolower($m['username']) === strtolower($username)) {
+                        $model = $m;
+                        $model_online = false;
+                        $last_online = isset($m['last_online']) ? (int)$m['last_online'] : 0;
+                        break;
+                    }
                 }
             }
         }
+    }
+}
+
+// 3. For offline models, try to load AI bio from bio cache
+if ($model && !$model_online && empty($model['ai_bio'])) {
+    require_once 'bio-cache-manager.php';
+    $bio_cache = new BioCacheManager();
+    $bio_data = $bio_cache->getModelBio($model['username']);
+    
+    if ($bio_data && !empty($bio_data['ai_bio'])) {
+        $model['ai_bio'] = $bio_data['ai_bio'];
+        $model['ai_bio_last_generated'] = $bio_data['ai_bio_last_generated'] ?? null;
+        $model['ai_bio_version'] = $bio_data['ai_bio_version'] ?? null;
     }
 }
 if(!$model) {
@@ -421,7 +475,8 @@ function getModelInsights($username, $cache_dir) {
     }
     $insights['activity_score'] = !empty($activity_factors) ? intval(array_sum($activity_factors) / count($activity_factors)) : 0;
     
-    $insights['consistency_score'] = min(100, ($insights['total_snapshots'] / 10) * 100);
+    // Note: This will be overridden with proper time-based calculation after enhanced analytics are loaded
+    $insights['consistency_score'] = 0;
     $insights['popular_tags'] = array_slice(array_count_values($all_tags), 0, 5, true);
     $insights['room_subjects'] = array_slice(array_reverse($all_subjects), 0, 3);
     
@@ -521,6 +576,12 @@ require_once 'model-analytics-enhanced.php';
 $online_activity = getOnlineActivity($username, $cache_dir);
 $model_insights = getModelInsights($username, $cache_dir);
 $enhanced_analytics = getEnhancedModelAnalytics($username, 30); // Last 30 days
+
+// Fix consistency score with proper time-based calculation from enhanced analytics
+if (isset($enhanced_analytics['historical']['consistency_score'])) {
+    $model_insights['consistency_score'] = round($enhanced_analytics['historical']['consistency_score'], 1);
+}
+
 $similar_models = getSimilarModels($username, $cache_dir, $model);
 $model_badges = getModelBadges($model, $model_insights);
 
@@ -1648,6 +1709,20 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   }
 }
+
+/* Enhanced tooltips for metrics */
+.metric-mini {
+  cursor: help;
+  transition: transform 0.2s ease;
+}
+
+.metric-mini:hover .metric-mini-label {
+  color: var(--primary-color);
+}
+
+.metric-mini[title]:hover {
+  transform: translateY(-2px);
+}
 </style>
 
 <!-- Full-Width Model Page -->
@@ -1822,25 +1897,25 @@ main {
             <h3 class="card-title">Performance Metrics</h3>
           </div>
           <div class="metrics-mini-grid">
-            <div class="metric-mini">
+            <div class="metric-mini" title="Highest viewer count ever recorded">
               <div class="metric-mini-value"><?= number_format($enhanced_analytics['historical']['peak_viewers_ever'] ?? $model_insights['peak_viewers']) ?></div>
-              <div class="metric-mini-label">Peak Viewers</div>
+              <div class="metric-mini-label">Peak Viewers ⓘ</div>
             </div>
-            <div class="metric-mini">
+            <div class="metric-mini" title="Lowest viewer count recorded (when online)">
               <div class="metric-mini-value"><?= number_format($enhanced_analytics['historical']['low_viewers_ever'] ?? 0) ?></div>
-              <div class="metric-mini-label">Low Viewers</div>
+              <div class="metric-mini-label">Low Viewers ⓘ</div>
             </div>
-            <div class="metric-mini">
+            <div class="metric-mini" title="Average viewers over the last 30 days">
               <div class="metric-mini-value"><?= number_format($enhanced_analytics['historical']['avg_viewers_30d'] ?? $model_insights['avg_viewers']) ?></div>
-              <div class="metric-mini-label">Avg Viewers</div>
+              <div class="metric-mini-label">Avg Viewers (30d) ⓘ</div>
             </div>
-            <div class="metric-mini">
+            <div class="metric-mini" title="Overall performance score based on viewers, consistency, and activity">
               <div class="metric-mini-value"><?= $enhanced_analytics['performance_score']['score'] ?>%</div>
-              <div class="metric-mini-label">Performance</div>
+              <div class="metric-mini-label">Performance ⓘ</div>
             </div>
-            <div class="metric-mini">
+            <div class="metric-mini" title="Streaming regularity: percentage of time online vs. 6 hours/day over 30 days">
               <div class="metric-mini-value"><?= $model_insights['consistency_score'] ?>%</div>
-              <div class="metric-mini-label">Consistency</div>
+              <div class="metric-mini-label">Consistency ⓘ</div>
             </div>
           </div>
         </div>
@@ -2047,21 +2122,21 @@ main {
             $day_names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
           ?>
           <div class="metrics-mini-grid">
-            <div class="metric-mini">
+            <div class="metric-mini" title="Recent streaming activity: percentage of time online in the last 7 days">
               <div class="metric-mini-value"><?= $pattern['activity_score'] ?>%</div>
-              <div class="metric-mini-label">Weekly Activity</div>
+              <div class="metric-mini-label">Weekly Activity ⓘ</div>
             </div>
-            <div class="metric-mini">
+            <div class="metric-mini" title="Day of the week when most streaming happens">
               <div class="metric-mini-value"><?= $day_names[$pattern['best_day']] ?? 'N/A' ?></div>
-              <div class="metric-mini-label">Best Day</div>
+              <div class="metric-mini-label">Most Active Day ⓘ</div>
             </div>
-            <div class="metric-mini">
+            <div class="metric-mini" title="Hour of the day when most streaming happens">
               <div class="metric-mini-value"><?= sprintf('%02d:00', $pattern['best_hour']) ?></div>
-              <div class="metric-mini-label">Peak Hour</div>
+              <div class="metric-mini-label">Peak Hour ⓘ</div>
             </div>
-            <div class="metric-mini">
+            <div class="metric-mini" title="Number of separate streaming sessions in the last 7 days">
               <div class="metric-mini-value"><?= $pattern['total_sessions'] ?></div>
-              <div class="metric-mini-label">Sessions (7d)</div>
+              <div class="metric-mini-label">Sessions (7d) ⓘ</div>
             </div>
           </div>
           <?php else: ?>

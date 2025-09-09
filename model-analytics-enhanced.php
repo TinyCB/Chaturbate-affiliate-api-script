@@ -15,9 +15,20 @@ function getEnhancedModelAnalytics($username, $days = 30) {
     $extender = new SimpleAnalyticsExtender();
     $historical = $extender->getModelAnalytics($username);
     
-    // Get current insights (from existing function)
+    // Get current insights (from existing function if available)
     $cache_dir = __DIR__ . '/cache/';
-    $current = getModelInsights($username, $cache_dir);
+    $current = function_exists('getModelInsights') ? getModelInsights($username, $cache_dir) : [];
+    
+    // Default current data if getModelInsights is not available
+    if (empty($current)) {
+        $current = [
+            'peak_viewers' => $historical['peak_viewers_ever'] ?? 0,
+            'avg_viewers' => $historical['avg_viewers_30d'] ?? 0,
+            'total_snapshots' => $historical['total_snapshots'] ?? 0,
+            'consistency_score' => $historical['consistency_score'] ?? 0,
+            'activity_score' => 0
+        ];
+    }
     
     // If no historical data, return current only
     if (!$historical) {
@@ -25,7 +36,7 @@ function getEnhancedModelAnalytics($username, $days = 30) {
             'current' => $current,
             'historical' => null,
             'trends' => ['viewer_trend' => 'stable', 'trend_indicators' => []],
-            'performance_score' => ['score' => $current['activity_score'], 'grade' => 'N/A']
+            'performance_score' => ['score' => $current['activity_score'] ?? 0, 'grade' => 'N/A']
         ];
     }
     

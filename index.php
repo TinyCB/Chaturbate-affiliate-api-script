@@ -40,6 +40,16 @@ window.SLUG_TO_GENDER = {};
 for (const key in window.GENDER_SLUGS) window.SLUG_TO_GENDER[window.GENDER_SLUGS[key]] = key;
 </script>
 <style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
 #main-flex-wrap {
   display: flex;
   align-items: flex-start;
@@ -315,7 +325,13 @@ a.tag-cb.subject-tag:focus {
   <div id="discovery-highlights" style="margin: 16px 8px; display: none; width: calc(100% - 16px); max-width: calc(100% - 16px); box-sizing: border-box; overflow-x: hidden;">
     <!-- Stats Dashboard Header -->
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
-      <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700;">🔍 Discovery Hub</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h2 style="margin: 0; font-size: 24px; font-weight: 700;">🔍 Discovery Hub</h2>
+        <span id="auto-refresh-indicator" style="font-size: 11px; opacity: 0.7; display: flex; align-items: center; gap: 4px;">
+          <span style="display: inline-block; width: 6px; height: 6px; background: #4caf50; border-radius: 50%; animation: pulse 2s infinite;"></span>
+          Auto-updating
+        </span>
+      </div>
       <p style="margin: 0; opacity: 0.9; font-size: 14px;">Discover amazing models you might have missed</p>
     </div>
 
@@ -340,11 +356,71 @@ a.tag-cb.subject-tag:focus {
     </div>
 
     <!-- Performance Insights -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px;">
       <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
         <h3 style="margin: 0 0 16px 0; color: #333; font-size: 18px;">🏆 Top Performers</h3>
-        <div id="top-performers" style="display: flex; flex-direction: column; gap: 12px;">
+        <div id="top-performers" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
           <!-- Top performers will be populated here -->
+        </div>
+      </div>
+      
+      <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 16px 0; color: #ff6b6b; font-size: 18px;">🎯 Almost There</h3>
+        <div id="almost-there-widget" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+            <div style="width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid #ccc; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+            Loading models...
+          </div>
+        </div>
+      </div>
+      
+      <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 16px 0; color: #54a0ff; font-size: 18px;">🔥 Close to Goal</h3>
+        <div id="close-to-goal-widget" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+            <div style="width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid #ccc; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+            Loading models...
+          </div>
+        </div>
+      </div>
+      
+      <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 16px 0; color: #5f27cd; font-size: 18px;">💎 Big Goals</h3>
+        <div id="big-goals-widget" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+            <div style="width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid #ccc; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+            Loading models...
+          </div>
+        </div>
+      </div>
+      
+      <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 16px 0; color: #4ecdc4; font-size: 18px;">🌟 New Goals</h3>
+        <div id="new-goals-widget" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+            <div style="width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid #ccc; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+            Loading models...
+          </div>
+        </div>
+      </div>
+      
+      <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 16px 0; color: #ff9ff3; font-size: 18px;">⚡ Fast Progress</h3>
+        <div id="fast-progress-widget" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+            <div style="width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid #ccc; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+            Loading models...
+          </div>
+        </div>
+      </div>
+      
+      <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h3 style="margin: 0 0 16px 0; color: #10b981; font-size: 18px;">🏆 Goal Completed</h3>
+        <div id="goal-completed-widget" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+            <div style="width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid #ccc; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+            Loading models...
+          </div>
         </div>
       </div>
       
@@ -378,7 +454,7 @@ a.tag-cb.subject-tag:focus {
     <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 style="margin: 0; color: #333; font-size: 18px;">🏷️ Popular Tags</h3>
-        <button onclick="refreshPopularTags()" style="background: none; border: 1px solid #333; color: #333; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+        <span id="tags-status" style="font-size: 11px; color: #666;">Live updating...</span>
       </div>
       <p style="margin: 0 0 16px 0; color: #666; font-size: 13px;">Click any tag to discover models with similar interests</p>
       <div id="popular-tags-carousel" style="position: relative;">
@@ -444,7 +520,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="trending-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #ff4757; font-size: 16px;">🔥 Trending Now</h3>
-          <button onclick="refreshDiscoverySection('trending')" style="background: none; border: 1px solid #ff4757; color: #ff4757; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="trending-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="trending-grid"></div>
       </div>
@@ -452,7 +528,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="new-models-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #2ed573; font-size: 16px;">🌟 New Models</h3>
-          <button onclick="refreshDiscoverySection('new-models')" style="background: none; border: 1px solid #2ed573; color: #2ed573; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="new-models-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="new-models-grid"></div>
       </div>
@@ -460,7 +536,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="just-live-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #00d4ff; font-size: 16px;">⚡ Just Went Live</h3>
-          <button onclick="refreshDiscoverySection('just-live')" style="background: none; border: 1px solid #00d4ff; color: #00d4ff; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="just-live-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="just-live-grid"></div>
       </div>
@@ -468,7 +544,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="hidden-gems-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #9b59b6; font-size: 16px;">💎 Hidden Gems</h3>
-          <button onclick="refreshDiscoverySection('hidden-gems')" style="background: none; border: 1px solid #9b59b6; color: #9b59b6; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="hidden-gems-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="hidden-gems-grid"></div>
       </div>
@@ -476,7 +552,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="high-energy-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #ff6b35; font-size: 16px;">⚡ High Energy</h3>
-          <button onclick="refreshDiscoverySection('high-energy')" style="background: none; border: 1px solid #ff6b35; color: #ff6b35; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="high-energy-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="high-energy-grid"></div>
       </div>
@@ -484,7 +560,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="marathon-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #e74c3c; font-size: 16px;">🎯 Marathon Streamers (5+ hours)</h3>
-          <button onclick="refreshDiscoverySection('marathon')" style="background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="marathon-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="marathon-grid"></div>
       </div>
@@ -492,7 +568,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="international-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #6c5ce7; font-size: 16px;">🌍 International Models</h3>
-          <button onclick="refreshDiscoverySection('international')" style="background: none; border: 1px solid #6c5ce7; color: #6c5ce7; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="international-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="international-grid"></div>
       </div>
@@ -500,7 +576,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="interactive-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #e84393; font-size: 16px;">🎪 Interactive Shows</h3>
-          <button onclick="refreshDiscoverySection('interactive')" style="background: none; border: 1px solid #e84393; color: #e84393; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="interactive-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="interactive-grid"></div>
       </div>
@@ -508,7 +584,7 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="couples-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #fd79a8; font-size: 16px;">👫 Couples & Groups</h3>
-          <button onclick="refreshDiscoverySection('couples')" style="background: none; border: 1px solid #fd79a8; color: #fd79a8; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="couples-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="couples-grid"></div>
       </div>
@@ -516,10 +592,11 @@ a.tag-cb.subject-tag:focus {
       <div class="discovery-section" id="mature-section" style="background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0; color: #a29bfe; font-size: 16px;">🍷 Mature & Experienced</h3>
-          <button onclick="refreshDiscoverySection('mature')" style="background: none; border: 1px solid #a29bfe; color: #a29bfe; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Refresh</button>
+          <span id="mature-status" style="font-size: 11px; color: #666;">Live updating...</span>
         </div>
         <div class="discovery-grid" id="mature-grid"></div>
       </div>
+
     </div>
   </div>
 
@@ -602,33 +679,17 @@ const FILTERS = {
 let currentPage = FILTERS.page || 1;
 function toggleSidebar() {
   var sidebar = document.getElementById('filter-sidebar');
-  var backdrop = document.getElementById('sidebar-backdrop');
-  var isMobile = window.innerWidth <= 768;
   
   if (!sidebar) return;
   
   if (sidebar.classList.contains('open')) {
     sidebar.classList.remove('open');
-    if (backdrop && !isMobile) backdrop.classList.remove('active');
-    document.body.style.overflow = '';
   } else {
     sidebar.classList.add('open');
-    if (backdrop && !isMobile) backdrop.classList.add('active');
-    // Don't manipulate body scroll on mobile - it can cause issues
-    if (!isMobile) {
-      document.body.style.overflow = 'hidden';
-    }
   }
 }
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Only create backdrop on desktop
-    if (window.innerWidth > 768) {
-      var backdrop = document.createElement('div');
-      backdrop.id = 'sidebar-backdrop';
-      backdrop.className = 'sidebar-backdrop';
-      backdrop.onclick = toggleSidebar;
-      document.body.appendChild(backdrop);
-    }
     
     // Set sidebar state based on screen size
     var sidebar = document.getElementById('filter-sidebar');
@@ -650,25 +711,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle window resize to ensure proper behavior
     window.addEventListener('resize', function() {
         var sidebar = document.getElementById('filter-sidebar');
-        var backdrop = document.getElementById('sidebar-backdrop');
         var isMobile = window.innerWidth <= 768;
         
-        if (sidebar && backdrop) {
-            if (!isMobile) {
-                // On desktop, show backdrop when sidebar is open
-                if (sidebar.classList.contains('open')) {
-                    backdrop.classList.add('active');
-                } else {
-                    backdrop.classList.remove('active');
-                }
-                document.body.style.overflow = '';
-            } else {
-                // On mobile, never show backdrop and don't manipulate body scroll
-                backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            }
+        if (sidebar && isMobile) {
+            // Close sidebar on mobile when switching from desktop
+            sidebar.classList.remove('open');
         }
     });
+    
     document.querySelectorAll('.filter-chip[data-gender]').forEach(el=>{
         if(FILTERS.gender.includes(el.dataset.gender)) el.classList.add('selected');
     });
@@ -1811,6 +1861,8 @@ function renderDiscoverySection(models, sectionId, limit = 24) {
   });
 }
 
+// No caching for analytics - always fetch fresh data for live goal updates
+
 function showDiscoveryHighlights() {
   const highlights = document.getElementById('discovery-highlights');
   const showBtn = document.getElementById('show-stats');
@@ -1821,6 +1873,9 @@ function showDiscoveryHighlights() {
     
     // Store discovery state in sessionStorage
     sessionStorage.setItem('discoveryHubActive', 'true');
+    
+    // Start auto-refresh for live updates
+    startDiscoveryAutoRefresh();
     
     // Hide main model grid, sidebar filters, and header elements when in discovery mode
     document.getElementById('model-grid').style.display = 'none';
@@ -1845,6 +1900,7 @@ function showDiscoveryHighlights() {
         
         // Populate performance insights using ALL cached data
         populateTopPerformers(allCachedModels);
+        populateGoalWidgets(allCachedModels);
         populateActivityTrends(allCachedModels);
         
         // Populate category breakdown using ALL cached data
@@ -1867,6 +1923,7 @@ function showDiscoveryHighlights() {
       if (allModels.length > 0) {
         populateStatsOverview(allModels);
         populateTopPerformers(allModels);
+        populateGoalWidgets(allModels);
         populateActivityTrends(allModels);
         populateCategoryBreakdown(allModels);
         
@@ -1882,6 +1939,9 @@ function showDiscoveryHighlights() {
     
     // Remove discovery state from sessionStorage
     sessionStorage.removeItem('discoveryHubActive');
+    
+    // Stop auto-refresh when hiding discovery hub
+    stopDiscoveryAutoRefresh();
     
     // Show main model grid, sidebar filters, and header elements when discovery is hidden
     document.getElementById('model-grid').style.display = 'grid';
@@ -1928,23 +1988,511 @@ function populateStatsOverview(models) {
 function populateTopPerformers(models) {
   const topModels = [...models]
     .sort((a, b) => (parseInt(b.num_users) || 0) - (parseInt(a.num_users) || 0))
-    .slice(0, 5);
+    .slice(0, 10);
+  
+  const totalViewers = topModels.reduce((sum, model) => sum + (parseInt(model.num_users) || 0), 0);
+  const avgViewers = totalViewers / Math.max(topModels.length, 1);
   
   const container = document.getElementById('top-performers');
-  container.innerHTML = topModels.map((model, index) => `
-    <div style="display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 8px; background: ${index === 0 ? '#fff3cd' : '#f8f9fa'}; cursor: pointer; transition: transform 0.2s ease;" 
-         onclick="window.open('/model/${encodeURIComponent(model.username)}', '_blank');" 
-         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)';" 
-         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-      <span style="font-weight: 700; color: ${index === 0 ? '#b8860b' : '#666'};">#${index + 1}</span>
-      <img src="${model.image_url}" alt="${model.username}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-      <div style="flex: 1;">
-        <div style="font-weight: 600; font-size: 14px; color: #333;">${model.username}</div>
-        <div style="font-size: 12px; color: #666;">${(parseInt(model.num_users) || 0).toLocaleString()} viewers</div>
-      </div>
-      ${model.is_hd ? '<span style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">HD</span>' : ''}
+  container.innerHTML = `
+    <div style="margin-bottom: 12px; padding: 8px; background: #f8f9fa; border-radius: 6px; text-align: center;">
+      <div style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 4px;">Top 10 Summary</div>
+      <div style="font-size: 12px; color: #666;">Total: ${totalViewers.toLocaleString()} viewers | Avg: ${Math.round(avgViewers).toLocaleString()}</div>
     </div>
-  `).join('');
+    ${topModels.map((model, index) => `
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: ${index < 3 ? (index === 0 ? '#fff3cd' : index === 1 ? '#e8f5e8' : '#f0e8ff') : '#f8f9fa'}; cursor: pointer; transition: transform 0.2s ease;" 
+           onclick="window.open('/model/${encodeURIComponent(model.username)}', '_blank');" 
+           onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';" 
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <span style="font-weight: 700; color: ${index < 3 ? (index === 0 ? '#b8860b' : index === 1 ? '#4CAF50' : '#9C27B0') : '#666'}; font-size: 12px; min-width: 18px;">#${index + 1}</span>
+        <img src="${model.image_url}" alt="${model.username}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 600; font-size: 12px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${model.username}</div>
+          <div style="font-size: 11px; color: #666;">${(parseInt(model.num_users) || 0).toLocaleString()}</div>
+        </div>
+        ${model.is_hd ? '<span style="background: #4CAF50; color: white; padding: 1px 4px; border-radius: 3px; font-size: 9px;">HD</span>' : ''}
+      </div>
+    `).join('')}
+  `;
+}
+
+function populateGoalWidgets(models) {
+  console.log('populateGoalWidgets called with', models.length, 'models');
+  
+  // Get models with analytics data
+  const enrichedModels = models.filter(m => m._analytics?.actual_goals?.current_goal);
+  console.log('Found', enrichedModels.length, 'models with goal data');
+  
+  // Debug: Check what goal data looks like
+  if (enrichedModels.length > 0) {
+    const sampleGoal = enrichedModels[0]._analytics?.actual_goals?.current_goal;
+    console.log('Sample goal data structure:', sampleGoal);
+    console.log('Available goal fields:', Object.keys(sampleGoal || {}));
+  }
+  
+  // Calculate goal categories
+  const almostThere = enrichedModels.filter(m => {
+    const goal = m._analytics?.actual_goals?.current_goal;
+    if (!goal || !goal.tokens_remaining || goal.tokens_remaining <= 0) return false;
+    const initialTokens = goal.initial_tokens || 0;
+    if (initialTokens <= 0) return false;
+    const progress = ((initialTokens - goal.tokens_remaining) / initialTokens) * 100;
+    return progress > 80 && (m.num_users || 0) > 3;
+  }).slice(0, 10);
+  
+  const closeToGoal = enrichedModels.filter(m => {
+    const goal = m._analytics?.actual_goals?.current_goal;
+    if (!goal || !goal.tokens_remaining || goal.tokens_remaining <= 0) return false;
+    const initialTokens = goal.initial_tokens || 0;
+    if (initialTokens <= 0) return false;
+    const progress = ((initialTokens - goal.tokens_remaining) / initialTokens) * 100;
+    return progress > 50 && progress <= 80 && (m.num_users || 0) > 5;
+  }).slice(0, 10);
+  
+  const bigGoals = enrichedModels.filter(m => {
+    const goal = m._analytics?.actual_goals?.current_goal;
+    return goal && (goal.initial_tokens || 0) > 1000 && (m.num_users || 0) > 10;
+  }).slice(0, 10);
+  
+  const newGoals = enrichedModels.filter(m => {
+    const goal = m._analytics?.actual_goals?.current_goal;
+    if (!goal || !goal.tokens_remaining || goal.tokens_remaining <= 0) return false;
+    const initialTokens = goal.initial_tokens || 0;
+    if (initialTokens <= 0) return false;
+    const progress = ((initialTokens - goal.tokens_remaining) / initialTokens) * 100;
+    return progress < 10 && (m.num_users || 0) > 3;
+  }).slice(0, 10);
+  
+  const fastProgress = enrichedModels.filter(m => {
+    const goal = m._analytics?.actual_goals?.current_goal;
+    const velocity = goal?.velocity || goal?.token_velocity || 0;
+    const viewers = (m.num_users || 0);
+    
+    return goal && velocity > 5 && viewers > 5;
+  }).slice(0, 10);
+  
+  // Goal Completed - models that recently finished goals and are doing shows
+  // Filter models with recent goal completions
+  const filteredModels = models.filter(m => {
+    const analytics = m._analytics?.actual_goals;
+    if (!analytics) return false;
+    
+    // Debug logging for goal completed detection
+    console.log(`Checking ${m.username} for goal completion:`, {
+      hasCompletedGoals: !!(analytics.completed_goals && analytics.completed_goals.length > 0),
+      completedGoalsLength: analytics.completed_goals?.length || 0,
+      hasCurrentGoal: !!analytics.current_goal,
+      viewers: m.num_users || 0,
+      completedGoals: analytics.completed_goals
+    });
+    
+    // Check if they have recent completed goals - removed all other criteria for debugging
+    const hasRecentCompletion = analytics.completed_goals && analytics.completed_goals.length > 0;
+    
+    // For debugging - only check 5-minute window, no other criteria
+    if (hasRecentCompletion) {
+      // Check if the most recent goal was completed recently (within last 5 minutes)
+      const recentGoals = analytics.completed_goals.filter(goal => {
+        if (goal.completed_at) {
+          const completedTime = goal.completed_at * 1000; // Convert to milliseconds
+          const fiveMinutesAgo = Date.now() - (5 * 60 * 1000); // 5 minutes ago
+          const isRecent = completedTime > fiveMinutesAgo;
+          
+          // Debug logging
+          const minutesAgo = (Date.now() - completedTime) / 1000 / 60;
+          console.log(`${m.username} goal completed ${minutesAgo.toFixed(1)} minutes ago - Recent: ${isRecent}`);
+          
+          return isRecent;
+        }
+        return false;
+      });
+      
+      console.log(`${m.username} recent goals:`, recentGoals.length);
+      return recentGoals.length > 0;
+    }
+    
+    return false;
+  });
+  
+  // Deduplicate by username - keep only the latest goal completion for each model
+  const uniqueModelsMap = filteredModels.reduce((uniqueModels, model) => {
+    const username = model.username;
+    const analytics = model._analytics?.actual_goals;
+    
+    if (analytics?.completed_goals) {
+      // Get the most recent completed goal for this model
+      const mostRecentGoal = analytics.completed_goals
+        .filter(g => g.completed_at)
+        .sort((a, b) => (b.completed_at || 0) - (a.completed_at || 0))[0];
+      
+      // Check if we already have this model
+      const existingModel = uniqueModels.get(username);
+      
+      if (!existingModel || !existingModel._mostRecentGoalTime || 
+          (mostRecentGoal?.completed_at || 0) > existingModel._mostRecentGoalTime) {
+        // Add timestamp for comparison and keep this model
+        model._mostRecentGoalTime = mostRecentGoal?.completed_at || 0;
+        uniqueModels.set(username, model);
+        console.log(`Updated ${username} with goal completed at ${mostRecentGoal?.completed_at}`);
+      } else {
+        console.log(`Skipped duplicate ${username} - existing goal is more recent`);
+      }
+    }
+    
+    return uniqueModels;
+  }, new Map());
+  
+  // Convert Map back to array and sort
+  const goalCompleted = Array.from(uniqueModelsMap.values()).sort((a, b) => {
+    // Sort by performance metrics - highest performing goal completers first
+    const aViewers = a.num_users || 0;
+    const bViewers = b.num_users || 0;
+    const aHD = a.is_hd ? 1000 : 0; // HD bonus
+    const bHD = b.is_hd ? 1000 : 0;
+    const aOnlineTime = (a.seconds_online || 0) / 3600; // Hours online
+    const bOnlineTime = (b.seconds_online || 0) / 3600;
+    
+    // Calculate performance score: viewers + HD bonus + time bonus
+    const aScore = aViewers + aHD + (aOnlineTime * 50);
+    const bScore = bViewers + bHD + (bOnlineTime * 50);
+    
+    return bScore - aScore; // Descending order
+  }).slice(0, 5); // Only show top 5 goal completers
+  
+  console.log('Goal completed models found:', goalCompleted.length);
+  
+  // Populate individual widgets
+  populateGoalWidget('almost-there-widget', almostThere, 'Almost There', '#ff6b6b');
+  populateGoalWidget('close-to-goal-widget', closeToGoal, 'Close to Goal', '#54a0ff');
+  populateGoalWidget('big-goals-widget', bigGoals, 'Big Goals', '#5f27cd');
+  populateGoalWidget('new-goals-widget', newGoals, 'New Goals', '#4ecdc4');
+  populateGoalWidget('fast-progress-widget', fastProgress, 'Fast Progress', '#ff9ff3');
+  populateGoalWidget('goal-completed-widget', goalCompleted, 'Goal Completed', '#10b981');
+}
+
+function getTimeAgo(date) {
+  const now = Date.now();
+  const time = date.getTime();
+  const diff = now - time;
+  
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  } else if (hours < 24) {
+    return `${hours}h ago`;
+  } else {
+    return `${Math.floor(hours / 24)}d ago`;
+  }
+}
+
+function createGoalCompletedCard(model, recentGoal, timeAgo, color) {
+  const age = model.age || '?';
+  const genderInfo = {
+    'f': { icon: 'F', color: '#e91e63', label: 'Female' },
+    'm': { icon: 'M', color: '#2196f3', label: 'Male' },
+    't': { icon: 'T', color: '#9c27b0', label: 'Trans' },
+    'c': { icon: 'C', color: '#ff5722', label: 'Couple' }
+  };
+  const gender = genderInfo[model.gender] || { icon: '?', color: '#9e9e9e', label: 'Unknown' };
+  
+  let goalText = 'Show completed';
+  if (recentGoal?.goal_text) {
+    goalText = recentGoal.goal_text.length > 30 ? 
+      recentGoal.goal_text.substring(0, 27) + '...' : 
+      recentGoal.goal_text;
+  }
+  
+  return `
+    <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; border-radius: 8px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); cursor: pointer; transition: all 0.2s ease; margin-bottom: 6px; border: 1px solid #10b981; box-shadow: 0 1px 3px rgba(16, 185, 129, 0.15);" 
+         onclick="window.open('/model/${encodeURIComponent(model.username)}', '_blank');" 
+         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)'; this.style.borderColor='#059669';" 
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(16, 185, 129, 0.15)'; this.style.borderColor='#10b981';">
+      <div style="position: relative;">
+        <img src="${model.image_url}" alt="${model.username}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 0 2px #10b981;">
+        <div style="position: absolute; bottom: -3px; right: -3px; background: ${gender.color}; color: white; width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-family: Arial, sans-serif;" title="${gender.label}">${gender.icon}</div>
+        <div style="position: absolute; top: -3px; left: -3px; background: #10b981; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);" title="Goal Completed">✓</div>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+          <div style="display: flex; flex-direction: column; min-width: 0; flex: 1;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: 600; color: #1f2937; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${model.username}</span>
+              <span style="background: #10b981; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600;">SHOW</span>
+            </div>
+            <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">
+              ${age} • ${model.num_users || 0} viewers
+            </div>
+          </div>
+        </div>
+        <div style="font-size: 11px; color: #059669; margin-bottom: 4px; font-style: italic;">
+          "${goalText}" completed ${timeAgo}
+        </div>
+        <div style="font-size: 10px; color: #10b981; font-weight: 600;">
+          🎉 Show in progress
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function populateGoalWidget(containerId, models, title, color) {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(containerId + ' container not found');
+    return;
+  }
+
+  // Check if this is initial load (no analytics data processed yet)
+  const hasAnalyticsData = window.cachedModelsForDiscovery && 
+    window.cachedModelsForDiscovery.some(m => m._analytics);
+
+  if (models.length === 0) {
+    if (!hasAnalyticsData) {
+      // Still loading analytics data
+      container.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+          <div style="margin-bottom: 8px;">
+            <div style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid ${color}; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+          </div>
+          <div>Loading ${title.toLowerCase()}...</div>
+          <div style="font-size: 11px; margin-top: 4px; color: #999;">Analyzing goal data</div>
+        </div>
+        <style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      `;
+    } else {
+      // Analytics loaded but no models in this category
+      container.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+          <div style="margin-bottom: 8px; font-size: 18px; opacity: 0.3;">💤</div>
+          <div>No ${title.toLowerCase()} right now</div>
+          <div style="font-size: 11px; margin-top: 4px; color: #999;">Check back later</div>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  // Special handling for goal completed widget
+  let summaryHtml;
+  if (containerId === 'goal-completed-widget') {
+    summaryHtml = `
+      <div style="margin-bottom: 12px; padding: 8px; background: #f0fdf4; border: 1px solid #10b981; border-radius: 6px; text-align: center;">
+        <div style="font-size: 14px; font-weight: 600; color: #10b981; margin-bottom: 4px;">🏆 ${title} (${models.length})</div>
+        <div style="font-size: 12px; color: #059669;">Performers who completed goals</div>
+      </div>
+    `;
+  } else {
+    const totalTokens = models.reduce((sum, model) => {
+      const goal = model._analytics?.actual_goals?.current_goal;
+      return sum + (goal?.tokens_remaining || 0);
+    }, 0);
+    const avgTokens = Math.round(totalTokens / models.length);
+    
+    summaryHtml = `
+      <div style="margin-bottom: 12px; padding: 8px; background: #f8f9fa; border-radius: 6px; text-align: center;">
+        <div style="font-size: 14px; font-weight: 600; color: #333; margin-bottom: 4px;">${title} (${models.length})</div>
+        <div style="font-size: 12px; color: #666;">Avg: ${avgTokens} tokens remaining</div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = summaryHtml +
+    models.map((model, index) => {
+      // Handle goal completed models differently
+      if (containerId === 'goal-completed-widget') {
+        // For goal completed models, get the most recent completed goal
+        const allCompletedGoals = model._analytics?.actual_goals?.completed_goals || [];
+        const recentGoal = allCompletedGoals
+          .filter(g => g.completed_at)
+          .sort((a, b) => (b.completed_at || 0) - (a.completed_at || 0))[0];
+        const completedTime = recentGoal?.completed_at ? new Date(recentGoal.completed_at * 1000) : null;
+        const timeAgo = completedTime ? getTimeAgo(completedTime) : '';
+        
+        return createGoalCompletedCard(model, recentGoal, timeAgo, color);
+      }
+      
+      // Regular goal widget handling
+      const goal = model._analytics?.actual_goals?.current_goal;
+      const initialTokens = goal?.initial_tokens || 0;
+      const tokensRemaining = goal?.tokens_remaining || 0;
+      const progress = initialTokens > 0 ? ((initialTokens - tokensRemaining) / initialTokens) * 100 : 0;
+      const velocity = goal?.velocity || goal?.token_velocity || 0;
+      
+      const age = model.age || '?';
+      const genderInfo = {
+        'f': { icon: 'F', color: '#e91e63', label: 'Female' },
+        'm': { icon: 'M', color: '#2196f3', label: 'Male' },
+        't': { icon: 'T', color: '#9c27b0', label: 'Trans' },
+        'c': { icon: 'C', color: '#ff5722', label: 'Couple' }
+      };
+      const gender = genderInfo[model.gender] || { icon: '?', color: '#9e9e9e', label: 'Unknown' };
+      
+      // Extract goal subject from raw_subject or room_subject
+      let goalSubject = '';
+      if (goal?.goal_text) {
+        goalSubject = goal.goal_text;
+      } else if (model.room_subject) {
+        // Try to extract goal from room subject
+        const goalMatch = model.room_subject.match(/goal[:\s]*([^#]+?)(?:\s*#|$)/i);
+        if (goalMatch) {
+          goalSubject = goalMatch[1].trim();
+        } else {
+          // Fallback to first part of room subject
+          goalSubject = model.room_subject.split(/[#-]/)[0].trim();
+        }
+      }
+      
+      // Truncate goal subject if too long
+      if (goalSubject.length > 35) {
+        goalSubject = goalSubject.substring(0, 32) + '...';
+      }
+      
+      return `
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s ease; margin-bottom: 6px; border: 1px solid #e8e8e8; box-shadow: 0 1px 3px rgba(0,0,0,0.08);" 
+             onclick="window.open('/model/${encodeURIComponent(model.username)}', '_blank');" 
+             onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'; this.style.borderColor='${color}';" 
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.08)'; this.style.borderColor='#e8e8e8';">
+          <div style="position: relative;">
+            <img src="${model.image_url}" alt="${model.username}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 0 2px ${color};">
+            <div style="position: absolute; bottom: -3px; right: -3px; background: ${gender.color}; color: white; width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-family: Arial, sans-serif;" title="${gender.label}">${gender.icon}</div>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+              <div style="display: flex; flex-direction: column; min-width: 0; flex: 1;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <div style="font-weight: 700; font-size: 13px; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${model.username}</div>
+                  <span style="font-size: 10px; color: #7f8c8d; background: #ecf0f1; padding: 2px 6px; border-radius: 10px; font-weight: 600;">${age}</span>
+                </div>
+                ${goalSubject ? `<div style="font-size: 10px; color: #34495e; line-height: 1.3; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic;" title="${goalSubject}">"${goalSubject}"</div>` : ''}
+              </div>
+              <div style="text-align: right; margin-left: 8px; min-width: 50px;">
+                <div style="font-size: 12px; color: #2c3e50; font-weight: 700;">${(parseInt(model.num_users) || 0)}</div>
+                <div style="font-size: 9px; color: #95a5a6; font-weight: 500;">viewers</div>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div style="font-size: 9px; color: #7f8c8d; font-weight: 600;">${Math.round(progress)}% complete</div>
+              <div style="font-size: 9px; color: #7f8c8d; font-weight: 600;">${tokensRemaining} tokens left</div>
+            </div>
+            <div style="margin-bottom: 6px;">
+              <div style="background: #ecf0f1; height: 6px; border-radius: 3px; overflow: hidden;">
+                <div style="background: ${color}; height: 100%; width: ${Math.min(progress, 100)}%; transition: width 0.3s ease;"></div>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px;">
+              <div style="display: flex; gap: 6px;">
+                ${velocity > 0 ? `<span style="background: #27ae60; color: white; padding: 2px 6px; border-radius: 3px; font-weight: 600;">${Math.round(velocity)} tok/min</span>` : '<span style="color: #95a5a6; font-size: 8px;">No velocity data</span>'}
+              </div>
+              <div style="display: flex; gap: 4px;">
+                ${model.is_hd ? '<span style="background: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-weight: 600;">HD</span>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+}
+
+function filterDiscoveryByGoalType(goalType) {
+  if (!window.cachedModelsForDiscovery) return;
+
+  // Get filtered models based on goal type
+  const filtered = window.cachedModelsForDiscovery.filter(m => {
+    if (!m._analytics?.actual_goals?.current_goal) return false;
+    
+    const goal = m._analytics.actual_goals.current_goal;
+    const initialTokens = goal.initial_tokens || 0;
+    const tokensRemaining = goal.tokens_remaining || 0;
+    const progress = initialTokens > 0 ? ((initialTokens - tokensRemaining) / initialTokens) * 100 : 0;
+    const viewers = parseInt(m.num_users) || 0;
+    const velocity = goal.velocity || 0;
+    
+    switch(goalType) {
+      case 'almost-there':
+        return tokensRemaining > 0 && progress > 80 && viewers > 3;
+      case 'close-to-goal':
+        return tokensRemaining > 0 && progress > 50 && progress <= 80 && viewers > 5;
+      case 'big-goals':
+        return initialTokens > 1000 && viewers > 10;
+      case 'new-goals':
+        return tokensRemaining > 0 && progress < 10 && viewers > 3;
+      case 'fast-progress':
+        return velocity > 5 && viewers > 5;
+      default:
+        return false;
+    }
+  });
+
+  // Hide discovery sections and show filtered models in main grid
+  const discoveryHighlights = document.getElementById('discovery-highlights');
+  if (discoveryHighlights) {
+    discoveryHighlights.style.display = 'none';
+    sessionStorage.removeItem('discoveryHubActive');
+    const showBtn = document.getElementById('show-stats');
+    if (showBtn) showBtn.textContent = '🔍 Discovery Hub';
+  }
+
+  // Show main grid and populate with filtered models
+  const modelGrid = document.getElementById('model-grid');
+  const pagination = document.querySelector('.pagination-wrapper');
+  const filterSidebar = document.getElementById('filter-sidebar');
+  const searchSection = document.querySelector('.search-section');
+  const headerControls = document.querySelector('.header-controls');
+  
+  if (modelGrid) modelGrid.style.display = 'block';
+  if (pagination) pagination.style.display = 'block';
+  if (filterSidebar) filterSidebar.classList.add('open');
+  if (searchSection) searchSection.style.display = 'block';
+  if (headerControls) headerControls.style.display = 'flex';
+
+  // Add goal type indicator
+  const goalTypeNames = {
+    'almost-there': 'Almost There (80%+ complete)',
+    'close-to-goal': 'Close to Goal (50-80% complete)',
+    'big-goals': 'Big Goals (1000+ tokens)',
+    'new-goals': 'New Goals (<10% complete)',
+    'fast-progress': 'Fast Progress (high velocity)'
+  };
+  
+  const indicatorHtml = `
+    <div style="background: #e3f2fd; border: 1px solid #2196F3; border-radius: 8px; padding: 12px; margin-bottom: 16px; text-align: center;">
+      <div style="color: #1976D2; font-weight: 600; margin-bottom: 4px;">🎯 Filtered by Goal Type</div>
+      <div style="color: #424242; font-size: 14px;">${goalTypeNames[goalType]} (${filtered.length} models)</div>
+      <button onclick="clearGoalTypeFilter()" style="margin-top: 8px; padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Clear Filter</button>
+    </div>
+  `;
+
+  if (modelGrid) {
+    modelGrid.innerHTML = indicatorHtml + renderModels(filtered.slice(0, window.camsPerPage || 20));
+  }
+
+  // Update displayed counts
+  const totalResultsEl = document.getElementById('total-results');
+  if (totalResultsEl) {
+    totalResultsEl.textContent = filtered.length.toLocaleString();
+  }
+}
+
+function clearGoalTypeFilter() {
+  if (window.cachedModelsForDiscovery) {
+    const modelGrid = document.getElementById('model-grid');
+    const totalResultsEl = document.getElementById('total-results');
+    
+    if (modelGrid) {
+      modelGrid.innerHTML = renderModels(window.cachedModelsForDiscovery.slice(0, window.camsPerPage || 20));
+    }
+    
+    if (totalResultsEl) {
+      totalResultsEl.textContent = window.cachedModelsForDiscovery.length.toLocaleString();
+    }
+  }
 }
 
 function populateActivityTrends(models) {
@@ -2359,6 +2907,128 @@ function refreshPopularTags() {
   populatePopularTags(window.cachedModelsForDiscovery);
 }
 
+// Auto-refresh system for discovery hub
+let discoveryAutoRefreshInterval;
+let lastAutoRefreshTime = 0;
+
+function startDiscoveryAutoRefresh() {
+  // Clear any existing interval
+  if (discoveryAutoRefreshInterval) {
+    clearInterval(discoveryAutoRefreshInterval);
+  }
+  
+  console.log('🔄 Starting discovery hub auto-refresh (10s intervals for testing)');
+  
+  // Do an immediate refresh first
+  setTimeout(async () => {
+    console.log('🔄 Performing immediate auto-refresh...');
+    await performAutoRefresh();
+  }, 3000);
+  
+  discoveryAutoRefreshInterval = setInterval(async () => {
+    console.log('🔄 Auto-refresh interval triggered at', new Date().toLocaleTimeString());
+    await performAutoRefresh();
+  }, AUTO_REFRESH_INTERVAL);
+}
+
+async function performAutoRefresh() {
+  try {
+    const now = Date.now();
+    
+    console.log('🔄 Starting auto-refresh cycle...');
+    
+    // Update status indicators to show refreshing
+    updateRefreshStatus('refreshing');
+    
+    // Fetch fresh data
+    const allModels = await loadAllCachedDataForStats();
+    
+    if (allModels && allModels.length > 0) {
+      console.log(`🔄 Auto-refresh: Loaded ${allModels.length} models`);
+      
+      // Update cached data
+      window.cachedModelsForDiscovery = allModels;
+      
+      // Refresh all sections (in correct order)
+      populateStatsOverview(allModels);
+      populateTopPerformers(allModels);
+      populatePopularTags(allModels);
+      
+      // Apply any active discovery filters before repopulating sections
+      let modelsToDisplay = allModels;
+      if (window.currentDiscoveryFilters && Object.keys(window.currentDiscoveryFilters).length > 0) {
+        console.log('🔄 Auto-refresh: Applying active filters:', window.currentDiscoveryFilters);
+        modelsToDisplay = applyMultipleDiscoveryFilters(allModels, window.currentDiscoveryFilters);
+        console.log(`🔄 Auto-refresh: Filtered from ${allModels.length} to ${modelsToDisplay.length} models`);
+      }
+      
+      populateDiscoverySections(modelsToDisplay);
+      
+      // Load analytics for goal widgets (await to ensure proper loading)
+      await loadAnalyticsForGoalWidgets(allModels);
+      
+      // Update last refresh time and status
+      lastAutoRefreshTime = now;
+      updateRefreshStatus('updated');
+      
+      console.log('✅ Discovery hub auto-refresh complete');
+    } else {
+      console.warn('⚠️ Auto-refresh returned no data');
+      updateRefreshStatus('error');
+    }
+  } catch (error) {
+    console.error('❌ Discovery hub auto-refresh error:', error);
+    updateRefreshStatus('error');
+  }
+}
+
+function stopDiscoveryAutoRefresh() {
+  if (discoveryAutoRefreshInterval) {
+    clearInterval(discoveryAutoRefreshInterval);
+    discoveryAutoRefreshInterval = null;
+    console.log('🛑 Discovery hub auto-refresh stopped');
+  }
+}
+
+function updateRefreshStatus(status) {
+  const statusElements = [
+    'trending-status', 'new-models-status', 'just-live-status', 
+    'hidden-gems-status', 'high-energy-status', 'marathon-status',
+    'international-status', 'interactive-status', 'couples-status', 
+    'mature-status', 'tags-status'
+  ];
+  
+  let statusText = '';
+  let statusColor = '#666';
+  
+  switch(status) {
+    case 'refreshing':
+      statusText = 'Updating...';
+      statusColor = '#ff9800';
+      break;
+    case 'updated':
+      const timeAgo = Math.floor((Date.now() - lastAutoRefreshTime) / 1000);
+      statusText = timeAgo < 60 ? `Updated ${timeAgo}s ago` : `Updated ${Math.floor(timeAgo/60)}m ago`;
+      statusColor = '#4caf50';
+      break;
+    case 'error':
+      statusText = 'Update failed';
+      statusColor = '#f44336';
+      break;
+    default:
+      statusText = 'Live updating...';
+      statusColor = '#666';
+  }
+  
+  statusElements.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = statusText;
+      element.style.color = statusColor;
+    }
+  });
+}
+
 function filterDiscoveryByTag(tag) {
   if (!window.cachedModelsForDiscovery) return;
   
@@ -2477,6 +3147,62 @@ function clearTagFilter() {
   }
 }
 
+// No caching - always fetch fresh analytics for live goal updates
+
+function enrichModelsWithAnalytics(models) {
+  return models.map(model => {
+    const enrichedModel = { ...model };
+    const username = model.username.toLowerCase();
+    
+    // No caching - analytics data will be loaded asynchronously in background
+    enrichedModel._analytics = null;
+    
+    return enrichedModel;
+  });
+}
+
+async function loadAnalyticsForGoalWidgets(models) {
+  // Load analytics data in background for goal stats widget
+  console.log(`🎯 Loading analytics for ${models.length} models for goal widgets...`);
+  const sampleModels = models.slice(0, 100);
+  
+  try {
+    const enrichedModels = await Promise.all(sampleModels.map(async (model) => {
+      const username = model.username.toLowerCase();
+      
+      // Always fetch fresh analytics data for live updates
+      try {
+        const response = await fetch(`/cache/analytics/${username}.json`);
+        if (response.ok) {
+          const analyticsData = await response.json();
+          return { ...model, _analytics: analyticsData };
+        } else {
+          return { ...model, _analytics: null };
+        }
+      } catch (error) {
+        console.error(`Failed to fetch analytics for ${username}:`, error);
+        return { ...model, _analytics: null };
+      }
+    }));
+    
+    // Update goal stats widget with enriched data
+    if (window.cachedModelsForDiscovery) {
+      // Update cached models with analytics data
+      const updatedModels = window.cachedModelsForDiscovery.map(model => {
+        const enriched = enrichedModels.find(e => e.username === model.username);
+        return enriched || model;
+      });
+      window.cachedModelsForDiscovery = updatedModels;
+      
+      console.log(`✅ Analytics loaded, re-populating goal widgets with ${updatedModels.length} models...`);
+      // Re-populate goal widgets with enriched data
+      populateGoalWidgets(updatedModels);
+    }
+  } catch (error) {
+    console.error('❌ Error loading analytics for goal widgets:', error);
+  }
+}
+
 function populateDiscoverySections(models) {
   const trending = getDiscoveryModels(models, 'trending');
   const newModels = getDiscoveryModels(models, 'new-models');
@@ -2488,6 +3214,9 @@ function populateDiscoverySections(models) {
   const interactive = getDiscoveryModels(models, 'interactive');
   const couples = getDiscoveryModels(models, 'couples');
   const mature = getDiscoveryModels(models, 'mature');
+  
+  // Load analytics data for goal widgets
+  loadAnalyticsForGoalWidgets(models);
   
   renderDiscoverySection(trending, 'trending-grid', 24);
   renderDiscoverySection(newModels, 'new-models-grid', 24);
@@ -2622,6 +3351,7 @@ function getDiscoveryModels(models, category) {
         .sort((a, b) => (b.num_users || 0) - (a.num_users || 0))
         .slice(0, 100);
       break;
+      
   }
   
   // Shuffle for variety on refresh

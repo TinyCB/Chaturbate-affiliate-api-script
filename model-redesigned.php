@@ -187,6 +187,10 @@ require_once 'model-analytics-enhanced.php';
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
+        
+        .stat-card[title] {
+            cursor: help;
+        }
 
         .stat-value {
             font-size: 2rem;
@@ -525,9 +529,9 @@ require_once 'model-analytics-enhanced.php';
                     <div class="stat-value"><?= number_format($model_insights['avg_viewers']) ?></div>
                     <div class="stat-label">Avg Viewers</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" title="Streaming regularity: percentage of time online vs. 6 hours/day over 30 days">
                     <div class="stat-value"><?= $model_insights['consistency_score'] ?>%</div>
-                    <div class="stat-label">Consistency</div>
+                    <div class="stat-label">Consistency ⓘ</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value"><?= number_format($model['num_followers'] ?? 0) ?></div>
